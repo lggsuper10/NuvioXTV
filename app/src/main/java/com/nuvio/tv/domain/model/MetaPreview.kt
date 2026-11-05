@@ -35,6 +35,7 @@ data class MetaPreview(
     val seasonCount: Int? = null,
     val voteCount: Int? = null,
     val sourceAddonBaseUrl: String? = null,
+    val localSourceName: String? = null,
     val mdbListRatings: MDBListRatings? = null,
     val mdbListRatingOrder: List<String> = MDBListSettings.DEFAULT_RATING_ORDER
 ) {

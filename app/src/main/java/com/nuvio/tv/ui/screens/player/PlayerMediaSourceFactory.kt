@@ -220,7 +220,10 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
                 "safeNativeMb=${NuvioExoPlayerPerformanceHelper.getSafeNativeMemoryLimitMb(context)} " +
                 "parallel=${if (useParallelConnections) parallelConnectionCount else 0} chunkKb=$parallelChunkSizeKb"
         )
-        val useChunkSessionSource = useParallelConnections && !isHls && !isDash
+        // SAF content URIs are served by Android's ContentResolver through DefaultDataSource,
+        // not by the HTTP range pipeline used for network streams.
+        val isLocalContent = isLocalContentUrl(url)
+        val useChunkSessionSource = useParallelConnections && !isHls && !isDash && !isLocalContent
         parallelStartupPrefetchUnlocked.set(!useChunkSessionSource)
         val networkProgressiveFactory: DataSource.Factory = if (useChunkSessionSource) {
             val sessionConnections = parallelConnectionCount
@@ -252,10 +255,13 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
         } else {
             httpDataSourceFactory
         }
-        val progressiveUpstreamFactory: DataSource.Factory =
+        val progressiveUpstreamFactory: DataSource.Factory = if (isLocalContent) {
+            networkProgressiveFactory
+        } else {
             RedirectReportingDataSource.Factory(networkProgressiveFactory, url) { resolvedUrl ->
                 onStreamRedirected?.invoke(url, resolvedUrl)
             }
+        }
 
         // 2. VOD disk cache (opt-in).
         val useVodCache = ENABLE_VOD_CACHE && vodCacheEnabled && !isHls && !isDash && shouldUseVodCache(url)
@@ -577,6 +583,11 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
         internal fun isLoopbackUrl(url: String): Boolean {
             val host = url.toHttpUrlOrNull()?.host ?: return false
             return host == "127.0.0.1" || host == "::1" || host.equals("localhost", ignoreCase = true)
+        }
+
+        internal fun isLocalContentUrl(url: String): Boolean {
+            val scheme = Uri.parse(url).scheme?.lowercase(Locale.US)
+            return scheme == "content" || scheme == "file"
         }
 
         fun parseHeaders(headers: String?): Map<String, String> {

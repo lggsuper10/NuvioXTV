@@ -614,6 +614,16 @@ fun ContentCard(
                     )
                 }
 
+                item.localSourceName?.takeIf { it.isNotBlank() }?.let { sourceName ->
+                    LocalSourceBadge(
+                        sourceName = sourceName,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(start = NuvioTheme.spacing.sm, top = NuvioTheme.spacing.sm)
+                            .zIndex(2f)
+                    )
+                }
+
                 if (isWatched) {
                     WatchedMarker(
                         modifier = Modifier

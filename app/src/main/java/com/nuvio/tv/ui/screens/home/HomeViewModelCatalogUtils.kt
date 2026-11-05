@@ -5,8 +5,10 @@ import com.nuvio.tv.domain.model.catalogRowLegacyKey
 import com.nuvio.tv.domain.model.Addon
 import com.nuvio.tv.domain.model.CatalogDescriptor
 import com.nuvio.tv.domain.model.CatalogRow
+import com.nuvio.tv.domain.model.ContentType
 import com.nuvio.tv.domain.model.MetaPreview
 import com.nuvio.tv.domain.model.stableKey
+import com.nuvio.tv.data.locallibrary.LocalCatalog
 import kotlinx.coroutines.Job
 
 internal fun HomeViewModel.catalogKey(addonId: String, type: String, catalogId: String): String {
@@ -280,13 +282,15 @@ internal fun HomeViewModel.rebuildCatalogOrder(addons: List<Addon>) {
 
             synchronized(catalogStateLock) {
                 catalogOrder.clear()
-                catalogOrder.addAll(normalized)
+                catalogOrder.addAll(prioritizeLocalCatalogs(addons, normalized))
             }
         } else {
             // No saved order - manifest order + collections at end
             synchronized(catalogStateLock) {
                 catalogOrder.clear()
-                catalogOrder.addAll(defaultOrder + collectionKeys)
+                catalogOrder.addAll(
+                    prioritizeLocalCatalogs(addons, defaultOrder + collectionKeys)
+                )
             }
         }
     } else {
@@ -303,9 +307,32 @@ internal fun HomeViewModel.rebuildCatalogOrder(addons: List<Addon>) {
 
         synchronized(catalogStateLock) {
             catalogOrder.clear()
-            catalogOrder.addAll(mergedOrder)
+            catalogOrder.addAll(prioritizeLocalCatalogs(addons, mergedOrder))
         }
     }
+}
+
+private fun HomeViewModel.prioritizeLocalCatalogs(
+    addons: List<Addon>,
+    order: List<String>
+): List<String> {
+    val localCatalogs = addons
+        .asSequence()
+        .filter { LocalCatalog.isLocalAddon(it.baseUrl) }
+        .flatMap { addon ->
+            addon.catalogs.asSequence().map { catalog ->
+                catalogKey(addon.id, catalog.apiType, catalog.id) to
+                    (catalog.type == ContentType.MOVIE)
+            }
+        }
+        .toList()
+    val localKeys = localCatalogs.mapTo(LinkedHashSet()) { it.first }
+    if (localKeys.isEmpty()) return order
+    val localMovieKeys = localCatalogs.filter { it.second }.mapTo(LinkedHashSet()) { it.first }
+    val localSeriesKeys = localKeys - localMovieKeys
+    return order.filter { it in localMovieKeys } +
+        order.filter { it in localSeriesKeys } +
+        order.filterNot { it in localKeys }
 }
 
 private fun HomeViewModel.buildDefaultCatalogOrder(addons: List<Addon>): List<String> {

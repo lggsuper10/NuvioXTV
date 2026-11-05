@@ -3,6 +3,7 @@ package com.nuvio.tv.core.tmdb
 import android.util.Log
 import com.nuvio.tv.BuildConfig
 import com.nuvio.tv.data.remote.api.TmdbApi
+import com.nuvio.tv.data.remote.api.TmdbSearchResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,9 @@ class TmdbService @Inject constructor(
 
     private val imdbToTmdbInFlight = ConcurrentHashMap<String, CompletableDeferred<Int?>>()
     private val tmdbToImdbInFlight = ConcurrentHashMap<String, CompletableDeferred<String?>>()
+    private val artworkSearchCache = ConcurrentHashMap<String, TmdbSearchArtworkResult>()
+    private val artworkSearchInFlight =
+        ConcurrentHashMap<String, CompletableDeferred<TmdbSearchArtworkResult>>()
     
     // Mutex for thread-safe cache operations
     private val cacheMutex = Mutex()
@@ -284,6 +288,144 @@ class TmdbService @Inject constructor(
     fun apiKey(): String = TMDB_API_KEY
 
     /**
+     * Finds artwork for a locally owned file by matching its parsed filename against
+     * TMDB.  [searchCompleted] is false for transport failures, so callers can avoid
+     * caching a transient network error as a permanent "no artwork" result.
+     */
+    suspend fun searchImages(
+        title: String,
+        year: String?,
+        mediaType: String
+    ): TmdbSearchArtworkResult = withContext(Dispatchers.IO) {
+        val query = title.trim()
+        if (query.isBlank() || TMDB_API_KEY.isBlank()) {
+            return@withContext TmdbSearchArtworkResult(null, searchCompleted = false)
+        }
+
+        val isMovie = normalizeMediaType(mediaType) == "movie"
+        val cacheKey = "${if (isMovie) "movie" else "tv"}|${year.orEmpty()}|${query.lowercase()}"
+        artworkSearchCache[cacheKey]?.let { return@withContext it }
+
+        val request = CompletableDeferred<TmdbSearchArtworkResult>()
+        artworkSearchInFlight.putIfAbsent(cacheKey, request)?.let { existing ->
+            return@withContext existing.await()
+        }
+
+        try {
+            var response = if (isMovie) {
+                tmdbApi.searchMovies(
+                    apiKey = TMDB_API_KEY,
+                    query = query,
+                    year = year
+                )
+            } else {
+                tmdbApi.searchTv(
+                    apiKey = TMDB_API_KEY,
+                    query = query,
+                    year = year
+                )
+            }
+            if (!response.isSuccessful) {
+                TmdbSearchArtworkResult(null, searchCompleted = false).also(request::complete)
+            } else {
+                var results = response.body()?.results.orEmpty()
+                // The year filter is strict. Retry once without it when a filename
+                // contains a release year that differs from TMDB's primary date.
+                if (results.isEmpty() && !year.isNullOrBlank()) {
+                    response = if (isMovie) {
+                        tmdbApi.searchMovies(apiKey = TMDB_API_KEY, query = query)
+                    } else {
+                        tmdbApi.searchTv(apiKey = TMDB_API_KEY, query = query)
+                    }
+                    if (!response.isSuccessful) {
+                        return@withContext TmdbSearchArtworkResult(
+                            null,
+                            searchCompleted = false
+                        ).also(request::complete)
+                    }
+                    results = response.body()?.results.orEmpty()
+                }
+                val selected = selectSearchArtwork(results, title, year)
+                TmdbSearchArtworkResult(
+                    images = selected?.images,
+                    searchCompleted = true,
+                    tmdbId = selected?.tmdbId
+                ).also {
+                    artworkSearchCache[cacheKey] = it
+                    request.complete(it)
+                }
+            }
+        } catch (error: CancellationException) {
+            request.cancel(error)
+            throw error
+        } catch (error: Exception) {
+            Log.w(TAG, "Artwork search failed for '$query': ${error.message}")
+            TmdbSearchArtworkResult(null, searchCompleted = false).also(request::complete)
+        } finally {
+            artworkSearchInFlight.remove(cacheKey, request)
+        }
+    }
+
+    private fun selectSearchArtwork(
+        results: List<TmdbSearchResult>,
+        title: String,
+        year: String?
+    ): SelectedSearchArtwork? {
+        if (results.isEmpty()) return null
+        val normalizedQuery = normalizeSearchText(title)
+        val selected = results.maxWithOrNull(
+            compareBy<TmdbSearchResult> { result ->
+                val names = listOfNotNull(
+                    result.title,
+                    result.name,
+                    result.originalTitle,
+                    result.originalName
+                ).map(::normalizeSearchText).filter { it.isNotBlank() }
+                when {
+                    normalizedQuery.isBlank() -> 0
+                    names.any { it == normalizedQuery } -> 6
+                    names.any { it.startsWith(normalizedQuery) || normalizedQuery.startsWith(it) } -> 3
+                    else -> 0
+                }
+            }.thenBy { result ->
+                val resultYear = (result.releaseDate ?: result.firstAirDate)
+                    ?.take(4)
+                    ?.takeIf { it.length == 4 }
+                if (!year.isNullOrBlank() && resultYear == year) 3 else 0
+            }.thenBy { it.voteCount ?: 0 }
+                .thenBy { it.popularity ?: 0.0 }
+        ) ?: return null
+
+        val poster = imageUrl(selected.posterPath, "w500")
+        val backdrop = imageUrl(selected.backdropPath, "w1280")
+        return SelectedSearchArtwork(
+            images = if (poster != null || backdrop != null) {
+                TmdbImages(
+                    backdropUrl = backdrop ?: poster,
+                    posterUrl = poster ?: backdrop
+                )
+            } else {
+                null
+            },
+            tmdbId = selected.id
+        )
+    }
+
+    private fun imageUrl(path: String?, size: String): String? {
+        val clean = path?.trim()?.takeIf { it.isNotBlank() } ?: return null
+        if (clean.startsWith("http://") || clean.startsWith("https://")) return clean
+        return "https://image.tmdb.org/t/p/$size/${clean.trimStart('/')}"
+    }
+
+    private fun normalizeSearchText(value: String): String =
+        value.lowercase().replace(Regex("""[^\p{L}\p{N}]+"""), "")
+
+    private data class SelectedSearchArtwork(
+        val images: TmdbImages?,
+        val tmdbId: Int
+    )
+
+    /**
      * Fetches backdrop and poster URLs from TMDB for the given IMDB ID.
      * Returns null if the IMDB ID doesn't start with "tt" or if TMDB has no data.
      * Results are NOT cached here — callers should persist what they need.
@@ -309,3 +451,9 @@ class TmdbService @Inject constructor(
 }
 
 data class TmdbImages(val backdropUrl: String?, val posterUrl: String?, val runtimeMinutes: Int? = null)
+
+data class TmdbSearchArtworkResult(
+    val images: TmdbImages?,
+    val searchCompleted: Boolean,
+    val tmdbId: Int? = null
+)

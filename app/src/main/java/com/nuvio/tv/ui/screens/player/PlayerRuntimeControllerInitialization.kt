@@ -243,6 +243,10 @@ internal fun PlayerRuntimeController.initializePlayer(
                 playerSettings.mpvHi10pGnextSoftwareFallbackEnabled
             mpvHardwareDecodeModeSetting = playerSettings.mpvHardwareDecodeMode
             var effectiveInternalPlayerEngine = overrideInternalPlayerEngine ?: playerSettings.internalPlayerEngine
+            if (PlayerMediaSourceFactory.isLocalContentUrl(url)) {
+                // libmpv cannot open Android SAF content:// URIs; ExoPlayer's DefaultDataSource can.
+                effectiveInternalPlayerEngine = InternalPlayerEngine.EXOPLAYER
+            }
             if (effectiveInternalPlayerEngine == InternalPlayerEngine.AUTO) {
                 effectiveInternalPlayerEngine = resolveAutoInternalPlayerEngine()
             }

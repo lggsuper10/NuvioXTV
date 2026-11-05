@@ -127,7 +127,10 @@ fun HeroContentSection(
     onHeroActionFocused: () -> Unit = {},
     onPlayFocusRestored: () -> Unit = {},
     onShowFullDescription: () -> Unit = {},
-    onTruncationChanged: (Boolean) -> Unit = {}
+    onTruncationChanged: (Boolean) -> Unit = {},
+    titleAccessory: (@Composable () -> Unit)? = null,
+    showLibraryAction: Boolean = true,
+    showWatchedAction: Boolean = true
 ) {
     val context = LocalContext.current
     val isSeriesApi = remember(meta.apiType) {
@@ -203,6 +206,12 @@ fun HeroContentSection(
             verticalArrangement = Arrangement.Bottom
         ) {
             // Logo/Title — always visible during trailer, animates size
+            titleAccessory?.let { accessory ->
+                Box(modifier = Modifier.padding(bottom = NuvioTheme.spacing.sm)) {
+                    accessory()
+                }
+            }
+
             if (shouldShowLogo) {
                 AsyncImage(
                     model = logoModel,
@@ -269,20 +278,22 @@ fun HeroContentSection(
                             }
                         )
 
-                        ActionIconButton(
-                            icon = if (isInLibrary) Icons.Default.Check else null,
-                            painter = if (!isInLibrary) {
-                                libraryAddPainter
-                            } else {
-                                null
-                            },
-                            contentDescription = if (isInLibrary) stringResource(R.string.hero_remove_from_library) else stringResource(R.string.hero_add_to_library),
-                            onClick = onToggleLibrary,
-                            onLongPress = onLibraryLongPress,
-                            onFocused = onHeroActionFocused
-                        )
+                        if (showLibraryAction) {
+                            ActionIconButton(
+                                icon = if (isInLibrary) Icons.Default.Check else null,
+                                painter = if (!isInLibrary) {
+                                    libraryAddPainter
+                                } else {
+                                    null
+                                },
+                                contentDescription = if (isInLibrary) stringResource(R.string.hero_remove_from_library) else stringResource(R.string.hero_add_to_library),
+                                onClick = onToggleLibrary,
+                                onLongPress = onLibraryLongPress,
+                                onFocused = onHeroActionFocused
+                            )
+                        }
 
-                        if (meta.apiType == "movie") {
+                        if (showWatchedAction && meta.apiType == "movie") {
                             ActionIconButton(
                                 icon = if (isMovieWatched) {
                                     Icons.Default.Visibility

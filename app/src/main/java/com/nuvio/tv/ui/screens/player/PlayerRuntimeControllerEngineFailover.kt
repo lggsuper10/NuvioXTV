@@ -16,6 +16,7 @@ internal fun PlayerRuntimeController.maybeAutoSwitchInternalPlayerOnStartupError
     if (!autoSwitchInternalPlayerOnErrorEnabled) return false
     if (startupEngineFailoverTriggered) return false
     if (!isStartupPhaseForEngineFailover()) return false
+    if (PlayerMediaSourceFactory.isLocalContentUrl(currentStreamUrl)) return false
 
     val targetEngine = when (currentInternalPlayerEngine) {
         InternalPlayerEngine.EXOPLAYER -> InternalPlayerEngine.MVP_PLAYER
@@ -71,6 +72,11 @@ internal fun PlayerRuntimeController.switchToInternalPlayerEngine(
     reason: String = "manual-switch"
 ) {
     if (currentStreamUrl.isBlank()) return
+    if (targetEngine == InternalPlayerEngine.MVP_PLAYER &&
+        PlayerMediaSourceFactory.isLocalContentUrl(currentStreamUrl)
+    ) {
+        return
+    }
 
     beginSwitchTraceSession(reason = reason, targetEngine = targetEngine)
     val targetEngineLabel = targetEngineLabel(targetEngine)

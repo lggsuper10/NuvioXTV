@@ -305,8 +305,8 @@ android {
         abi {
             isEnable = !buildingAppBundle
             reset()
-            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-            isUniversalApk = true
+            include("armeabi-v7a")
+            isUniversalApk = false
         }
     }
 
@@ -500,6 +500,12 @@ dependencies {
 
     // ViewModel
     implementation(libs.lifecycle.viewmodel.compose)
+
+    // Local media library (SAF folders + Room index)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+    implementation(libs.androidx.documentfile)
 
     // Media3 — remaining stock modules from Maven (not forked)
     implementation(libs.media3.exoplayer.hls)

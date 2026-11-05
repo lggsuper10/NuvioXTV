@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.nuvio.tv.R
+import com.nuvio.tv.data.locallibrary.LocalCatalog
 import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
@@ -771,8 +772,10 @@ fun ModernHomeContent(
                     // Also treat as pending when activeCarouselItem is null (row not yet resolved).
                     val heroEnrichmentEnabled = uiState.heroEnrichmentEnabled
                     val enrichmentFailed = activeItemId != null && activeItemId in failedEnrichmentIds.value
-                    val effectiveEnrichmentActive = activeCarouselItem == null || enrichmentActive ||
-                        (enrichedHero == null && activeItemId != null && heroEnrichmentEnabled && !enrichmentFailed)
+                    val isLocalItem = activeItemId != null && LocalCatalog.isLocalItemId(activeItemId)
+                    val effectiveEnrichmentActive = activeCarouselItem == null ||
+                        (!isLocalItem && (enrichmentActive ||
+                            (enrichedHero == null && activeItemId != null && heroEnrichmentEnabled && !enrichmentFailed)))
                     
                     val activeRowKeyVal = activeRowKey.value
                     val activeRow = activeRowKeyVal?.let { rowByKey[it] }
@@ -784,7 +787,7 @@ fun ModernHomeContent(
                         resolvedHero?.backdrop,
                         resolvedHero?.imageUrl,
                         resolvedHero?.poster,
-                        activeRowFallbackBackdrop
+                        activeRowFallbackBackdrop.takeIf { activeCarouselItem == null }
                     )
                     
                     Triple(heroBackdrop, resolvedHero, effectiveEnrichmentActive)

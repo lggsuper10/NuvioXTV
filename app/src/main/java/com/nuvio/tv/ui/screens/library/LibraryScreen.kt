@@ -135,6 +135,7 @@ fun LibraryScreen(
     viewModel: LibraryViewModel = hiltViewModel(),
     serversViewModel: LibraryServersViewModel = hiltViewModel(),
     showBuiltInHeader: Boolean = true,
+    onNavigateToLocalMedia: () -> Unit = {},
     onNavigateToDetail: (String, String, String?) -> Unit,
     onNavigateToCatalogSeeAll: (String, String, String) -> Unit = { _, _, _ -> },
     onCloudPlaybackResolved: (CloudLibraryPlaybackInfo) -> Unit = {}
@@ -373,9 +374,14 @@ fun LibraryScreen(
                     selectedViewMode = mode
                     expandedPicker = null
                 },
-                // Refresh belongs to the cloud view only, pinned right in line with the tabs.
-                trailing = if (viewMode == LibraryViewMode.Cloud) {
-                    {
+                // Refresh belongs to the cloud view only. Local folders are reachable
+                // from every library view so USB/internal storage stays discoverable.
+                trailing = {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        if (viewMode == LibraryViewMode.Cloud) {
                         Button(
                             onClick = viewModel::refreshCloudLibrary,
                             enabled = !uiState.cloudLibrary.isRefreshing,
@@ -392,9 +398,17 @@ fun LibraryScreen(
                                 }
                             )
                         }
+                        }
+                        Button(
+                            onClick = onNavigateToLocalMedia,
+                            colors = ButtonDefaults.colors(
+                                containerColor = NuvioTheme.colors.BackgroundCard,
+                                contentColor = NuvioTheme.colors.TextPrimary
+                            )
+                        ) {
+                            Text(stringResource(R.string.library_local_media_button))
+                        }
                     }
-                } else {
-                    null
                 }
             )
         }

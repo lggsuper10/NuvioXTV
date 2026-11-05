@@ -110,6 +110,7 @@ import com.nuvio.tv.R
 import com.nuvio.tv.domain.model.FocusedPosterTrailerPlaybackTarget
 import com.nuvio.tv.domain.model.CardDepthSurface
 import com.nuvio.tv.domain.model.MetaPreview
+import com.nuvio.tv.ui.components.LocalSourceBadge
 import com.nuvio.tv.domain.model.ContinueWatchingCardStyle
 import com.nuvio.tv.domain.model.PLACEHOLDER_IMAGE_URL
 import com.nuvio.tv.domain.model.isPlaceholder
@@ -1505,6 +1506,16 @@ private fun ModernCarouselCard(
                             .align(Alignment.BottomStart)
                             .fillMaxWidth(0.62f)
                             .padding(start = 10.dp, end = 10.dp, bottom = NuvioTheme.spacing.md)
+                    )
+                }
+
+                item.metaPreview?.localSourceName?.takeIf { it.isNotBlank() }?.let { sourceName ->
+                    LocalSourceBadge(
+                        sourceName = sourceName,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(start = NuvioTheme.spacing.sm, top = NuvioTheme.spacing.sm)
+                            .zIndex(2f)
                     )
                 }
 

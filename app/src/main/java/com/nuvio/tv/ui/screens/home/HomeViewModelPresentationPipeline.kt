@@ -11,6 +11,7 @@ import com.nuvio.tv.core.poster.patternForScreen
 import com.nuvio.tv.core.poster.withCustomPosterUrls
 import com.nuvio.tv.core.tmdb.TmdbEnrichment
 import com.nuvio.tv.data.mediaserver.ServerItemRef
+import com.nuvio.tv.data.locallibrary.LocalCatalog
 import com.nuvio.tv.domain.model.FocusedPosterTrailerPlaybackTarget
 import com.nuvio.tv.domain.model.HomeImdbRatingsVisibility
 import com.nuvio.tv.domain.model.DetailImdbRatingsVisibility
@@ -528,6 +529,22 @@ private sealed interface ExternalMetaOutcome {
 private fun HomeViewModel.externalEnrichmentOutstanding(itemId: String): Boolean =
     externalMetaPrefetchEnabled && itemId !in prefetchedExternalMetaIds
 
+/**
+ * Local catalog ids are not TMDB ids (or IMDB ids). Match the parsed file title
+ * against TMDB instead so local hero cards get the same rich metadata as addon
+ * catalogs while retaining local playback.
+ */
+private suspend fun HomeViewModel.resolveFocusTmdbId(item: MetaPreview): String? =
+    if (LocalCatalog.isLocalItemId(item.id)) {
+        tmdbService.searchImages(
+            title = item.name,
+            year = item.releaseInfo?.take(4),
+            mediaType = item.apiType
+        ).tmdbId?.toString()
+    } else {
+        tmdbService.ensureTmdbId(item.id, item.apiType)
+    }
+
 private suspend fun HomeViewModel.fetchExternalMetaOutcome(item: MetaPreview): ExternalMetaOutcome =
     try {
         val result = metaRepository.getMetaFromAllAddons(item.apiType, item.id, item.sourceAddonBaseUrl)
@@ -644,7 +661,7 @@ internal fun HomeViewModel.onItemFocusPipeline(item: MetaPreview) {
             // - tmdbEnabledForCurrentLayout: controls TMDB enrichment
             // - externalMetaPrefetchEnabled: controls external meta addon fetch
             val tmdbDeferred = if (tmdbEnabledForCurrentLayout && item.id !in prefetchedTmdbIds) {
-                val tmdbId = runCatching { tmdbService.ensureTmdbId(item.id, item.apiType) }.getOrNull()
+                val tmdbId = runCatching { resolveFocusTmdbId(item) }.getOrNull()
                 if (tmdbId != null) async {
                     runCatching {
                         tmdbMetadataService.fetchEnrichment(
@@ -765,7 +782,7 @@ internal fun HomeViewModel.preloadAdjacentItemPipeline(item: MetaPreview) {
         try {
             // Launch TMDB and external meta addon fetch in parallel (same as focused pipeline).
             val tmdbDeferred = if (tmdbEnabledForCurrentLayout) {
-                val tmdbId = runCatching { tmdbService.ensureTmdbId(item.id, item.apiType) }.getOrNull()
+                val tmdbId = runCatching { resolveFocusTmdbId(item) }.getOrNull()
                 if (tmdbId != null) async {
                     runCatching {
                         tmdbMetadataService.fetchEnrichment(

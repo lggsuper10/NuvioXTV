@@ -2,10 +2,12 @@ package com.nuvio.tv.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.nuvio.tv.R
 import com.nuvio.tv.core.network.NetworkResult
 import com.nuvio.tv.core.network.safeApiCall
 import com.nuvio.tv.core.poster.withCustomPosterUrls
 import com.nuvio.tv.data.mapper.toDomainOrNull
+import com.nuvio.tv.data.locallibrary.LocalCatalog
 import com.nuvio.tv.data.mediaserver.ServerCatalog
 import com.nuvio.tv.data.mediaserver.messageRes
 import com.nuvio.tv.data.mediaserver.serverFailure
@@ -28,7 +30,8 @@ class CatalogRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val api: AddonApi,
     private val layoutPreferenceDataStore: LayoutPreferenceDataStore,
-    private val serverCatalog: ServerCatalog
+    private val serverCatalog: ServerCatalog,
+    private val localCatalog: LocalCatalog
 ) : CatalogRepository {
     companion object {
         private const val TAG = "CatalogRepository"
@@ -48,6 +51,22 @@ class CatalogRepositoryImpl @Inject constructor(
         posterScreen: com.nuvio.tv.core.poster.CustomPosterScreen
     ): Flow<NetworkResult<CatalogRow>> = flow {
         emit(NetworkResult.Loading)
+
+        if (LocalCatalog.isLocalAddon(addonBaseUrl)) {
+            val row = localCatalog.catalog(
+                addonBaseUrl = addonBaseUrl,
+                addonId = addonId,
+                catalogId = catalogId,
+                catalogName = catalogName,
+                type = type
+            )
+            if (row != null) {
+                emit(NetworkResult.Success(row))
+            } else {
+                emit(NetworkResult.Error(context.getString(R.string.local_media_source_unavailable)))
+            }
+            return@flow
+        }
 
         if (ServerCatalog.isServerAddon(addonBaseUrl)) {
             val row = try {

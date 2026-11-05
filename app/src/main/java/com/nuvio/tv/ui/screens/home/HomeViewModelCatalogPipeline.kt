@@ -129,8 +129,14 @@ internal fun HomeViewModel.observeTmdbSettingsPipeline() {
 @OptIn(FlowPreview::class)
 internal fun HomeViewModel.observeInstalledAddonsPipeline() {
     viewModelScope.launch {
-        combine(addonRepository.getInstalledAddons(), serverCatalog.addons) { installed, servers ->
-            installed.enabledAddons() + servers
+        combine(
+            addonRepository.getInstalledAddons(),
+            serverCatalog.addons,
+            localCatalog.addons
+        ) { installed, servers, locals ->
+            // Local rows are loaded eagerly and displayed first so newly added files are
+            // immediately visible without waiting for a lazy catalog pass.
+            locals + installed.enabledAddons() + servers
         }
             .distinctUntilChanged()
             .collectLatest { addons ->

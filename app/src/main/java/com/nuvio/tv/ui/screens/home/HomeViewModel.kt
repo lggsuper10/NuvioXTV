@@ -20,6 +20,7 @@ import com.nuvio.tv.data.local.MDBListSettingsDataStore
 import com.nuvio.tv.data.local.TmdbSettingsDataStore
 import com.nuvio.tv.data.local.TraktSettingsDataStore
 import com.nuvio.tv.data.local.ContinueWatchingEnrichmentCache
+import com.nuvio.tv.data.locallibrary.LocalCatalog
 import com.nuvio.tv.data.mediaserver.ServerCatalog
 import com.nuvio.tv.data.trailer.TrailerService
 import com.nuvio.tv.domain.model.Addon
@@ -88,6 +89,7 @@ class HomeViewModel @Inject constructor(
     internal val profileManager: com.nuvio.tv.core.profile.ProfileManager,
     internal val tvRecommendationManager: TvRecommendationManager,
     internal val serverCatalog: ServerCatalog,
+    internal val localCatalog: LocalCatalog,
     internal val metaPreviewEnricher: MetaPreviewEnricher = MetaPreviewEnricher(
         tmdbService,
         tmdbMetadataService,
@@ -362,6 +364,7 @@ class HomeViewModel @Inject constructor(
         }
 
         observeStartupAuthNotice()
+        observeLocalArtworkUpdates()
         viewModelScope.launch {
             profileManager.activeProfileReady.first { it }
             observeLayoutPreferences()
@@ -804,6 +807,8 @@ class HomeViewModel @Inject constructor(
     private fun observeCollections() = observeCollectionsPipeline()
 
     private fun observeInstalledAddons() = observeInstalledAddonsPipeline()
+
+    private fun observeLocalArtworkUpdates() = observeLocalArtworkUpdatesPipeline()
 
     /**
      * Set when the catalogs were last loaded or refreshed, so returning to Home right after

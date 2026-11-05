@@ -85,7 +85,6 @@ internal fun ModernHeroScene(
 ) {
     ModernHeroMediaLayer(
         heroBackdrop = { state().heroBackdrop },
-        enrichmentActive = { state().enrichmentActive },
         shouldPlayHeroTrailer = { state().shouldPlayTrailer },
         heroTrailerFirstFrameRendered = { state().trailerFirstFrameRendered },
         heroTrailerUrl = { state().trailerUrl },
@@ -113,7 +112,6 @@ internal fun ModernHeroScene(
 @Composable
 internal fun ModernHeroMediaLayer(
     heroBackdrop: () -> String?,
-    enrichmentActive: () -> Boolean,
     shouldPlayHeroTrailer: () -> Boolean,
     heroTrailerFirstFrameRendered: () -> Boolean,
     heroTrailerUrl: () -> String?,
@@ -136,12 +134,12 @@ internal fun ModernHeroMediaLayer(
     val localContext = LocalContext.current
 
     // Backdrop URL is managed upstream (heroSceneStateLambda freezes it
-    // during rapid nav / scroll). Only update when enrichment is not active
+    // during rapid nav / scroll). Always follow the active card immediately.
     val rawBackdrop by remember { derivedStateOf { heroBackdrop() } }
-    val enriching by remember { derivedStateOf { enrichmentActive() } }
     var displayedBackdrop by remember { mutableStateOf(HeroBackdropState.lastDisplayedUrl ?: heroBackdrop()) }
-    if (rawBackdrop != null && rawBackdrop != displayedBackdrop && !enriching) {
-        displayedBackdrop = rawBackdrop!!
+    val nextBackdrop = rawBackdrop
+    if (nextBackdrop != null && nextBackdrop != displayedBackdrop) {
+        displayedBackdrop = nextBackdrop
     }
     val imageModel = remember(
         localContext,

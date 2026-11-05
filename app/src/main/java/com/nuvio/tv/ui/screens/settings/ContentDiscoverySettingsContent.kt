@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Power
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,10 +39,14 @@ internal fun ContentDiscoverySettingsContent(
     val hubServersRequester = remember { FocusRequester() }
     val serversRequester = remember { FocusRequester() }
     val serverRequester = remember { FocusRequester() }
+    val localMediaRequester = remember { FocusRequester() }
     var returningToHub by remember { mutableStateOf(false) }
 
     BackHandler(enabled = serverPage != null) {
-        serverPage = if (serverPage == SERVERS_PAGE) null else SERVERS_PAGE
+        serverPage = when (serverPage) {
+            SERVERS_PAGE, LOCAL_MEDIA_PAGE -> null
+            else -> SERVERS_PAGE
+        }
         if (serverPage == null) returningToHub = true
     }
 
@@ -49,6 +54,7 @@ internal fun ContentDiscoverySettingsContent(
         val requester = when (serverPage) {
             null -> hubServersRequester.takeIf { returningToHub }
             SERVERS_PAGE -> serversRequester
+            LOCAL_MEDIA_PAGE -> localMediaRequester
             else -> serverRequester
         } ?: return@LaunchedEffect
         returningToHub = false
@@ -66,14 +72,19 @@ internal fun ContentDiscoverySettingsContent(
                 onNavigateToPlugins()
             },
             onNavigateToServers = { serverPage = SERVERS_PAGE },
+            onNavigateToLocalMedia = { serverPage = LOCAL_MEDIA_PAGE },
             showPlugins = showPlugins,
             initialFocusRequester = initialFocusRequester,
             focusPluginsOnReturn = focusPluginsOnReturn && showPlugins,
-            serversFocusRequester = hubServersRequester
+            serversFocusRequester = hubServersRequester,
+            localMediaFocusRequester = localMediaRequester
         )
         SERVERS_PAGE -> MediaServersSettingsContent(
             initialFocusRequester = serversRequester,
             onOpenServer = { serverPage = it }
+        )
+        LOCAL_MEDIA_PAGE -> LocalMediaSettingsContent(
+            initialFocusRequester = localMediaRequester
         )
         else -> MediaServerSettingsContent(
             connectionId = page,
@@ -89,10 +100,12 @@ private fun ContentDiscoveryHub(
     onNavigateToAddons: () -> Unit,
     onNavigateToPlugins: () -> Unit,
     onNavigateToServers: () -> Unit,
+    onNavigateToLocalMedia: () -> Unit,
     showPlugins: Boolean,
     initialFocusRequester: FocusRequester?,
     focusPluginsOnReturn: Boolean,
-    serversFocusRequester: FocusRequester
+    serversFocusRequester: FocusRequester,
+    localMediaFocusRequester: FocusRequester
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -121,6 +134,13 @@ private fun ContentDiscoveryHub(
                 leadingIcon = Icons.Default.Dns,
                 modifier = Modifier.focusRequester(serversFocusRequester)
             )
+            SettingsActionRow(
+                title = stringResource(R.string.settings_local_media),
+                subtitle = stringResource(R.string.settings_local_media_subtitle),
+                onClick = onNavigateToLocalMedia,
+                leadingIcon = Icons.Default.Folder,
+                modifier = Modifier.focusRequester(localMediaFocusRequester)
+            )
             if (showPlugins) {
                 SettingsActionRow(
                     title = stringResource(R.string.plugin_title),
@@ -139,3 +159,4 @@ private fun ContentDiscoveryHub(
 }
 
 private const val SERVERS_PAGE = "servers"
+private const val LOCAL_MEDIA_PAGE = "local_media"

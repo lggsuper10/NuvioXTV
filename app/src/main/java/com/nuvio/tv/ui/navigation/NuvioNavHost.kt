@@ -28,6 +28,7 @@ import com.nuvio.tv.core.build.AppFeaturePolicy
 import com.nuvio.tv.core.party.PartyMedia
 import com.nuvio.tv.domain.model.ExperienceMode
 import com.nuvio.tv.data.mediaserver.ServerCatalog
+import com.nuvio.tv.data.locallibrary.LocalCatalog
 import com.nuvio.tv.ui.screens.CatalogSeeAllScreen
 import com.nuvio.tv.ui.screens.ExperienceModeSelectionScreen
 import com.nuvio.tv.ui.screens.LayoutSelectionScreen
@@ -36,6 +37,7 @@ import com.nuvio.tv.ui.screens.home.HomeScreen
 import com.nuvio.tv.ui.screens.addon.AddonManagerScreen
 import com.nuvio.tv.ui.screens.addon.CatalogOrderScreen
 import com.nuvio.tv.ui.screens.library.LibraryScreen
+import com.nuvio.tv.ui.screens.locallibrary.LocalDetailScreen
 import com.nuvio.tv.ui.screens.player.PlayerExitReason
 import com.nuvio.tv.ui.screens.player.PlayerScreen
 import com.nuvio.tv.ui.screens.player.PostPlayRecommendation
@@ -46,6 +48,7 @@ import com.nuvio.tv.ui.screens.search.DiscoverScreen
 import com.nuvio.tv.ui.screens.search.SearchScreen
 import com.nuvio.tv.ui.screens.settings.AboutScreen
 import com.nuvio.tv.ui.screens.settings.LayoutSettingsScreen
+import com.nuvio.tv.ui.screens.settings.LocalMediaScreen
 import com.nuvio.tv.ui.screens.settings.LicensesAttributionsScreen
 import com.nuvio.tv.ui.screens.settings.PlaybackSettingsScreen
 import com.nuvio.tv.ui.screens.settings.SettingsScreen
@@ -246,15 +249,19 @@ private fun PlaybackNavHost(
 
             HomeScreen(
                 onNavigateToDetail = { itemId, itemType, addonBaseUrl ->
-                    val heroBackdrop = HeroBackdropState.consumeAndClear()
-                    navController.navigate(
-                        Screen.Detail.createRoute(
-                            itemId = itemId,
-                            itemType = itemType,
-                            addonBaseUrl = addonBaseUrl,
-                            heroBackdropUrl = heroBackdrop
+                    if (LocalCatalog.isLocalItemId(itemId)) {
+                        navController.navigate(Screen.LocalDetail.createRoute(itemId))
+                    } else {
+                        val heroBackdrop = HeroBackdropState.consumeAndClear()
+                        navController.navigate(
+                            Screen.Detail.createRoute(
+                                itemId = itemId,
+                                itemType = itemType,
+                                addonBaseUrl = addonBaseUrl,
+                                heroBackdropUrl = heroBackdrop
+                            )
                         )
-                    )
+                    }
                 },
                 onContinueWatchingClick = onContinueWatchingClick@{ item ->
                     if (!playbackAvailability.canStream(item)) {
@@ -463,6 +470,18 @@ private fun PlaybackNavHost(
                 }
             )
             }
+        }
+
+        composable(
+            route = Screen.LocalDetail.route,
+            arguments = listOf(
+                navArgument("localId") { type = NavType.StringType }
+            )
+        ) {
+            LocalDetailScreen(
+                onBack = { navController.popBackStack() },
+                onPlay = { route -> navController.navigate(route) }
+            )
         }
 
         composable(
@@ -1214,6 +1233,7 @@ private fun PlaybackNavHost(
         composable(Screen.Library.route) {
             LibraryScreen(
                 showBuiltInHeader = !hideBuiltInHeaders,
+                onNavigateToLocalMedia = { navController.navigate(Screen.LocalMedia.route) },
                 onNavigateToDetail = { itemId, itemType, addonBaseUrl ->
                     navController.navigate(Screen.Detail.createRoute(itemId, itemType, addonBaseUrl))
                 },
@@ -1259,6 +1279,10 @@ private fun PlaybackNavHost(
                 },
                 onNavigateToWatchParty = { navController.navigate(Screen.WatchParty.createRoute()) }
             )
+        }
+
+        composable(Screen.LocalMedia.route) {
+            LocalMediaScreen(onBack = { navController.popBackStack() })
         }
 
         composable(
@@ -1471,7 +1495,11 @@ private fun PlaybackNavHost(
                 searchViewModel = searchViewModel,
                 viewModel = homeViewModel,
                 onNavigateToDetail = { itemId, itemType, addonBaseUrl ->
-                    navController.navigate(Screen.Detail.createRoute(itemId, itemType, addonBaseUrl))
+                    if (LocalCatalog.isLocalItemId(itemId)) {
+                        navController.navigate(Screen.LocalDetail.createRoute(itemId))
+                    } else {
+                        navController.navigate(Screen.Detail.createRoute(itemId, itemType, addonBaseUrl))
+                    }
                 },
                 onBackPress = { navController.popBackStack() }
             )
