@@ -2,6 +2,7 @@ package com.nuvio.tv.core.tmdb
 
 import android.util.Log
 import com.nuvio.tv.BuildConfig
+import com.nuvio.tv.core.locallibrary.ArtworkQueryVariants
 import com.nuvio.tv.data.remote.api.TmdbApi
 import com.nuvio.tv.data.remote.api.TmdbSearchResult
 import kotlinx.coroutines.CancellationException
@@ -299,8 +300,8 @@ class TmdbService @Inject constructor(
         year: String?,
         mediaType: String
     ): TmdbSearchArtworkResult = withContext(Dispatchers.IO) {
-        val query = title.trim()
-        if (query.isBlank() || TMDB_API_KEY.isBlank()) {
+        val rawQuery = title.trim()
+        if (rawQuery.isBlank() || TMDB_API_KEY.isBlank()) {
             return@withContext TmdbSearchArtworkResult(null, searchCompleted = false)
         }
         if (!TmdbRuntimeConfig.isApiReachable()) {
@@ -308,7 +309,7 @@ class TmdbService @Inject constructor(
         }
 
         val isMovie = normalizeMediaType(mediaType) == "movie"
-        val cacheKey = "${if (isMovie) "movie" else "tv"}|${year.orEmpty()}|${query.lowercase()}"
+        val cacheKey = "${if (isMovie) "movie" else "tv"}|${year.orEmpty()}|${rawQuery.lowercase()}"
         artworkSearchCache[cacheKey]?.let { return@withContext it }
 
         val request = CompletableDeferred<TmdbSearchArtworkResult>()
@@ -317,74 +318,39 @@ class TmdbService @Inject constructor(
         }
 
         try {
-            var response = withTimeoutOrNull(TMDB_SEARCH_TIMEOUT_MS) {
-                if (isMovie) {
-                    tmdbApi.searchMovies(
-                        apiKey = TMDB_API_KEY,
-                        query = query,
-                        year = year
-                    )
-                } else {
-                    tmdbApi.searchTv(
-                        apiKey = TMDB_API_KEY,
-                        query = query,
-                        year = year
-                    )
+            val queries = ArtworkQueryVariants.build(rawQuery)
+            for (query in queries) {
+                val attempt = searchTmdbWithYearFallback(query, year, isMovie)
+                if (attempt.failed) {
+                    TmdbRuntimeConfig.markApiUnavailable()
+                    return@withContext TmdbSearchArtworkResult(
+                        null,
+                        searchCompleted = false
+                    ).also(request::complete)
+                }
+                val selected = selectSearchArtwork(attempt.results.orEmpty(), query, year)
+                if (selected?.images != null) {
+                    TmdbRuntimeConfig.markApiAvailable()
+                    return@withContext TmdbSearchArtworkResult(
+                        images = selected.images,
+                        searchCompleted = true,
+                        tmdbId = selected.tmdbId
+                    ).also {
+                        artworkSearchCache[cacheKey] = it
+                        request.complete(it)
+                    }
                 }
             }
-            if (response == null) {
-                TmdbRuntimeConfig.markApiUnavailable()
-                return@withContext TmdbSearchArtworkResult(
-                    null,
-                    searchCompleted = false
-                ).also(request::complete)
-            }
-            if (!response.isSuccessful) {
-                TmdbRuntimeConfig.markApiUnavailable()
-                TmdbSearchArtworkResult(null, searchCompleted = false).also(request::complete)
-            } else {
-                var results = response.body()?.results.orEmpty()
-                // The year filter is strict. Retry once without it when a filename
-                // contains a release year that differs from TMDB's primary date.
-                if (results.isEmpty() && !year.isNullOrBlank()) {
-                    response = withTimeoutOrNull(TMDB_SEARCH_TIMEOUT_MS) {
-                        if (isMovie) {
-                            tmdbApi.searchMovies(apiKey = TMDB_API_KEY, query = query)
-                        } else {
-                            tmdbApi.searchTv(apiKey = TMDB_API_KEY, query = query)
-                        }
-                    }
-                    if (response == null) {
-                        TmdbRuntimeConfig.markApiUnavailable()
-                        return@withContext TmdbSearchArtworkResult(
-                            null,
-                            searchCompleted = false
-                        ).also(request::complete)
-                    }
-                    if (!response.isSuccessful) {
-                        TmdbRuntimeConfig.markApiUnavailable()
-                        return@withContext TmdbSearchArtworkResult(
-                            null,
-                            searchCompleted = false
-                        ).also(request::complete)
-                    }
-                    results = response.body()?.results.orEmpty()
-                }
-                val selected = selectSearchArtwork(results, title, year)
-                TmdbSearchArtworkResult(
-                    images = selected?.images,
-                    searchCompleted = true,
-                    tmdbId = selected?.tmdbId
-                ).also {
-                    artworkSearchCache[cacheKey] = it
-                    request.complete(it)
-                }
+            TmdbRuntimeConfig.markApiAvailable()
+            TmdbSearchArtworkResult(null, searchCompleted = true).also {
+                artworkSearchCache[cacheKey] = it
+                request.complete(it)
             }
         } catch (error: CancellationException) {
             request.cancel(error)
             throw error
         } catch (error: Exception) {
-            Log.w(TAG, "Artwork search failed for '$query': ${error.message}")
+            Log.w(TAG, "Artwork search failed for '$rawQuery': ${error.message}")
             TmdbRuntimeConfig.markApiUnavailable()
             TmdbSearchArtworkResult(null, searchCompleted = false).also(request::complete)
         } finally {
@@ -397,50 +363,88 @@ class TmdbService @Inject constructor(
         year: String?,
         mediaType: String
     ): List<TmdbArtworkCandidate> = withContext(Dispatchers.IO) {
-        val cleanQuery = query.trim()
-        if (cleanQuery.isBlank() || TMDB_API_KEY.isBlank()) {
+        val rawQuery = query.trim()
+        if (rawQuery.isBlank() || TMDB_API_KEY.isBlank()) {
             return@withContext emptyList()
         }
         val isMovie = normalizeMediaType(mediaType) == "movie"
+        for (candidateQuery in ArtworkQueryVariants.build(rawQuery)) {
+            val attempt = searchTmdbWithYearFallback(candidateQuery, year, isMovie)
+            if (attempt.failed) {
+                TmdbRuntimeConfig.markApiUnavailable()
+                return@withContext emptyList()
+            }
+            val candidates = attempt.results.orEmpty()
+                .mapNotNull { result ->
+                    val title = result.title ?: result.name
+                        ?: result.originalTitle ?: result.originalName
+                        ?: return@mapNotNull null
+                    val poster = imageUrl(result.posterPath, "w500")
+                    val backdrop = imageUrl(result.backdropPath, "w1280")
+                    if (poster == null && backdrop == null) return@mapNotNull null
+                    val resultYear = (result.releaseDate ?: result.firstAirDate)
+                        ?.take(4)?.takeIf { it.length == 4 }
+                    TmdbArtworkCandidate(
+                        tmdbId = result.id,
+                        title = title,
+                        year = resultYear ?: year,
+                        posterUrl = poster,
+                        backdropUrl = backdrop
+                    )
+                }
+                .distinctBy { it.tmdbId }
+                .take(20)
+            if (candidates.isNotEmpty()) {
+                TmdbRuntimeConfig.markApiAvailable()
+                return@withContext candidates
+            }
+        }
+        TmdbRuntimeConfig.markApiAvailable()
+        emptyList()
+    }
+
+    private data class TmdbSearchAttempt(
+        val results: List<TmdbSearchResult>? = null,
+        val failed: Boolean = false
+    )
+
+    private suspend fun searchTmdbWithYearFallback(
+        query: String,
+        year: String?,
+        isMovie: Boolean
+    ): TmdbSearchAttempt {
+        var attempt = searchTmdb(query = query, year = year, isMovie = isMovie)
+        // The year filter is strict. Retry once without it when the filename's
+        // release year differs from TMDB's primary release date.
+        if (!attempt.failed && attempt.results.isNullOrEmpty() && !year.isNullOrBlank()) {
+            attempt = searchTmdb(query = query, year = null, isMovie = isMovie)
+        }
+        return attempt
+    }
+
+    private suspend fun searchTmdb(
+        query: String,
+        year: String?,
+        isMovie: Boolean
+    ): TmdbSearchAttempt {
         val response = try {
             withTimeoutOrNull(TMDB_SEARCH_TIMEOUT_MS) {
                 if (isMovie) {
-                    tmdbApi.searchMovies(apiKey = TMDB_API_KEY, query = cleanQuery)
+                    tmdbApi.searchMovies(apiKey = TMDB_API_KEY, query = query, year = year)
                 } else {
-                    tmdbApi.searchTv(apiKey = TMDB_API_KEY, query = cleanQuery)
+                    tmdbApi.searchTv(apiKey = TMDB_API_KEY, query = query, year = year)
                 }
             }
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
-            Log.w(TAG, "Candidate search failed: ${error.message}")
+            Log.w(TAG, "TMDB search failed for '$query': ${error.message}")
             null
         }
         if (response == null || !response.isSuccessful) {
-            TmdbRuntimeConfig.markApiUnavailable()
-            return@withContext emptyList()
+            return TmdbSearchAttempt(failed = true)
         }
-        TmdbRuntimeConfig.markApiAvailable()
-        response.body()?.results.orEmpty()
-            .mapNotNull { result ->
-                val title = result.title ?: result.name
-                    ?: result.originalTitle ?: result.originalName
-                    ?: return@mapNotNull null
-                val poster = imageUrl(result.posterPath, "w500")
-                val backdrop = imageUrl(result.backdropPath, "w1280")
-                if (poster == null && backdrop == null) return@mapNotNull null
-                val resultYear = (result.releaseDate ?: result.firstAirDate)
-                    ?.take(4)?.takeIf { it.length == 4 }
-                TmdbArtworkCandidate(
-                    tmdbId = result.id,
-                    title = title,
-                    year = resultYear ?: year,
-                    posterUrl = poster,
-                    backdropUrl = backdrop
-                )
-            }
-            .distinctBy { it.tmdbId }
-            .take(20)
+        return TmdbSearchAttempt(results = response.body()?.results.orEmpty())
     }
 
     private fun selectSearchArtwork(

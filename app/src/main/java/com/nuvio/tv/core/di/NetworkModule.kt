@@ -317,7 +317,7 @@ object NetworkModule {
     @Named("tmdb")
     fun provideTmdbRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit =
         Retrofit.Builder()
-            .baseUrl("https://api.themoviedb.org/3/")
+            .baseUrl("https://api.tmdb.org/3/")
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()

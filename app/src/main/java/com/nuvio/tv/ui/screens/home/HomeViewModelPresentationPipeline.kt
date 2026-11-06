@@ -952,7 +952,7 @@ private fun HomeViewModel.applyEnrichmentToDisplayedRows(
     }
 }
 
-private fun HomeViewModel.updateCatalogItemWithTmdb(itemId: String, enrichment: TmdbEnrichment) {
+internal fun HomeViewModel.updateCatalogItemWithTmdb(itemId: String, enrichment: TmdbEnrichment) {
     enrichmentMergedIds.add(itemId)
     val isModernLayout = _uiState.value.homeLayout == HomeLayout.MODERN
     fun mergeItem(currentItem: MetaPreview): MetaPreview {

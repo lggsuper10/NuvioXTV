@@ -243,7 +243,8 @@ internal fun PlayerRuntimeController.initializePlayer(
                 playerSettings.mpvHi10pGnextSoftwareFallbackEnabled
             mpvHardwareDecodeModeSetting = playerSettings.mpvHardwareDecodeMode
             var effectiveInternalPlayerEngine = overrideInternalPlayerEngine ?: playerSettings.internalPlayerEngine
-            if (PlayerMediaSourceFactory.isLocalContentUrl(url)) {
+            val isLocalContent = PlayerMediaSourceFactory.isLocalContentUrl(url)
+            if (isLocalContent) {
                 // libmpv cannot open Android SAF content:// URIs; ExoPlayer's DefaultDataSource can.
                 effectiveInternalPlayerEngine = InternalPlayerEngine.EXOPLAYER
             }
@@ -294,6 +295,10 @@ internal fun PlayerRuntimeController.initializePlayer(
             )
 
             val afrJob = async {
+                // Local files must not delay first frame while MediaExtractor scans
+                // the whole container. Let ExoPlayer start first; the display mode
+                // can still be refined once the background probe finishes.
+                if (isLocalContent) delay(1_000L)
                 runAfrPreflightIfEnabled(
                     url = url,
                     headers = headers,
@@ -650,10 +655,14 @@ internal fun PlayerRuntimeController.initializePlayer(
             isVc1TrackSelectionBypassActiveForCurrentPlayback = vc1TrackSelectionBypassActive
 
             val startupSubtitlePreparation = prepareStreamStartSubtitles(playerSettings)
-            val awaitedAfr = withTimeoutOrNull(AFR_PREFLIGHT_TOTAL_TIMEOUT_MS) {
-                afrJob.await()
+            val awaitedAfr = if (isLocalContent) {
+                null
+            } else {
+                withTimeoutOrNull(AFR_PREFLIGHT_TOTAL_TIMEOUT_MS) {
+                    afrJob.await()
+                }
             }
-            if (awaitedAfr == null) {
+            if (!isLocalContent && awaitedAfr == null) {
                 Log.w(PlayerRuntimeController.TAG, "AFR preflight await timed out in ExoPlayer branch; cancelling afrJob")
                 afrJob.cancel()
             }
@@ -1495,6 +1504,13 @@ internal fun PlayerRuntimeController.initializePlayer(
                         if (isReleasingPlayer && error.errorCode == PlaybackException.ERROR_CODE_TIMEOUT) return
                         cancelFirstFrameWatchdog()
                         val detailedError = error.toDisplayMessage(context)
+                        if (PlayerMediaSourceFactory.isLocalContentUrl(currentStreamUrl)) {
+                            Log.e(
+                                PlayerRuntimeController.TAG,
+                                "Local playback error file=${currentFilename.orEmpty()} path=$currentStreamUrl code=${error.errorCodeName}",
+                                error
+                            )
+                        }
                         cancelStableProgressReset()
 
                         if (Vc1VideoFormatHeuristics.isVc1PlaybackFailure(
@@ -1705,7 +1721,7 @@ internal fun PlayerRuntimeController.initializePlayer(
                              error.errorCode == PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED)
                         _uiState.update {
                             it.copy(
-                                error = detailedError,
+                                error = withPlaybackFileDetails(detailedError),
                                 showSwitchToMpvErrorAction = canSwitchToMpvOnFatal,
                                 showLoadingOverlay = false,
                                 showPauseOverlay = false,
@@ -1954,7 +1970,7 @@ internal fun PlayerRuntimeController.initializePlayer(
             }
             _uiState.update {
                 it.copy(
-                    error = displayError,
+                    error = withPlaybackFileDetails(displayError),
                     showLoadingOverlay = false,
                     loadingIssueReportVisible = false,
                     loadingIssueElapsedMs = 0L

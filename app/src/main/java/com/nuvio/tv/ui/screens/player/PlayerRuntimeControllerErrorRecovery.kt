@@ -206,6 +206,29 @@ internal fun PlaybackException.toDisplayMessage(context: android.content.Context
     }
 }
 
+/**
+ * Local files often fail because of an unsupported container, a damaged file or
+ * an SMB/USB read problem. Add the exact filename and URI to the error screen so
+ * the failing item is unambiguous.
+ */
+internal fun PlayerRuntimeController.withPlaybackFileDetails(message: String): String {
+    if (!PlayerMediaSourceFactory.isLocalContentUrl(currentStreamUrl)) return message
+    val filename = currentFilename
+        ?.trim()
+        ?.takeIf { it.isNotBlank() }
+        ?: currentStreamUrl.substringAfterLast('/').substringBefore('?').takeIf { it.isNotBlank() }
+        ?: return message
+    return buildString {
+        append(message)
+        append("\n\n")
+        append(context.getString(com.nuvio.tv.R.string.local_detail_file, filename))
+        if (currentStreamUrl.isNotBlank() && currentStreamUrl != filename) {
+            append('\n')
+            append(currentStreamUrl)
+        }
+    }
+}
+
 internal fun Throwable.toDisplayMessage(context: android.content.Context, fallback: String? = null): String {
     val meaningfulMessage = findMostRelevantCauseMessage()
     return meaningfulMessage
@@ -541,7 +564,7 @@ internal fun PlayerRuntimeController.tryParsingErrorProbeFallback(
             if (tryServerFallback()) {
                 return@launch
             }
-            val userFacingError = error.toDisplayMessage(context)
+            val userFacingError = withPlaybackFileDetails(error.toDisplayMessage(context))
             _uiState.update {
                 it.copy(
                     error = userFacingError,

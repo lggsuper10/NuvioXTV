@@ -940,9 +940,11 @@ internal fun PlayerRuntimeController.maybeScheduleFirstFrameWatchdog() {
 }
 
 internal fun PlayerRuntimeController.handleVc1PlaybackFailure(errorMessage: String? = null) {
-    val displayMessage = errorMessage?.takeIf { it.isNotBlank() }
-        ?: _exoPlayer?.playerError?.toDisplayMessage(context)
-        ?: return
+    val displayMessage = (
+        errorMessage?.takeIf { it.isNotBlank() }
+            ?: _exoPlayer?.playerError?.toDisplayMessage(context)
+            ?: return
+        ).let(::withPlaybackFileDetails)
     cancelFirstFrameWatchdog()
     cancelStallWatchdog()
     cancelStableProgressReset()
@@ -991,7 +993,7 @@ internal fun PlayerRuntimeController.scheduleDeferredPlayerReinitialize(
         }.onFailure { e ->
             _uiState.update {
                 it.copy(
-                    error = e.toDisplayMessage(context),
+                    error = withPlaybackFileDetails(e.toDisplayMessage(context)),
                     showLoadingOverlay = false,
                     showPauseOverlay = false
                 )
