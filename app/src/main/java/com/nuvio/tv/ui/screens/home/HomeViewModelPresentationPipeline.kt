@@ -545,6 +545,37 @@ private suspend fun HomeViewModel.resolveFocusTmdbId(item: MetaPreview): String?
         tmdbService.ensureTmdbId(item.id, item.apiType)
     }
 
+/**
+ * Local catalog ids cannot be resolved by TMDB's external-id endpoint. Try
+ * TMDB title search first, then Douban (which is reachable on many networks
+ * where the TMDB API host is not).
+ */
+private suspend fun HomeViewModel.fetchLocalEnrichment(item: MetaPreview): TmdbEnrichment? {
+    val isSeries = isSeriesType(item.apiType)
+    val mediaType = if (isSeries) "tv" else "movie"
+    val year = item.releaseInfo?.take(4)?.takeIf { it.length == 4 }
+    val tmdbId = runCatching {
+        tmdbService.searchImages(title = item.name, year = year, mediaType = mediaType).tmdbId
+    }.getOrNull()
+    if (tmdbId != null) {
+        val enrichment = runCatching {
+            tmdbMetadataService.fetchEnrichment(
+                tmdbId = tmdbId.toString(),
+                contentType = item.type,
+                language = tmdbSettingsDataStore.settings.value.language
+            )
+        }.getOrNull()
+        if (enrichment != null) return enrichment
+    }
+    return runCatching {
+        doubanService.fetchDetails(
+            title = item.name,
+            year = year,
+            isSeries = isSeries
+        )?.toTmdbEnrichment()
+    }.getOrNull()
+}
+
 private suspend fun HomeViewModel.fetchExternalMetaOutcome(item: MetaPreview): ExternalMetaOutcome =
     try {
         val result = metaRepository.getMetaFromAllAddons(item.apiType, item.id, item.sourceAddonBaseUrl)
@@ -660,17 +691,25 @@ internal fun HomeViewModel.onItemFocusPipeline(item: MetaPreview) {
             // Which sources are used depends on settings:
             // - tmdbEnabledForCurrentLayout: controls TMDB enrichment
             // - externalMetaPrefetchEnabled: controls external meta addon fetch
-            val tmdbDeferred = if (tmdbEnabledForCurrentLayout && item.id !in prefetchedTmdbIds) {
-                val tmdbId = runCatching { resolveFocusTmdbId(item) }.getOrNull()
-                if (tmdbId != null) async {
-                    runCatching {
-                        tmdbMetadataService.fetchEnrichment(
-                            tmdbId = tmdbId,
-                            contentType = item.type,
-                            language = currentTmdbSettings.language
-                        )
-                    }.getOrNull()
-                } else null
+            val canEnrichLocal = LocalCatalog.isLocalItemId(item.id) &&
+                currentTmdbSettings.useDouban
+            val tmdbDeferred = if ((tmdbEnabledForCurrentLayout || canEnrichLocal) &&
+                item.id !in prefetchedTmdbIds
+            ) {
+                if (LocalCatalog.isLocalItemId(item.id)) {
+                    async { runCatching { fetchLocalEnrichment(item) }.getOrNull() }
+                } else {
+                    val tmdbId = runCatching { resolveFocusTmdbId(item) }.getOrNull()
+                    if (tmdbId != null) async {
+                        runCatching {
+                            tmdbMetadataService.fetchEnrichment(
+                                tmdbId = tmdbId,
+                                contentType = item.type,
+                                language = currentTmdbSettings.language
+                            )
+                        }.getOrNull()
+                    } else null
+                }
             } else null
 
 
@@ -781,17 +820,23 @@ internal fun HomeViewModel.preloadAdjacentItemPipeline(item: MetaPreview) {
 
         try {
             // Launch TMDB and external meta addon fetch in parallel (same as focused pipeline).
-            val tmdbDeferred = if (tmdbEnabledForCurrentLayout) {
-                val tmdbId = runCatching { resolveFocusTmdbId(item) }.getOrNull()
-                if (tmdbId != null) async {
-                    runCatching {
-                        tmdbMetadataService.fetchEnrichment(
-                            tmdbId = tmdbId,
-                            contentType = item.type,
-                            language = currentTmdbSettings.language
-                        )
-                    }.getOrNull()
-                } else null
+            val canEnrichLocal = LocalCatalog.isLocalItemId(item.id) &&
+                currentTmdbSettings.useDouban
+            val tmdbDeferred = if (tmdbEnabledForCurrentLayout || canEnrichLocal) {
+                if (LocalCatalog.isLocalItemId(item.id)) {
+                    async { runCatching { fetchLocalEnrichment(item) }.getOrNull() }
+                } else {
+                    val tmdbId = runCatching { resolveFocusTmdbId(item) }.getOrNull()
+                    if (tmdbId != null) async {
+                        runCatching {
+                            tmdbMetadataService.fetchEnrichment(
+                                tmdbId = tmdbId,
+                                contentType = item.type,
+                                language = currentTmdbSettings.language
+                            )
+                        }.getOrNull()
+                    } else null
+                }
             } else null
 
             val externalMetaDeferred = if (externalMetaPrefetchEnabled &&

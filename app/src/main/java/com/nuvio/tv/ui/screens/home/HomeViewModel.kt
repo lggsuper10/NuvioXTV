@@ -21,6 +21,7 @@ import com.nuvio.tv.data.local.TmdbSettingsDataStore
 import com.nuvio.tv.data.local.TraktSettingsDataStore
 import com.nuvio.tv.data.local.ContinueWatchingEnrichmentCache
 import com.nuvio.tv.data.locallibrary.LocalCatalog
+import com.nuvio.tv.core.locallibrary.DoubanService
 import com.nuvio.tv.data.mediaserver.ServerCatalog
 import com.nuvio.tv.data.trailer.TrailerService
 import com.nuvio.tv.domain.model.Addon
@@ -90,6 +91,7 @@ class HomeViewModel @Inject constructor(
     internal val tvRecommendationManager: TvRecommendationManager,
     internal val serverCatalog: ServerCatalog,
     internal val localCatalog: LocalCatalog,
+    internal val doubanService: DoubanService,
     internal val metaPreviewEnricher: MetaPreviewEnricher = MetaPreviewEnricher(
         tmdbService,
         tmdbMetadataService,

@@ -1405,6 +1405,13 @@
     <string name="tmdb_enrich_continue_watching_subtitle">将 TMDB 增强应用至继续观看项目</string>
     <string name="tmdb_language_title">语言</string>
     <string name="tmdb_language_subtitle">TMDB 元数据的标题、标志和已启用字段的语言</string>
+    <string name="tmdb_api_key_title">TMDB API 密钥</string>
+    <string name="tmdb_api_key_subtitle">用于在线海报和影视资料；留空则使用内置密钥。</string>
+    <string name="tmdb_api_key_dialog_title">TMDB API 密钥</string>
+    <string name="tmdb_api_key_dialog_subtitle">可在 themoviedb.org 免费申请。如果当前网络无法访问 api.themoviedb.org，仍需配合代理或 VPN。</string>
+    <string name="tmdb_api_key_placeholder">输入 TMDB API Key</string>
+    <string name="tmdb_douban_title">豆瓣海报与资料（兜底）</string>
+    <string name="tmdb_douban_subtitle">TMDB 不可用时，从豆瓣获取海报、简介、导演、演员和类型。非官方接口，可能受访问频率限制。</string>
     <string name="tmdb_artwork_title">美术图</string>
     <string name="tmdb_artwork_subtitle">来自 TMDB 的标志和背景图片</string>
     <string name="tmdb_basic_info_title">基本信息</string>

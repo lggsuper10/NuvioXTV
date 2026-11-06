@@ -38,6 +38,8 @@ class TmdbSettingsViewModel @Inject constructor(
     fun onEvent(event: TmdbSettingsEvent) {
         when (event) {
             is TmdbSettingsEvent.ToggleEnabled -> update { dataStore.setEnabled(event.enabled) }
+            is TmdbSettingsEvent.SetApiKey -> update { dataStore.setApiKey(event.apiKey) }
+            is TmdbSettingsEvent.ToggleDouban -> update { dataStore.setUseDouban(event.enabled) }
             is TmdbSettingsEvent.ToggleModernHomeEnabled -> {
                 update { dataStore.setModernHomeEnabled(event.enabled) }
             }
@@ -72,6 +74,8 @@ class TmdbSettingsViewModel @Inject constructor(
 
 data class TmdbSettingsUiState(
     val enabled: Boolean = false,
+    val apiKey: String = "",
+    val useDouban: Boolean = true,
     val modernHomeEnabled: Boolean = false,
     val enrichContinueWatching: Boolean = true,
     val language: String = "en",
@@ -88,6 +92,8 @@ data class TmdbSettingsUiState(
 ) {
     fun fromSettings(settings: TmdbSettings): TmdbSettingsUiState = copy(
         enabled = settings.enabled,
+        apiKey = settings.apiKey,
+        useDouban = settings.useDouban,
         modernHomeEnabled = settings.modernHomeEnabled,
         enrichContinueWatching = settings.enrichContinueWatching,
         language = settings.language,
@@ -106,6 +112,8 @@ data class TmdbSettingsUiState(
 
 sealed class TmdbSettingsEvent {
     data class ToggleEnabled(val enabled: Boolean) : TmdbSettingsEvent()
+    data class SetApiKey(val apiKey: String) : TmdbSettingsEvent()
+    data class ToggleDouban(val enabled: Boolean) : TmdbSettingsEvent()
     data class ToggleModernHomeEnabled(val enabled: Boolean) : TmdbSettingsEvent()
     data class ToggleEnrichContinueWatching(val enabled: Boolean) : TmdbSettingsEvent()
     data class SetLanguage(val language: String) : TmdbSettingsEvent()

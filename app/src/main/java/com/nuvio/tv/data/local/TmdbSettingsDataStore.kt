@@ -3,6 +3,7 @@ package com.nuvio.tv.data.local
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.nuvio.tv.core.tmdb.TmdbRuntimeConfig
 import com.nuvio.tv.core.profile.ProfileManager
 import com.nuvio.tv.domain.model.TmdbSettings
 import kotlinx.coroutines.CoroutineScope
@@ -33,6 +34,8 @@ class TmdbSettingsDataStore @Inject constructor(
         factory.get(profileId, FEATURE)
 
     private val enabledKey = booleanPreferencesKey("tmdb_enabled")
+    private val apiKeyKey = stringPreferencesKey("tmdb_api_key")
+    private val useDoubanKey = booleanPreferencesKey("tmdb_use_douban")
     private val modernHomeEnabledKey = booleanPreferencesKey("tmdb_modern_home_enabled")
     private val enrichContinueWatchingKey = booleanPreferencesKey("tmdb_enrich_continue_watching")
     private val languageKey = stringPreferencesKey("tmdb_language")
@@ -51,6 +54,8 @@ class TmdbSettingsDataStore @Inject constructor(
         factory.get(pid, FEATURE).data.map { prefs ->
             TmdbSettings(
                 enabled = prefs[enabledKey] ?: false,
+                apiKey = prefs[apiKeyKey].orEmpty(),
+                useDouban = prefs[useDoubanKey] ?: true,
                 modernHomeEnabled = prefs[modernHomeEnabledKey] ?: false,
                 enrichContinueWatching = prefs[enrichContinueWatchingKey] ?: true,
                 language = prefs[languageKey] ?: "en",
@@ -65,11 +70,20 @@ class TmdbSettingsDataStore @Inject constructor(
                 useMoreLikeThis = prefs[useMoreLikeThisKey] ?: true,
                 useCollections = prefs[useCollectionsKey] ?: true
             )
+                .also { TmdbRuntimeConfig.apiKey = it.apiKey }
         }
     }.stateIn(scope, SharingStarted.Eagerly, TmdbSettings())
 
     suspend fun setEnabled(enabled: Boolean) {
         store().edit { it[enabledKey] = enabled }
+    }
+
+    suspend fun setApiKey(apiKey: String) {
+        store().edit { it[apiKeyKey] = apiKey.trim() }
+    }
+
+    suspend fun setUseDouban(enabled: Boolean) {
+        store().edit { it[useDoubanKey] = enabled }
     }
 
     suspend fun setModernHomeEnabled(enabled: Boolean) {

@@ -2,6 +2,10 @@ package com.nuvio.tv.domain.model
 
 data class TmdbSettings(
     val enabled: Boolean = false,
+    // Optional user-supplied TMDB API key. Blank uses the build-time key.
+    val apiKey: String = "",
+    // Douban is used as a poster/metadata fallback when TMDB is unavailable.
+    val useDouban: Boolean = true,
     val modernHomeEnabled: Boolean = false,
     val enrichContinueWatching: Boolean = true,
     // TMDB language preference (ISO-639-1, default English)

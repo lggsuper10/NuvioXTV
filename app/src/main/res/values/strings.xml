@@ -1520,6 +1520,13 @@
     <string name="tmdb_enrich_continue_watching_subtitle">Apply TMDB enrichment to Continue Watching items</string>
     <string name="tmdb_language_title">Language</string>
     <string name="tmdb_language_subtitle">TMDB metadata language for title, logo, and enabled fields</string>
+    <string name="tmdb_api_key_title">TMDB API Key</string>
+    <string name="tmdb_api_key_subtitle">Used for online posters and metadata. Leave blank to use the built-in key.</string>
+    <string name="tmdb_api_key_dialog_title">TMDB API Key</string>
+    <string name="tmdb_api_key_dialog_subtitle">Create a free key at themoviedb.org. If api.themoviedb.org is blocked on your network, a proxy or VPN is still required.</string>
+    <string name="tmdb_api_key_placeholder">Enter TMDB API key</string>
+    <string name="tmdb_douban_title">Douban Artwork and Details (Fallback)</string>
+    <string name="tmdb_douban_subtitle">When TMDB is unavailable, fetch the poster, synopsis, director, cast, and genres from Douban. Unofficial interface; availability may vary.</string>
     <string name="tmdb_artwork_title">Artwork</string>
     <string name="tmdb_artwork_subtitle">Logo and backdrop images from TMDB</string>
     <string name="tmdb_basic_info_title">Basic Info</string>

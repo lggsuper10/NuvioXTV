@@ -10,12 +10,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "TmdbService"
-private val TMDB_API_KEY = BuildConfig.TMDB_API_KEY
+private const val TMDB_SEARCH_TIMEOUT_MS = 6_000L
+private val TMDB_API_KEY: String get() = TmdbRuntimeConfig.effectiveApiKey()
 
 /**
  * Service to handle TMDB ID conversions and lookups.
@@ -301,6 +303,9 @@ class TmdbService @Inject constructor(
         if (query.isBlank() || TMDB_API_KEY.isBlank()) {
             return@withContext TmdbSearchArtworkResult(null, searchCompleted = false)
         }
+        if (!TmdbRuntimeConfig.isApiReachable()) {
+            return@withContext TmdbSearchArtworkResult(null, searchCompleted = false)
+        }
 
         val isMovie = normalizeMediaType(mediaType) == "movie"
         val cacheKey = "${if (isMovie) "movie" else "tv"}|${year.orEmpty()}|${query.lowercase()}"
@@ -312,32 +317,52 @@ class TmdbService @Inject constructor(
         }
 
         try {
-            var response = if (isMovie) {
-                tmdbApi.searchMovies(
-                    apiKey = TMDB_API_KEY,
-                    query = query,
-                    year = year
-                )
-            } else {
-                tmdbApi.searchTv(
-                    apiKey = TMDB_API_KEY,
-                    query = query,
-                    year = year
-                )
+            var response = withTimeoutOrNull(TMDB_SEARCH_TIMEOUT_MS) {
+                if (isMovie) {
+                    tmdbApi.searchMovies(
+                        apiKey = TMDB_API_KEY,
+                        query = query,
+                        year = year
+                    )
+                } else {
+                    tmdbApi.searchTv(
+                        apiKey = TMDB_API_KEY,
+                        query = query,
+                        year = year
+                    )
+                }
+            }
+            if (response == null) {
+                TmdbRuntimeConfig.markApiUnavailable()
+                return@withContext TmdbSearchArtworkResult(
+                    null,
+                    searchCompleted = false
+                ).also(request::complete)
             }
             if (!response.isSuccessful) {
+                TmdbRuntimeConfig.markApiUnavailable()
                 TmdbSearchArtworkResult(null, searchCompleted = false).also(request::complete)
             } else {
                 var results = response.body()?.results.orEmpty()
                 // The year filter is strict. Retry once without it when a filename
                 // contains a release year that differs from TMDB's primary date.
                 if (results.isEmpty() && !year.isNullOrBlank()) {
-                    response = if (isMovie) {
-                        tmdbApi.searchMovies(apiKey = TMDB_API_KEY, query = query)
-                    } else {
-                        tmdbApi.searchTv(apiKey = TMDB_API_KEY, query = query)
+                    response = withTimeoutOrNull(TMDB_SEARCH_TIMEOUT_MS) {
+                        if (isMovie) {
+                            tmdbApi.searchMovies(apiKey = TMDB_API_KEY, query = query)
+                        } else {
+                            tmdbApi.searchTv(apiKey = TMDB_API_KEY, query = query)
+                        }
+                    }
+                    if (response == null) {
+                        TmdbRuntimeConfig.markApiUnavailable()
+                        return@withContext TmdbSearchArtworkResult(
+                            null,
+                            searchCompleted = false
+                        ).also(request::complete)
                     }
                     if (!response.isSuccessful) {
+                        TmdbRuntimeConfig.markApiUnavailable()
                         return@withContext TmdbSearchArtworkResult(
                             null,
                             searchCompleted = false
@@ -360,6 +385,7 @@ class TmdbService @Inject constructor(
             throw error
         } catch (error: Exception) {
             Log.w(TAG, "Artwork search failed for '$query': ${error.message}")
+            TmdbRuntimeConfig.markApiUnavailable()
             TmdbSearchArtworkResult(null, searchCompleted = false).also(request::complete)
         } finally {
             artworkSearchInFlight.remove(cacheKey, request)
