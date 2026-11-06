@@ -80,6 +80,7 @@ class TmdbSettingsDataStore @Inject constructor(
 
     suspend fun setApiKey(apiKey: String) {
         store().edit { it[apiKeyKey] = apiKey.trim() }
+        TmdbRuntimeConfig.markApiAvailable()
     }
 
     suspend fun setUseDouban(enabled: Boolean) {

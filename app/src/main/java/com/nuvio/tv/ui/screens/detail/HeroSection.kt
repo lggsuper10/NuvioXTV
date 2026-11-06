@@ -130,7 +130,8 @@ fun HeroContentSection(
     onTruncationChanged: (Boolean) -> Unit = {},
     titleAccessory: (@Composable () -> Unit)? = null,
     showLibraryAction: Boolean = true,
-    showWatchedAction: Boolean = true
+    showWatchedAction: Boolean = true,
+    extraActions: (@Composable () -> Unit)? = null
 ) {
     val context = LocalContext.current
     val isSeriesApi = remember(meta.apiType) {
@@ -333,6 +334,8 @@ fun HeroContentSection(
                                 onFocused = onHeroActionFocused
                             )
                         }
+
+                        extraActions?.invoke()
                     }
 
                     Spacer(modifier = Modifier.height(NuvioTheme.spacing.lg))

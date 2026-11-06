@@ -392,6 +392,57 @@ class TmdbService @Inject constructor(
         }
     }
 
+    suspend fun searchArtworkCandidates(
+        query: String,
+        year: String?,
+        mediaType: String
+    ): List<TmdbArtworkCandidate> = withContext(Dispatchers.IO) {
+        val cleanQuery = query.trim()
+        if (cleanQuery.isBlank() || TMDB_API_KEY.isBlank()) {
+            return@withContext emptyList()
+        }
+        val isMovie = normalizeMediaType(mediaType) == "movie"
+        val response = try {
+            withTimeoutOrNull(TMDB_SEARCH_TIMEOUT_MS) {
+                if (isMovie) {
+                    tmdbApi.searchMovies(apiKey = TMDB_API_KEY, query = cleanQuery)
+                } else {
+                    tmdbApi.searchTv(apiKey = TMDB_API_KEY, query = cleanQuery)
+                }
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Log.w(TAG, "Candidate search failed: ${error.message}")
+            null
+        }
+        if (response == null || !response.isSuccessful) {
+            TmdbRuntimeConfig.markApiUnavailable()
+            return@withContext emptyList()
+        }
+        TmdbRuntimeConfig.markApiAvailable()
+        response.body()?.results.orEmpty()
+            .mapNotNull { result ->
+                val title = result.title ?: result.name
+                    ?: result.originalTitle ?: result.originalName
+                    ?: return@mapNotNull null
+                val poster = imageUrl(result.posterPath, "w500")
+                val backdrop = imageUrl(result.backdropPath, "w1280")
+                if (poster == null && backdrop == null) return@mapNotNull null
+                val resultYear = (result.releaseDate ?: result.firstAirDate)
+                    ?.take(4)?.takeIf { it.length == 4 }
+                TmdbArtworkCandidate(
+                    tmdbId = result.id,
+                    title = title,
+                    year = resultYear ?: year,
+                    posterUrl = poster,
+                    backdropUrl = backdrop
+                )
+            }
+            .distinctBy { it.tmdbId }
+            .take(20)
+    }
+
     private fun selectSearchArtwork(
         results: List<TmdbSearchResult>,
         title: String,
@@ -477,6 +528,14 @@ class TmdbService @Inject constructor(
 }
 
 data class TmdbImages(val backdropUrl: String?, val posterUrl: String?, val runtimeMinutes: Int? = null)
+
+data class TmdbArtworkCandidate(
+    val tmdbId: Int,
+    val title: String,
+    val year: String?,
+    val posterUrl: String?,
+    val backdropUrl: String?
+)
 
 data class TmdbSearchArtworkResult(
     val images: TmdbImages?,
