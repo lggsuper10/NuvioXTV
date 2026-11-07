@@ -11,6 +11,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.tv.core.build.AppFeaturePolicy
 import com.nuvio.tv.core.streams.PlaybackAvailability
 import com.nuvio.tv.data.local.PluginDataStore
+import com.nuvio.tv.data.locallibrary.LocalCatalog
 import com.nuvio.tv.data.mediaserver.ServerRepository
 import com.nuvio.tv.data.mediaserver.ServerStreams
 import com.nuvio.tv.domain.repository.AddonRepository
@@ -64,10 +65,14 @@ internal fun PlaybackAvailabilityProvider(content: @Composable () -> Unit) {
 }
 
 internal fun PlaybackAvailability.canStream(item: ContinueWatchingItem): Boolean = when (item) {
-    is ContinueWatchingItem.InProgress -> canStream(
-        item.progress.contentType, item.progress.videoId, item.progress.contentId
-    )
-    is ContinueWatchingItem.NextUp -> canStream(
-        item.info.contentType, item.info.videoId, item.info.contentId
-    )
+    is ContinueWatchingItem.InProgress -> if (LocalCatalog.isLocalItemId(item.progress.contentId)) {
+        true
+    } else {
+        canStream(item.progress.contentType, item.progress.videoId, item.progress.contentId)
+    }
+    is ContinueWatchingItem.NextUp -> if (LocalCatalog.isLocalItemId(item.info.contentId)) {
+        true
+    } else {
+        canStream(item.info.contentType, item.info.videoId, item.info.contentId)
+    }
 }

@@ -32,6 +32,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.focusable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.DropdownMenu
@@ -95,6 +96,7 @@ import com.nuvio.tv.domain.model.LibraryListTab
 import com.nuvio.tv.domain.model.LibrarySourceMode
 import com.nuvio.tv.domain.model.PosterShape
 import com.nuvio.tv.data.local.PlayerPreference
+import com.nuvio.tv.data.locallibrary.LocalSourceEntity
 import com.nuvio.tv.ui.components.EmptyScreenState
 import com.nuvio.tv.ui.components.GridContentCard
 import com.nuvio.tv.ui.screens.detail.requestFocusAfterFrames
@@ -116,8 +118,10 @@ import androidx.compose.ui.text.TextStyle
 import com.nuvio.tv.R
 
 private const val KEY_REPEAT_THROTTLE_MS = 80L
+private const val ALL_FOLDERS_VALUE = "__all_folders__"
 
 private enum class LibraryViewMode {
+    Local,
     Saved,
     Cloud,
     Servers
@@ -134,6 +138,7 @@ private fun localizedTypeLabel(key: String): String = when (key.lowercase()) {
 fun LibraryScreen(
     viewModel: LibraryViewModel = hiltViewModel(),
     serversViewModel: LibraryServersViewModel = hiltViewModel(),
+    localLibraryViewModel: LocalLibraryViewModel = hiltViewModel(),
     showBuiltInHeader: Boolean = true,
     onNavigateToLocalMedia: () -> Unit = {},
     onNavigateToDetail: (String, String, String?) -> Unit,
@@ -148,11 +153,20 @@ fun LibraryScreen(
     var showDeleteConfirm by remember(uiState.showManageDialog) { mutableStateOf(false) }
     var expandedPicker by remember { mutableStateOf<String?>(null) }
     var selectedViewMode by rememberSaveable { mutableStateOf(LibraryViewMode.Saved) }
+    var localDefaultApplied by rememberSaveable { mutableStateOf(false) }
     val servers by serversViewModel.servers.collectAsState()
     val serverShelves by serversViewModel.shelves.collectAsState()
+    val localLibrary by localLibraryViewModel.uiState.collectAsState()
     val hasServers = servers.enabledConnections.isNotEmpty()
     val viewModes = LibraryViewMode.entries.filter { it != LibraryViewMode.Servers || hasServers }
     val viewMode = selectedViewMode.takeIf { it in viewModes } ?: LibraryViewMode.Saved
+
+    LaunchedEffect(localLibrary.isLoading, localLibrary.hasSources) {
+        if (!localDefaultApplied && !localLibrary.isLoading) {
+            if (localLibrary.hasSources) selectedViewMode = LibraryViewMode.Local
+            localDefaultApplied = true
+        }
+    }
     var activeCloudItem by remember { mutableStateOf<CloudLibraryItem?>(null) }
     var pendingCloudPlayback by remember { mutableStateOf<CloudLibraryPlaybackInfo?>(null) }
     var showCloudPlayerChoice by remember { mutableStateOf(false) }
@@ -211,6 +225,10 @@ fun LibraryScreen(
 
     LaunchedEffect(viewMode, servers.revision) {
         if (viewMode == LibraryViewMode.Servers) serversViewModel.load()
+    }
+
+    LaunchedEffect(viewMode) {
+        if (viewMode == LibraryViewMode.Local) localLibraryViewModel.refresh()
     }
 
     LaunchedEffect(uiState.isLoading) {
@@ -349,6 +367,7 @@ fun LibraryScreen(
                 )
                 Text(
                     text = when {
+                        viewMode == LibraryViewMode.Local -> stringResource(R.string.library_local_media_button).uppercase()
                         viewMode == LibraryViewMode.Cloud -> stringResource(R.string.library_source_cloud).uppercase()
                         viewMode == LibraryViewMode.Servers -> stringResource(R.string.library_source_servers).uppercase()
                         uiState.sourceMode == LibrarySourceMode.TRAKT -> "TRAKT"
@@ -413,7 +432,102 @@ fun LibraryScreen(
             )
         }
 
-        if (viewMode == LibraryViewMode.Saved) {
+        if (viewMode == LibraryViewMode.Local) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                LocalLibraryFilterRow(
+                    state = localLibrary,
+                    expandedPicker = expandedPicker,
+                    upFocusRequester = primaryFocusRequester,
+                    onExpandedChange = { picker, shouldExpand ->
+                        expandedPicker = if (shouldExpand) picker else null
+                    },
+                    onSelectFilter = localLibraryViewModel::selectFilter,
+                    onSelectBrowseMode = localLibraryViewModel::selectBrowseMode,
+                    onSelectSource = localLibraryViewModel::selectSource,
+                    onSelectSort = localLibraryViewModel::selectSort
+                )
+            }
+
+            if (localLibrary.isLoading) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(220.dp),
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        LoadingIndicator()
+                    }
+                }
+            } else if (localLibrary.browseMode == LocalLibraryBrowseMode.FOLDERS) {
+                if (localLibrary.folderSummaries.isEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        LocalLibraryEmptyState(
+                            title = stringResource(R.string.local_library_no_folders_title),
+                            subtitle = stringResource(R.string.local_library_no_folders_subtitle),
+                            onAddFolder = onNavigateToLocalMedia
+                        )
+                    }
+                } else {
+                    localLibrary.folderSummaries.forEach { folder ->
+                        item(key = "local_folder_${folder.source.id}", span = { GridItemSpan(maxLineSpan) }) {
+                            LocalFolderCard(
+                                summary = folder,
+                                onClick = {
+                                    if (folder.source.available) {
+                                        localLibraryViewModel.selectSource(folder.source.id)
+                                        localLibraryViewModel.selectBrowseMode(LocalLibraryBrowseMode.ITEMS)
+                                    } else {
+                                        onNavigateToLocalMedia()
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            } else if (!localLibrary.hasSources) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    LocalLibraryEmptyState(
+                        title = stringResource(R.string.local_library_no_folders_title),
+                        subtitle = stringResource(R.string.local_library_no_folders_subtitle),
+                        onAddFolder = onNavigateToLocalMedia
+                    )
+                }
+            } else if (localLibrary.selectedSourceUnavailable) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    LocalLibraryEmptyState(
+                        title = stringResource(R.string.local_library_source_offline_title),
+                        subtitle = stringResource(R.string.local_library_source_offline_subtitle),
+                        action = stringResource(R.string.local_library_manage_folders),
+                        onAddFolder = onNavigateToLocalMedia
+                    )
+                }
+            } else if (localLibrary.visibleItems.isEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    LocalLibraryEmptyState(
+                        title = stringResource(R.string.local_library_empty_title),
+                        subtitle = stringResource(R.string.local_library_empty_subtitle),
+                        onAddFolder = onNavigateToLocalMedia
+                    )
+                }
+            } else {
+                items(
+                    items = localLibrary.visibleItems,
+                    key = { "local:${it.type}:${it.id}" }
+                ) { item ->
+                    GridContentCard(
+                        item = item,
+                        posterCardStyle = posterCardStyle,
+                        showLabel = true,
+                        onClick = {
+                            onNavigateToDetail(
+                                item.id,
+                                item.apiType,
+                                item.sourceAddonBaseUrl.orEmpty()
+                            )
+                        }
+                    )
+                }
+            }
+        } else if (viewMode == LibraryViewMode.Saved) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 LibrarySelectorsRow(
                     sourceMode = uiState.sourceMode,
@@ -743,6 +857,232 @@ fun LibraryScreen(
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
+private fun LocalLibraryFilterRow(
+    state: LocalLibraryUiState,
+    expandedPicker: String?,
+    upFocusRequester: FocusRequester,
+    onExpandedChange: (String, Boolean) -> Unit,
+    onSelectFilter: (LocalLibraryFilter) -> Unit,
+    onSelectBrowseMode: (LocalLibraryBrowseMode) -> Unit,
+    onSelectSource: (Long?) -> Unit,
+    onSelectSort: (LocalLibrarySort) -> Unit
+) {
+    val allFolders = stringResource(R.string.local_library_all_folders)
+    val selectedSource = state.sources.firstOrNull { it.id == state.selectedSourceId }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm)
+        ) {
+            LocalFilterButton(
+                label = stringResource(R.string.local_library_filter_all),
+                selected = state.selectedFilter == LocalLibraryFilter.ALL,
+                onClick = {
+                    onSelectBrowseMode(LocalLibraryBrowseMode.ITEMS)
+                    onSelectFilter(LocalLibraryFilter.ALL)
+                }
+            )
+            LocalFilterButton(
+                label = stringResource(R.string.local_library_filter_movies),
+                selected = state.selectedFilter == LocalLibraryFilter.MOVIES,
+                onClick = {
+                    onSelectBrowseMode(LocalLibraryBrowseMode.ITEMS)
+                    onSelectFilter(LocalLibraryFilter.MOVIES)
+                }
+            )
+            LocalFilterButton(
+                label = stringResource(R.string.local_library_filter_series),
+                selected = state.selectedFilter == LocalLibraryFilter.SERIES,
+                onClick = {
+                    onSelectBrowseMode(LocalLibraryBrowseMode.ITEMS)
+                    onSelectFilter(LocalLibraryFilter.SERIES)
+                }
+            )
+            LocalFilterButton(
+                label = stringResource(R.string.local_library_filter_folders),
+                selected = state.browseMode == LocalLibraryBrowseMode.FOLDERS,
+                onClick = { onSelectBrowseMode(LocalLibraryBrowseMode.FOLDERS) }
+            )
+        }
+
+        if (state.browseMode == LocalLibraryBrowseMode.ITEMS) {
+        LibraryDropdownPicker(
+            modifier = Modifier.weight(1f),
+            upFocusRequester = upFocusRequester,
+            title = stringResource(R.string.local_library_all_folders),
+            value = selectedSource?.name ?: allFolders,
+            selectedValue = state.selectedSourceId?.toString() ?: ALL_FOLDERS_VALUE,
+            expanded = expandedPicker == "local_source",
+            options = listOf(LibraryOption(allFolders, ALL_FOLDERS_VALUE)) +
+                state.sources.map { LibraryOption(it.name, it.id.toString()) },
+            onExpandedChange = { onExpandedChange("local_source", it) },
+            onSelect = { option ->
+                onSelectSource(option.value.takeUnless { it == ALL_FOLDERS_VALUE }?.toLongOrNull())
+            }
+        )
+
+        LibraryDropdownPicker(
+            modifier = Modifier.weight(1f),
+            upFocusRequester = upFocusRequester,
+            title = stringResource(R.string.local_library_sort_recent),
+            value = when (state.sort) {
+                LocalLibrarySort.RECENT -> stringResource(R.string.local_library_sort_recent)
+                LocalLibrarySort.TITLE -> stringResource(R.string.local_library_sort_title)
+            },
+            selectedValue = state.sort.name,
+            expanded = expandedPicker == "local_sort",
+            options = listOf(
+                LibraryOption(
+                    stringResource(R.string.local_library_sort_recent),
+                    LocalLibrarySort.RECENT.name
+                ),
+                LibraryOption(
+                    stringResource(R.string.local_library_sort_title),
+                    LocalLibrarySort.TITLE.name
+                )
+            ),
+            onExpandedChange = { onExpandedChange("local_sort", it) },
+            onSelect = { option ->
+                onSelectSort(
+                    LocalLibrarySort.entries.firstOrNull { it.name == option.value }
+                        ?: LocalLibrarySort.RECENT
+                )
+            }
+        )
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun LocalFilterButton(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.colors(
+            containerColor = if (selected) NuvioTheme.colors.FocusBackground else NuvioTheme.colors.BackgroundCard,
+            contentColor = NuvioTheme.colors.TextPrimary
+        )
+    ) {
+        Text(label)
+    }
+}
+
+@Composable
+private fun LocalLibraryEmptyState(
+    title: String,
+    subtitle: String,
+    action: String? = null,
+    onAddFolder: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+    ) {
+        EmptyScreenState(
+            title = title,
+            subtitle = subtitle,
+            icon = Icons.Default.Folder,
+            height = 220.dp
+        )
+        Button(
+            onClick = onAddFolder,
+            colors = ButtonDefaults.colors(
+                containerColor = NuvioTheme.colors.BackgroundCard,
+                contentColor = NuvioTheme.colors.TextPrimary
+            )
+        ) {
+            Text(action ?: stringResource(R.string.local_media_add_folder))
+        }
+        Spacer(modifier = Modifier.height(NuvioTheme.spacing.lg))
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun LocalFolderCard(
+    summary: LocalFolderSummary,
+    onClick: () -> Unit
+) {
+    val source = summary.source
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = CardDefaults.shape(RoundedCornerShape(10.dp)),
+        colors = CardDefaults.colors(
+            containerColor = NuvioTheme.colors.BackgroundCard,
+            focusedContainerColor = NuvioTheme.colors.FocusBackground
+        ),
+        border = CardDefaults.border(
+            border = Border(
+                border = BorderStroke(NuvioTheme.spacing.hairline, NuvioTheme.colors.Border),
+                shape = RoundedCornerShape(10.dp)
+            ),
+            focusedBorder = Border(
+                border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
+                shape = RoundedCornerShape(10.dp)
+            )
+        ),
+        scale = CardDefaults.scale(focusedScale = 1.02f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 72.dp)
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Folder,
+                contentDescription = null,
+                tint = NuvioTheme.colors.TextSecondary,
+                modifier = Modifier.width(28.dp)
+            )
+            Spacer(modifier = Modifier.width(NuvioTheme.spacing.md))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = source.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = NuvioTheme.colors.TextPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.local_library_folder_item_count, summary.itemCount),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = NuvioTheme.colors.TextSecondary
+                )
+            }
+            Text(
+                text = stringResource(
+                    if (source.available) {
+                        R.string.local_library_folder_available
+                    } else {
+                        R.string.local_library_folder_offline
+                    }
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                color = if (source.available) {
+                    NuvioTheme.colors.TextTertiary
+                } else {
+                    NuvioTheme.colors.Primary
+                }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
 private fun LibraryViewModeRow(
     modes: List<LibraryViewMode>,
     selectedMode: LibraryViewMode,
@@ -774,6 +1114,7 @@ private fun LibraryViewModeRow(
                 ) {
                     Text(
                         text = when (mode) {
+                            LibraryViewMode.Local -> stringResource(R.string.library_local_media_button)
                             LibraryViewMode.Saved -> stringResource(R.string.library_source_saved)
                             LibraryViewMode.Cloud -> stringResource(R.string.library_source_cloud)
                             LibraryViewMode.Servers -> stringResource(R.string.library_source_servers)

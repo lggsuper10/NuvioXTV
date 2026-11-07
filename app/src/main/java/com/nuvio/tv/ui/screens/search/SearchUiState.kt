@@ -6,7 +6,7 @@ import com.nuvio.tv.domain.model.CatalogRow
 import com.nuvio.tv.domain.model.DiscoverLocation
 import com.nuvio.tv.domain.model.MetaPreview
 
-internal const val MIN_SEARCH_QUERY_LENGTH = 2
+internal const val MIN_SEARCH_QUERY_LENGTH = 1
 
 internal fun submittedSearchQuery(rawQuery: String): String =
     rawQuery.trim().takeIf { it.length >= MIN_SEARCH_QUERY_LENGTH }.orEmpty()
@@ -25,6 +25,7 @@ data class SearchUiState(
     val query: String = "",
     val submittedQuery: String = "",
     val isSearching: Boolean = false,
+    val localSearchOnly: Boolean = false,
     val error: String? = null,
     val catalogRows: List<CatalogRow> = emptyList(),
     val installedAddons: List<Addon> = emptyList(),

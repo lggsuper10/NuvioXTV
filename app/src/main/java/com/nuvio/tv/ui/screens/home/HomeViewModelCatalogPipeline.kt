@@ -291,6 +291,7 @@ internal suspend fun HomeViewModel.loadAllCatalogsPipeline(
                 "series" -> strTypeSeries.ifBlank { catalog.apiType.replaceFirstChar { it.uppercase() } }
                 else -> catalog.apiType.replaceFirstChar { it.uppercase() }
             }
+            if (catalogName.endsWith(typeLabel, ignoreCase = true)) return catalogName
             return "$catalogName - $typeLabel"
         }
 

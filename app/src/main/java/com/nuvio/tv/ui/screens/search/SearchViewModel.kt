@@ -10,6 +10,8 @@ import com.nuvio.tv.data.local.DiscoverSelectionDataStore
 import com.nuvio.tv.data.local.LayoutPreferenceDataStore
 import com.nuvio.tv.data.local.SearchHistoryDataStore
 import com.nuvio.tv.data.mediaserver.ServerCatalog
+import com.nuvio.tv.data.locallibrary.LocalCatalog
+import com.nuvio.tv.data.locallibrary.LocalSearchResult
 import com.nuvio.tv.domain.model.Addon
 import com.nuvio.tv.domain.model.CatalogDescriptor
 import com.nuvio.tv.domain.model.CatalogRow
@@ -59,6 +61,7 @@ class SearchViewModel @Inject constructor(
     private val watchedSeriesStateHolder: com.nuvio.tv.data.local.WatchedSeriesStateHolder,
     val posterOptions: com.nuvio.tv.ui.components.posteroptions.PosterOptionsController,
     private val serverCatalog: ServerCatalog,
+    private val localCatalog: LocalCatalog,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -102,8 +105,11 @@ class SearchViewModel @Inject constructor(
 
     private companion object {
         const val DISCOVER_INITIAL_LIMIT = 100
+        const val REMOTE_MIN_SEARCH_QUERY_LENGTH = 2
         const val DISCOVER_SHOW_MORE_BATCH = 50
         const val SUGGESTION_DEBOUNCE_MS = 150L
+        const val LOCAL_SEARCH_MOVIES = "local_search_movies"
+        const val LOCAL_SEARCH_SERIES = "local_search_series"
 
         /**
          * Live search fires while typing, but each run fans out to every enabled addon catalog, so
@@ -350,7 +356,7 @@ class SearchViewModel @Inject constructor(
     private fun fetchSuggestions(query: String) {
         suggestionJob?.cancel()
 
-        if (query.length < MIN_SEARCH_QUERY_LENGTH) {
+        if (query.length < REMOTE_MIN_SEARCH_QUERY_LENGTH) {
             _uiState.update { it.copy(suggestions = emptyList()) }
             return
         }
@@ -550,6 +556,7 @@ class SearchViewModel @Inject constructor(
                 it.copy(
                     isSearching = false,
                     error = null,
+                    localSearchOnly = false,
                     catalogRows = emptyList()
                 )
             }
@@ -565,20 +572,41 @@ class SearchViewModel @Inject constructor(
         activeSearchQuery = query
 
         val job = viewModelScope.launch {
-            val addons = try {
-                searchAddons()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                if (generation == searchGeneration && activeSearchQuery == query) {
-                    _uiState.update { it.copy(isSearching = false, error = e.message ?: context.getString(com.nuvio.tv.R.string.search_error_load_addons_failed)) }
+            val localRows = loadLocalSearchRows(query)
+            val remoteSearchEnabled = query.length >= REMOTE_MIN_SEARCH_QUERY_LENGTH
+            val addons = if (!remoteSearchEnabled) {
+                emptyList()
+            } else {
+                try {
+                    searchAddons()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    if (generation == searchGeneration && activeSearchQuery == query) {
+                        resetCatalogAccumulator()
+                        installLocalRows(localRows)
+                        if (localRows.isNotEmpty()) updateCatalogRowsNow()
+                        val hasLocalSources = localCatalog.hasAvailableSources()
+                        _uiState.update {
+                            it.copy(
+                                isSearching = false,
+                                error = if (localRows.isEmpty() && !hasLocalSources) {
+                                    e.message ?: context.getString(com.nuvio.tv.R.string.search_error_load_addons_failed)
+                                } else {
+                                    null
+                                },
+                                localSearchOnly = localRows.isEmpty() && hasLocalSources
+                            )
+                        }
+                    }
+                    return@launch
                 }
-                return@launch
             }
 
             if (generation != searchGeneration || activeSearchQuery != query) return@launch
 
             val searchTargets = buildSearchTargets(addons)
+            val localSearchOnly = searchTargets.isEmpty() && localCatalog.hasAvailableSources()
 
             // Same query against the same catalogs, and that run either finished or is still
             // arriving, so there is nothing new to fetch. Without this, pressing Done after live
@@ -589,6 +617,9 @@ class SearchViewModel @Inject constructor(
             val alreadySatisfied = requestKey == lastRequestKey &&
                 (requestKey == lastCompletedRequestKey || activeSearchJobs.any { it.isActive })
             if (alreadySatisfied) {
+                installLocalRows(localRows)
+                if (localRows.isNotEmpty()) updateCatalogRowsNow()
+                _uiState.update { it.copy(localSearchOnly = localSearchOnly) }
                 // An explicit submit that lands on a query the live search already finished still
                 // counts as a search the user confirmed, so remember it instead of skipping out
                 // of the history save below.
@@ -606,18 +637,51 @@ class SearchViewModel @Inject constructor(
             activeSearchJobs = emptyList()
             catalogRowsUpdateJob?.cancel()
             resetCatalogAccumulator()
+            installLocalRows(localRows)
 
             // Rows are left alone here. Clearing them produced an empty frame between the old
             // results and the placeholders below, which is the flash this screen used to show.
-            _uiState.update { it.copy(isSearching = true, error = null, installedAddons = addons) }
+            _uiState.update {
+                it.copy(
+                    isSearching = true,
+                    error = null,
+                    installedAddons = if (remoteSearchEnabled) addons else it.installedAddons,
+                    localSearchOnly = localSearchOnly
+                )
+            }
+            if (localRows.isNotEmpty()) updateCatalogRowsNow()
 
             if (searchTargets.isEmpty()) {
-                _uiState.update {
-                    it.copy(
-                        isSearching = false,
-                        error = context.getString(R.string.search_error_no_catalogs),
-                        catalogRows = emptyList()
-                    )
+                if (localRows.isNotEmpty()) {
+                    _uiState.update {
+                        it.copy(isSearching = false, error = null, localSearchOnly = localSearchOnly)
+                    }
+                } else if (localSearchOnly) {
+                    _uiState.update {
+                        it.copy(
+                            isSearching = false,
+                            error = null,
+                            catalogRows = emptyList(),
+                            localSearchOnly = true
+                        )
+                    }
+                } else if (!remoteSearchEnabled) {
+                    _uiState.update {
+                        it.copy(
+                            isSearching = false,
+                            error = null,
+                            catalogRows = emptyList(),
+                            localSearchOnly = false
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isSearching = false,
+                            error = context.getString(R.string.search_error_no_catalogs),
+                            catalogRows = emptyList()
+                        )
+                    }
                 }
                 return@launch
             }
@@ -705,7 +769,7 @@ class SearchViewModel @Inject constructor(
                     uiState.value.submittedQuery.trim() == query
                 ) {
                     lastCompletedRequestKey = requestKey
-                    _uiState.update { it.copy(isSearching = false) }
+                    _uiState.update { it.copy(isSearching = false, localSearchOnly = false) }
                     // Only explicit submit (or moving into results from the text input — see
                     // rememberSearchFromTextInput)
                     // writes history. Live search fires per keystroke and would otherwise record
@@ -1179,6 +1243,71 @@ class SearchViewModel @Inject constructor(
         return allSearchTargets
     }
 
+    private suspend fun loadLocalSearchRows(query: String): List<CatalogRow> =
+        runCatching {
+            localCatalog.refreshAvailability()
+            localCatalog.search(query).toCatalogRows()
+        }
+            .getOrDefault(emptyList())
+
+    private fun LocalSearchResult.toCatalogRows(): List<CatalogRow> = buildList {
+        if (movies.isNotEmpty()) {
+            add(
+                CatalogRow(
+                    addonId = LocalCatalog.LIBRARY_ADDON_ID,
+                    addonName = context.getString(R.string.local_catalog_library_name),
+                    addonBaseUrl = LocalCatalog.LIBRARY_BASE_URL,
+                    catalogId = LOCAL_SEARCH_MOVIES,
+                    catalogName = context.getString(R.string.local_search_movies),
+                    type = ContentType.MOVIE,
+                    rawType = ContentType.MOVIE.toApiString(),
+                    items = movies,
+                    isLoading = false,
+                    hasMore = false,
+                    currentPage = 0,
+                    supportsSkip = false,
+                    skipStep = 0,
+                    extraArgs = emptyMap()
+                )
+            )
+        }
+        if (series.isNotEmpty()) {
+            add(
+                CatalogRow(
+                    addonId = LocalCatalog.LIBRARY_ADDON_ID,
+                    addonName = context.getString(R.string.local_catalog_library_name),
+                    addonBaseUrl = LocalCatalog.LIBRARY_BASE_URL,
+                    catalogId = LOCAL_SEARCH_SERIES,
+                    catalogName = context.getString(R.string.local_search_series),
+                    type = ContentType.SERIES,
+                    rawType = ContentType.SERIES.toApiString(),
+                    items = series,
+                    isLoading = false,
+                    hasMore = false,
+                    currentPage = 0,
+                    supportsSkip = false,
+                    skipStep = 0,
+                    extraArgs = emptyMap()
+                )
+            )
+        }
+    }
+
+    private fun installLocalRows(rows: List<CatalogRow>) {
+        if (rows.isEmpty()) return
+        val keys = rows.map { row ->
+            catalogKey(
+                addonId = row.addonId,
+                addonBaseUrl = row.addonBaseUrl,
+                type = row.apiType,
+                catalogId = row.catalogId
+            )
+        }
+        rows.forEachIndexed { index, row -> catalogsMap[keys[index]] = row }
+        catalogOrder.removeAll(keys.toSet())
+        catalogOrder.addAll(0, keys)
+    }
+
     /**
      * A catalog is only searchable if a search is all it needs. One that also requires something we
      * cannot supply, a mandatory genre for instance, answers with an error or nothing at all, so
@@ -1193,6 +1322,7 @@ class SearchViewModel @Inject constructor(
     private fun catalogKey(addonId: String, addonBaseUrl: String, type: String, catalogId: String): String {
         return catalogRowStableKey(addonId, addonBaseUrl, type, catalogId)
     }
+
 }
 
 internal fun resolveDiscoverCatalog(

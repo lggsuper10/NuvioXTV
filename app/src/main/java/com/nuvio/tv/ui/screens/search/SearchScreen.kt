@@ -783,8 +783,20 @@ fun SearchScreen(
                     !uiState.isSearching && !hasPendingUnsubmittedQuery && visibleCatalogRows.isEmpty() -> {
                         item {
                             EmptyScreenState(
-                                title = stringResource(R.string.search_no_results_title),
-                                subtitle = stringResource(R.string.search_no_results_subtitle),
+                                title = stringResource(
+                                    if (uiState.localSearchOnly) {
+                                        R.string.search_local_empty_title
+                                    } else {
+                                        R.string.search_no_results_title
+                                    }
+                                ),
+                                subtitle = stringResource(
+                                    if (uiState.localSearchOnly) {
+                                        R.string.search_local_empty_subtitle
+                                    } else {
+                                        R.string.search_no_results_subtitle
+                                    }
+                                ),
                                 icon = Icons.Default.Search
                             )
                         }

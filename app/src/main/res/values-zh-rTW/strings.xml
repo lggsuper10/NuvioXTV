@@ -465,7 +465,7 @@
     <string name="local_media_empty">尚未新增本機資料夾</string>
     <string name="local_media_scanning">正在掃描…</string>
     <string name="local_media_scanned">已建立索引 %1$d 個影片</string>
-    <string name="local_media_source_unavailable">資料夾權限已失效，請移除後重新新增。</string>
+    <string name="local_media_source_unavailable">目錄目前無法存取，請連接 USB 或檢查儲存裝置。</string>
     <string name="local_media_scan_failed">掃描失敗：%1$s</string>
     <string name="local_media_source_exists">此資料夾已新增。</string>
     <string name="local_media_folder_picker_unavailable">此裝置沒有可用的系統資料夾選擇器。</string>
@@ -485,11 +485,25 @@
     <string name="local_media_last_scan">上次掃描：%1$s</string>
     <string name="local_media_never_scanned">尚未掃描</string>
     <string name="local_media_source_error">掃描錯誤：%1$s</string>
+    <string name="local_library_filter_folders">資料夾</string>
+    <string name="local_library_source_offline_title">資料夾目前無法使用</string>
+    <string name="local_library_source_offline_subtitle">請連接 USB 後重新掃描，或移除此目錄</string>
+    <string name="local_library_manage_folders">管理資料夾</string>
+    <string name="local_library_folder_available">可用</string>
+    <string name="local_library_folder_offline">目錄無法使用</string>
+    <string name="local_library_folder_item_count">%1$d 個內容</string>
+    <string name="local_media_remove_confirm_title">移除資料夾</string>
+    <string name="local_media_remove_confirm_subtitle">僅從媒體庫移除，不會刪除儲存裝置中的檔案。</string>
+    <string name="local_media_rescan_all">重新掃描全部</string>
+    <string name="local_media_long_press_hint">長按管理</string>
+    <string name="local_media_actions_subtitle">重新掃描或移除此目錄</string>
     <string name="local_source_badge">本機</string>
     <string name="local_source_badge_with_name">本機 · %1$s</string>
     <string name="local_source_display_name">本機 · %1$s</string>
-    <string name="local_catalog_movies">電影</string>
-    <string name="local_catalog_series">影集</string>
+    <string name="local_catalog_recent_movies">最近新增的電影</string>
+    <string name="local_catalog_recent_series">最近新增的影集</string>
+    <string name="local_catalog_movies">本機電影</string>
+    <string name="local_catalog_series">本機影集</string>
     <string name="local_detail_play">播放</string>
     <string name="local_detail_episodes">集數</string>
     <string name="local_detail_no_playable_items">找不到可播放的影片。</string>
@@ -1985,6 +1999,8 @@
     <string name="search_no_results_title">無結果</string>
     <string name="search_no_results_subtitle">請嘗試使用不同的關鍵字搜尋</string>
     <string name="search_error_no_catalogs">在已安裝的擴充套件中找不到可搜尋的目錄</string>
+    <string name="search_local_empty_title">本機媒體中找不到相關影片</string>
+    <string name="search_local_empty_subtitle">請檢查檔名或重新掃描本機資料夾</string>
 
     <string name="library_syncing">正在同步 Trakt 媒體庫…</string>
     <string name="library_title">媒體庫</string>

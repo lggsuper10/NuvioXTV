@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -48,6 +50,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.tv.material3.ExperimentalTvMaterial3Api
+import androidx.tv.material3.Button
+import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.nuvio.tv.R
@@ -58,6 +62,9 @@ import com.nuvio.tv.ui.components.LocalCardDepthStyle
 import com.nuvio.tv.ui.components.nuvioCardDepth
 import com.nuvio.tv.ui.components.PosterCardDefaults
 import com.nuvio.tv.ui.components.PosterCardStyle
+import com.nuvio.tv.data.locallibrary.LocalCatalog
+import com.nuvio.tv.data.locallibrary.LocalSourceEntity
+import com.nuvio.tv.ui.screens.library.LocalLibraryViewModel
 import com.nuvio.tv.ui.screens.home.HomeEvent
 import com.nuvio.tv.ui.screens.home.HomeViewModel
 import com.nuvio.tv.ui.screens.search.SearchEvent
@@ -72,6 +79,53 @@ import kotlin.math.roundToInt
 /** Stable focus key for a catalog poster (survives list reloads; not a grid index). */
 private fun catalogItemFocusKey(item: MetaPreview): String = "${item.apiType}:${item.id}"
 
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun LocalSeeAllFolderFilter(
+    sources: List<LocalSourceEntity>,
+    selectedSourceId: Long?,
+    onSelect: (Long?) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = NuvioTheme.spacing.xxxl),
+        horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm)
+    ) {
+        LocalFolderChip(
+            label = stringResource(R.string.local_library_all_folders),
+            selected = selectedSourceId == null,
+            onClick = { onSelect(null) }
+        )
+        sources.forEach { source ->
+            LocalFolderChip(
+                label = source.name,
+                selected = selectedSourceId == source.id,
+                onClick = { onSelect(source.id) }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun LocalFolderChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.colors(
+            containerColor = if (selected) NuvioTheme.colors.FocusBackground else NuvioTheme.colors.BackgroundCard,
+            contentColor = NuvioTheme.colors.TextPrimary
+        )
+    ) {
+        Text(label)
+    }
+}
+
 @Composable
 fun CatalogSeeAllScreen(
     catalogId: String,
@@ -80,6 +134,7 @@ fun CatalogSeeAllScreen(
     searchViewModel: SearchViewModel? = null,
     serverCatalog: ServerCatalogViewModel? = null,
     viewModel: HomeViewModel = hiltViewModel(),
+    localLibraryViewModel: LocalLibraryViewModel = hiltViewModel(),
     posterOptionsViewModel: com.nuvio.tv.ui.components.posteroptions.PosterOptionsViewModel = hiltViewModel(),
     onNavigateToDetail: (String, String, String) -> Unit,
     onBackPress: () -> Unit
@@ -104,6 +159,8 @@ fun CatalogSeeAllScreen(
     // In search mode, get the catalog row from SearchViewModel's existing results.
     // Otherwise fall back to HomeViewModel's fullCatalogRows (home screen catalogs).
     val searchUiState = searchViewModel?.uiState?.collectAsState()
+    val localLibraryState by localLibraryViewModel.uiState.collectAsState()
+    var selectedLocalSourceId by rememberSaveable { mutableStateOf<Long?>(null) }
     val searchWatchedMovieIds = searchViewModel?.watchedMovieIds?.collectAsState()
     val searchWatchedSeriesIds = searchViewModel?.watchedSeriesIds?.collectAsState()
     val searchCatalogRow = searchUiState?.value?.catalogRows?.find {
@@ -118,6 +175,17 @@ fun CatalogSeeAllScreen(
         serverCatalog != null -> serverRow?.value
         isSearchMode -> searchCatalogRow
         else -> homeCatalogRow
+    }
+    val isLocalCatalog = LocalCatalog.isLocalAddon(catalogRow?.addonBaseUrl)
+    val localSources = localLibraryState.sources
+    LaunchedEffect(localSources, selectedLocalSourceId) {
+        val selected = selectedLocalSourceId ?: return@LaunchedEffect
+        if (localSources.none { it.id == selected }) selectedLocalSourceId = null
+    }
+    val visibleItems = remember(catalogRow?.items, selectedLocalSourceId) {
+        val selected = selectedLocalSourceId
+        val items = catalogRow?.items.orEmpty()
+        if (selected == null) items else items.filter { selected in it.localSourceIds }
     }
 
     LaunchedEffect(catalogKey, isSearchMode, catalogRow != null) {
@@ -134,8 +202,8 @@ fun CatalogSeeAllScreen(
     var shouldRestoreFocus by rememberSaveable(catalogKey) { mutableStateOf(true) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val focusedItemIndex = remember(catalogRow?.items, focusedItemKey) {
-        val items = catalogRow?.items.orEmpty()
+    val focusedItemIndex = remember(visibleItems, focusedItemKey) {
+        val items = visibleItems
         if (items.isEmpty()) return@remember 0
         val key = focusedItemKey
         if (key.isNullOrBlank()) return@remember 0
@@ -143,7 +211,7 @@ fun CatalogSeeAllScreen(
     }
 
     // Load more when scrolling near the bottom
-    LaunchedEffect(gridState, catalogRow?.items?.size) {
+    LaunchedEffect(gridState, visibleItems.size) {
         snapshotFlow {
             val lastVisible = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val total = gridState.layoutInfo.totalItemsCount
@@ -182,9 +250,9 @@ fun CatalogSeeAllScreen(
         }
     }
 
-    LaunchedEffect(shouldRestoreFocus, catalogRow?.items?.size, focusedItemKey) {
+    LaunchedEffect(shouldRestoreFocus, visibleItems.size, focusedItemKey) {
         if (!shouldRestoreFocus) return@LaunchedEffect
-        val items = catalogRow?.items.orEmpty()
+        val items = visibleItems
         if (items.isEmpty()) return@LaunchedEffect
 
         val targetIndex = focusedItemIndex.coerceIn(0, items.lastIndex)
@@ -229,12 +297,29 @@ fun CatalogSeeAllScreen(
 
         Spacer(modifier = Modifier.height(NuvioTheme.spacing.xl))
 
-        val hasItems = catalogRow?.items?.isNotEmpty() == true
+        if (isLocalCatalog && localSources.isNotEmpty()) {
+            LocalSeeAllFolderFilter(
+                sources = localSources,
+                selectedSourceId = selectedLocalSourceId,
+                onSelect = { selectedLocalSourceId = it }
+            )
+            Spacer(modifier = Modifier.height(NuvioTheme.spacing.md))
+        }
+
+        val hasItems = visibleItems.isNotEmpty()
         val isCatalogLoading = if (catalogRow == null) serverFailed?.value != true else catalogRow.isLoading
 
         if (hasItems) {
-            val seeAllItemKeys = remember(catalogRow?.items) {
-                catalogRow?.stableItemKeys().orEmpty()
+            val seeAllItemKeys = remember(visibleItems, catalogKey) {
+                val seen = HashMap<String, Int>()
+                val rowKey = catalogRow?.stableKey() ?: catalogKey
+                visibleItems.map { item ->
+                    val identity = "${item.apiType}:${item.id}"
+                    val occurrence = seen.getOrDefault(identity, 0)
+                    seen[identity] = occurrence + 1
+                    val key = "${rowKey}_$identity"
+                    if (occurrence == 0) key else "$key#$occurrence"
+                }
             }
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyVerticalGrid(
@@ -253,8 +338,8 @@ fun CatalogSeeAllScreen(
                     verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.lg)
                 ) {
                     itemsIndexed(
-                        items = catalogRow.items,
-                        key = { index, _ -> seeAllItemKeys.getOrElse(index) { "${catalogRow.stableKey()}_$index" } }
+                        items = visibleItems,
+                        key = { index, _ -> seeAllItemKeys.getOrElse(index) { "${catalogRow?.stableKey() ?: catalogKey}_$index" } }
                     ) { index, item ->
                         val isWatched = if (isSearchMode) {
                             val isSeries = item.apiType.equals("series", ignoreCase = true) || item.apiType.equals("tv", ignoreCase = true)
@@ -288,17 +373,17 @@ fun CatalogSeeAllScreen(
                                 onNavigateToDetail(
                                     item.id,
                                     item.apiType,
-                                    catalogRow.addonBaseUrl
+                                    catalogRow?.addonBaseUrl.orEmpty()
                                 )
                             },
                             onLongPress = {
                                 focusedItemKey = itemFocusKey
-                                posterOptionsController.show(item, catalogRow.addonBaseUrl)
+                                posterOptionsController.show(item, catalogRow?.addonBaseUrl.orEmpty())
                             }
                         )
                     }
 
-                    if (catalogRow.isLoading) {
+                    if (catalogRow?.isLoading == true) {
                         item(key = "loading_more") {
                             val cardShape = remember(posterCardStyle.cornerRadius) {
                                 androidx.compose.foundation.shape.RoundedCornerShape(posterCardStyle.cornerRadius)

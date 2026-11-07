@@ -859,6 +859,7 @@ class HomeViewModel @Inject constructor(
 
     fun refreshHomeCatalogsIfStale() {
         if (addonsCache.isEmpty()) return
+        viewModelScope.launch { localCatalog.refreshAvailability() }
         val now = android.os.SystemClock.elapsedRealtime()
         if (now - lastHomeCatalogRefreshAtMs < HOME_CATALOG_REFRESH_TTL_MS) return
         lastHomeCatalogRefreshAtMs = now

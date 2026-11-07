@@ -6,8 +6,10 @@ import com.nuvio.tv.core.tmdb.MetaPreviewEnricher
 import com.nuvio.tv.core.util.filterReleasedItems
 import com.nuvio.tv.data.local.LayoutPreferenceDataStore
 import com.nuvio.tv.data.local.TmdbSettingsDataStore
+import com.nuvio.tv.data.locallibrary.LocalCatalog
 import com.nuvio.tv.data.mediaserver.ServerCatalog
 import com.nuvio.tv.domain.model.AmbientModeSettings
+import com.nuvio.tv.domain.model.ContentType
 import com.nuvio.tv.domain.model.MetaPreview
 import com.nuvio.tv.domain.model.enabledAddons
 import com.nuvio.tv.domain.model.skipStep
@@ -26,6 +28,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val ITEMS_PER_CATALOG = 10
+private const val LOCAL_ITEMS_PER_CATALOG = 8
 private const val MAX_SLIDES = 30
 private const val MAX_GENRES = 3
 
@@ -35,6 +38,7 @@ class AmbientSlideLoader @Inject constructor(
     private val addonRepository: AddonRepository,
     private val serverCatalog: ServerCatalog,
     private val catalogRepository: CatalogRepository,
+    private val localCatalog: LocalCatalog,
     private val layoutPreferenceDataStore: LayoutPreferenceDataStore,
     private val tmdbSettingsDataStore: TmdbSettingsDataStore,
     private val metaPreviewEnricher: MetaPreviewEnricher
@@ -50,8 +54,11 @@ class AmbientSlideLoader @Inject constructor(
             .take(AmbientModeSettings.MAX_CATALOGS)
         val hideUnreleased = layoutPreferenceDataStore.hideUnreleasedContent.first()
 
+        val localItems = async { loadLocalItems() }
         val rows = chosen.map { entry -> async { fetchItems(entry, hideUnreleased) } }.awaitAll()
-        val items = rows.interleave().distinctBy { "${it.apiType}:${it.id}" }.take(MAX_SLIDES)
+        val items = (localItems.await() + rows.interleave())
+            .distinctBy { "${it.apiType}:${it.id}" }
+            .take(MAX_SLIDES)
 
         val tmdbSettings = tmdbSettingsDataStore.settings.value
         val useTmdb = tmdbSettings.enabled &&
@@ -78,6 +85,13 @@ class AmbientSlideLoader @Inject constructor(
         return visible.items.take(ITEMS_PER_CATALOG)
     }
 
+    private suspend fun loadLocalItems(): List<MetaPreview> = runCatching {
+        listOf(
+            localCatalog.previews(ContentType.MOVIE, recentOnly = true, limit = LOCAL_ITEMS_PER_CATALOG),
+            localCatalog.previews(ContentType.SERIES, recentOnly = true, limit = LOCAL_ITEMS_PER_CATALOG)
+        ).interleave()
+    }.getOrDefault(emptyList())
+
     private fun List<List<MetaPreview>>.interleave(): List<MetaPreview> {
         val longest = maxOfOrNull { it.size } ?: 0
         return (0 until longest).flatMap { index -> mapNotNull { it.getOrNull(index) } }
@@ -86,6 +100,7 @@ class AmbientSlideLoader @Inject constructor(
     private fun MetaPreview.toSlide(): AmbientSlide? {
         val backdrop = background?.takeIf { it.isNotBlank() }
             ?: landscapePoster?.takeIf { it.isNotBlank() }
+            ?: poster?.takeIf { it.isNotBlank() }
             ?: return null
         return AmbientSlide(
             id = "$apiType:$id",

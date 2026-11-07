@@ -275,7 +275,11 @@ fun CatalogRowSection(
     val catalogTitle = remember(catalogRow.catalogName, typeLabel, showCatalogTypeSuffix) {
         val formattedName = catalogRow.catalogName.replaceFirstChar { it.uppercase() }
         if (formattedName.isBlank()) ""
-        else if (showCatalogTypeSuffix && typeLabel.isNotEmpty()) "$formattedName - $typeLabel" else formattedName
+        else if (
+            showCatalogTypeSuffix &&
+            typeLabel.isNotEmpty() &&
+            !formattedName.endsWith(typeLabel, ignoreCase = true)
+        ) "$formattedName - $typeLabel" else formattedName
     }
 
     Column(modifier = modifier.fillMaxWidth().then(

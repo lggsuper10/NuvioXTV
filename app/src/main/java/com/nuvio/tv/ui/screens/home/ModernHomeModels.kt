@@ -611,6 +611,7 @@ internal fun catalogRowTitle(
         "series" -> strTypeSeries.ifBlank { row.apiType.replaceFirstChar { it.uppercase() } }
         else -> row.apiType.replaceFirstChar { it.uppercase() }
     }
+    if (catalogName.endsWith(typeLabel, ignoreCase = true)) return catalogName
     return "$catalogName - $typeLabel"
 }
 

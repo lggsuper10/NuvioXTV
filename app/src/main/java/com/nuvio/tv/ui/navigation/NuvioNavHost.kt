@@ -201,6 +201,13 @@ private fun PlaybackNavHost(
                 manualSelection: Boolean = false,
                 startFromBeginning: Boolean = false
             ): String {
+                val contentId = when (item) {
+                    is ContinueWatchingItem.InProgress -> item.progress.contentId
+                    is ContinueWatchingItem.NextUp -> item.info.contentId
+                }
+                if (LocalCatalog.isLocalItemId(contentId)) {
+                    return Screen.LocalDetail.createRoute(contentId)
+                }
                 return when (item) {
                     is ContinueWatchingItem.InProgress -> Screen.Stream.createRoute(
                         videoId = item.progress.videoId,
@@ -1194,15 +1201,19 @@ private fun PlaybackNavHost(
             SearchScreen(
                 viewModel = searchViewModel,
                 onNavigateToDetail = { itemId, itemType, addonBaseUrl ->
-                    val heroBackdrop = HeroBackdropState.consumeAndClear()
-                    navController.navigate(
-                        Screen.Detail.createRoute(
-                            itemId = itemId,
-                            itemType = itemType,
-                            addonBaseUrl = addonBaseUrl,
-                            heroBackdropUrl = heroBackdrop
+                    if (LocalCatalog.isLocalItemId(itemId)) {
+                        navController.navigate(Screen.LocalDetail.createRoute(itemId))
+                    } else {
+                        val heroBackdrop = HeroBackdropState.consumeAndClear()
+                        navController.navigate(
+                            Screen.Detail.createRoute(
+                                itemId = itemId,
+                                itemType = itemType,
+                                addonBaseUrl = addonBaseUrl,
+                                heroBackdropUrl = heroBackdrop
+                            )
                         )
-                    )
+                    }
                 },
                 onNavigateToSeeAll = { catalogId, addonId, type ->
                     navController.navigate(
@@ -1235,7 +1246,11 @@ private fun PlaybackNavHost(
                 showBuiltInHeader = !hideBuiltInHeaders,
                 onNavigateToLocalMedia = { navController.navigate(Screen.LocalMedia.route) },
                 onNavigateToDetail = { itemId, itemType, addonBaseUrl ->
-                    navController.navigate(Screen.Detail.createRoute(itemId, itemType, addonBaseUrl))
+                    if (LocalCatalog.isLocalItemId(itemId)) {
+                        navController.navigate(Screen.LocalDetail.createRoute(itemId))
+                    } else {
+                        navController.navigate(Screen.Detail.createRoute(itemId, itemType, addonBaseUrl))
+                    }
                 },
                 onNavigateToCatalogSeeAll = { catalogId, addonId, type ->
                     navController.navigate(Screen.CatalogSeeAll.createRoute(catalogId, addonId, type))
