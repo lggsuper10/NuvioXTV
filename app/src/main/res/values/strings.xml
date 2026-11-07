@@ -98,6 +98,9 @@
 
     <string name="home_no_addons">No addons installed. Add one to get started.</string>
     <string name="home_no_catalog_addons">No catalog addons installed. Install a catalog addon to see content.</string>
+    <string name="home_empty_local_title">Your local library is empty</string>
+    <string name="home_empty_local_message">Add a video folder from this TV or a USB drive to start building your private cinema.</string>
+    <string name="home_empty_local_action">Add local folder</string>
     <string name="auth_notice_nuvio_logged_out">You have been signed out of Nuvio. Please sign in again.</string>
     <string name="auth_notice_trakt_logged_out">You have been signed out of Trakt. Please reconnect.</string>
     <string name="error_generic">An error occurred</string>
@@ -563,11 +566,11 @@
     <string name="settings_playback">Playback</string>
     <string name="settings_trakt_subtitle">Open Trakt connection screen</string>
     <string name="settings_tracking_title">Tracking</string>
-    <string name="settings_tracking_description">Connect tracking providers and choose which one powers your Library and Continue Watching.</string>
+    <string name="settings_tracking_description">Manage the local watch progress used for resume and Continue Watching.</string>
     <string name="tracking_accounts_title">Accounts</string>
     <string name="tracking_accounts_subtitle">Connect and manage tracking services</string>
-    <string name="tracking_sources_title">Sources</string>
-    <string name="tracking_sources_subtitle">Choose where Nuvio reads your library and watch progress. Playback scrobbles to every connected service.</string>
+    <string name="tracking_sources_title">Local Progress</string>
+    <string name="tracking_sources_subtitle">Resume and Continue Watching use the watch progress saved by Nuvio.</string>
     <string name="tracking_trakt_features_title">Trakt features</string>
     <string name="tracking_trakt_features_subtitle">Trakt-specific history, reviews, and recommendations</string>
     <string name="tracking_simkl_features_title">Simkl features</string>
@@ -584,7 +587,7 @@
     <string name="tracking_status_connecting">Connecting</string>
     <string name="tracking_finish_connection">Finish connection approval</string>
     <string name="tracking_connecting_provider">Starting %1$s connection…</string>
-    <string name="tracking_watch_progress_dialog_subtitle">Choose the service Nuvio reads for resume and Continue Watching. Scrobbling remains active for every connected service.</string>
+    <string name="tracking_watch_progress_dialog_subtitle">Nuvio uses the watch progress saved on this device for resume and Continue Watching.</string>
     <string name="tracking_library_source_dialog_subtitle">Choose the service Nuvio reads for your Library. Playback scrobbles to every connected service.</string>
     <string name="tracking_trakt_progress_required">Available when Trakt is the Watch Progress source</string>
     <string name="trakt_name">Trakt</string>
@@ -719,8 +722,11 @@
     <string name="advanced_remember_last_profile">Remember Last Profile</string>
     <string name="advanced_remember_last_profile_subtitle">Remember last selected profile at startup</string>
     <string name="advanced_confirm_exit">Full exit on close</string>
-    <string name="advanced_confirm_exit_subtitle">Fully terminate the app and free memory when exiting. Requires pressing back twice to confirm.</string>
+    <string name="advanced_confirm_exit_subtitle">Fully terminate the app and free memory when exiting. An exit confirmation is always shown.</string>
     <string name="confirm_exit_toast">Press back again to exit</string>
+    <string name="exit_confirm_title">Exit Nuvio</string>
+    <string name="exit_confirm_message">Return to the TV home screen. Your progress is saved and you can continue next time.</string>
+    <string name="exit_confirm_action">Exit</string>
     <string name="settings_debug">Debug</string>
     <string name="settings_plugins_section_subtitle">Manage repositories, providers, and plugin states</string>
     <string name="settings_account_section_subtitle">Account and sync status</string>
@@ -1612,11 +1618,11 @@
     <string name="trakt_login_instruction">Press Login to start Trakt device authentication. A QR code will appear here.</string>
     <string name="trakt_missing_credentials">Missing TRAKT_CLIENT_ID / TRAKT_CLIENT_SECRET in local.properties.</string>
     <string name="trakt_watch_progress_title">Watch Progress</string>
-    <string name="trakt_watch_progress_subtitle">Choose which progress source powers resume and continue watching</string>
+    <string name="trakt_watch_progress_subtitle">Local progress used for resume and Continue Watching</string>
     <string name="trakt_watch_progress_dialog_title">Watch Progress</string>
-    <string name="trakt_watch_progress_dialog_subtitle">Choose whether resume and continue watching should use Trakt or Nuvio Sync while Trakt scrobbling stays active.</string>
+    <string name="trakt_watch_progress_dialog_subtitle">Resume and Continue Watching use the watch progress saved on this device.</string>
     <string name="trakt_watch_progress_source_trakt">Trakt</string>
-    <string name="trakt_watch_progress_source_nuvio">Nuvio Sync</string>
+    <string name="trakt_watch_progress_source_nuvio">Local</string>
     <string name="trakt_library_source_title">Library Source</string>
     <string name="trakt_library_source_subtitle">Choose which source Nuvio reads for your Library</string>
     <string name="trakt_library_source_dialog_title">Library Source</string>

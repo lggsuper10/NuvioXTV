@@ -300,6 +300,9 @@ private fun PlaybackNavHost(
                 },
                 onNavigateToFolderDetail = { collectionId, folderId ->
                     navController.navigate(Screen.FolderDetail.createRoute(collectionId, folderId))
+                },
+                onNavigateToLocalMedia = {
+                    navController.navigate(Screen.LocalMedia.route)
                 }
             )
         }

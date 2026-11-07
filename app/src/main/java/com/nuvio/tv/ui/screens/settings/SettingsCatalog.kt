@@ -31,9 +31,9 @@ internal fun visibleSettingsCategories(
     isWatchPartyAvailable: Boolean = false
 ): List<SettingsCategory> = SettingsCategory.entries.filter { category ->
     when (category) {
-        SettingsCategory.ACCOUNT,
+        SettingsCategory.ACCOUNT -> false
         SettingsCategory.PROFILES -> isPrimaryProfile
-        SettingsCategory.WATCH_PARTY -> isWatchPartyAvailable
+        SettingsCategory.WATCH_PARTY -> false
         SettingsCategory.DEBUG -> isDebugBuild && !isEssentialMode
         SettingsCategory.EXPERIENCE -> false
         else -> true

@@ -132,8 +132,10 @@ internal fun HomeViewModel.observeInstalledAddonsPipeline() {
         combine(
             addonRepository.getInstalledAddons(),
             serverCatalog.addons,
-            localCatalog.addons
-        ) { installed, servers, locals ->
+            localCatalog.addons,
+            localCatalog.sourceCount
+        ) { installed, servers, locals, localSourceCount ->
+            _uiState.update { it.copy(localSourceCount = localSourceCount) }
             // Local rows are loaded eagerly and displayed first so newly added files are
             // immediately visible without waiting for a lazy catalog pass.
             locals + installed.enabledAddons() + servers
@@ -204,7 +206,19 @@ internal suspend fun HomeViewModel.loadAllCatalogsPipeline(
     try {
         if (addons.isEmpty()) {
             catalogsLoadInProgress = false
-            _uiState.update { it.copy(isLoading = false, error = appContext.getString(R.string.home_empty_no_sources_title)) }
+            clearCatalogData()
+            synchronized(catalogStateLock) { catalogOrder.clear() }
+            _fullCatalogRows.value = emptyList()
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = appContext.getString(R.string.home_empty_no_sources_title),
+                    catalogRows = emptyList(),
+                    homeRows = emptyList(),
+                    gridItems = emptyList(),
+                    heroItems = emptyList()
+                )
+            }
             return
         }
 
@@ -221,7 +235,19 @@ internal suspend fun HomeViewModel.loadAllCatalogsPipeline(
 
         if (isCatalogOrderEmpty() && !hasHeroSelections) {
             catalogsLoadInProgress = false
-            _uiState.update { it.copy(isLoading = false, error = appContext.getString(R.string.home_error_no_catalog_addons)) }
+            clearCatalogData()
+            synchronized(catalogStateLock) { catalogOrder.clear() }
+            _fullCatalogRows.value = emptyList()
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = appContext.getString(R.string.home_error_no_catalog_addons),
+                    catalogRows = emptyList(),
+                    homeRows = emptyList(),
+                    gridItems = emptyList(),
+                    heroItems = emptyList()
+                )
+            }
             return
         }
 
@@ -1131,7 +1157,13 @@ internal fun HomeViewModel.mergeRefreshedCatalogRow(
 ): Boolean {
     val current = readCatalogRow(key) ?: return false
     if (current.items.isEmpty()) return false
-    if (fresh.items.isEmpty()) return true
+    if (fresh.items.isEmpty()) {
+        // An empty successful response means the source really has nothing left.
+        // Replacing the row (instead of keeping the old items) removes posters
+        // for files that were deleted from a local library folder.
+        replaceCatalogRow(key, fresh)
+        return true
+    }
     if (forceReplace) return false
 
     val identity = { item: com.nuvio.tv.domain.model.MetaPreview -> item.apiType + ":" + item.id }

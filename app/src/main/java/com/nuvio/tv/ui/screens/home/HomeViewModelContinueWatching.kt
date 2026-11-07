@@ -8,6 +8,7 @@ import com.nuvio.tv.core.player.PlayerSessionTracker
 import com.nuvio.tv.core.util.isEpisodeReleaseAired
 import com.nuvio.tv.core.util.parseEpisodeReleaseInstant
 import com.nuvio.tv.core.util.selectEpisodeReleaseValue
+import com.nuvio.tv.data.locallibrary.LocalCatalog
 import com.nuvio.tv.domain.model.ContinueWatchingSortMode
 import com.nuvio.tv.domain.model.ContentType
 import com.nuvio.tv.domain.model.Meta
@@ -301,8 +302,9 @@ internal fun HomeViewModel.loadContinueWatchingPipeline() {
                 arrayOf(daysCap, dismissedNextUp, showUnairedNextUp, nextUpFromFurthest, sortMode)
             },
             watchProgressRepository.watchedItems.map { it.size },
-            cwPipelineRefreshTrigger
-        ) { progressSnapshot, settingsSnapshot, watchedItemsSize, _ ->
+            cwPipelineRefreshTrigger,
+            localCatalog.addons.map { addons -> addons.firstOrNull()?.version.orEmpty() }
+        ) { progressSnapshot, settingsSnapshot, watchedItemsSize, _, _ ->
             val (items, nextUpSeeds, hasLoadedRemoteProgress) = progressSnapshot
             @Suppress("UNCHECKED_CAST")
             val daysCap = settingsSnapshot[0] as Int
@@ -328,8 +330,8 @@ internal fun HomeViewModel.loadContinueWatchingPipeline() {
                 debug.markPhase("filter-snapshot")
                 val cycleStartMs = SystemClock.elapsedRealtime()
                 val useTrackingProvider = watchProgressRepository.hasActiveTrackingProgressProvider()
-                val items = snapshot.items
-                val nextUpSeeds = snapshot.nextUpSeeds
+                val items = retainAvailableLocalProgress(snapshot.items)
+                val nextUpSeeds = retainAvailableLocalProgress(snapshot.nextUpSeeds)
                 val daysCap = snapshot.daysCap
                 val dismissedNextUp = snapshot.dismissedNextUp
                 val showUnairedNextUp = snapshot.showUnairedNextUp
@@ -339,12 +341,14 @@ internal fun HomeViewModel.loadContinueWatchingPipeline() {
                     daysCap = daysCap,
                     nowEpochMs = System.currentTimeMillis()
                 )
-                val recentItems = items
-                    .asSequence()
-                    .filter { progress -> cutoffMs == null || progress.lastWatched >= cutoffMs }
-                    .sortedByDescending { it.lastWatched }
-                    .take(CW_MAX_RECENT_PROGRESS_ITEMS)
-                    .toList()
+                val recentItems = hydrateLocalProgressArtwork(
+                    items
+                        .asSequence()
+                        .filter { progress -> cutoffMs == null || progress.lastWatched >= cutoffMs }
+                        .sortedByDescending { it.lastWatched }
+                        .take(CW_MAX_RECENT_PROGRESS_ITEMS)
+                        .toList()
+                )
 
                 val recentNextUpSeeds = nextUpSeeds
                     .asSequence()
@@ -1222,6 +1226,36 @@ private fun deduplicateInProgress(items: List<WatchProgress>): List<WatchProgres
         .sortedByDescending { it.lastWatched }
         .distinctBy { it.contentId }
     return (nonSeries + latestPerShow).sortedByDescending { it.lastWatched }
+}
+
+private suspend fun HomeViewModel.hydrateLocalProgressArtwork(
+    items: List<WatchProgress>
+): List<WatchProgress> {
+    if (items.none { LocalCatalog.isLocalItemId(it.contentId) }) return items
+    return items.map { progress ->
+        if (!LocalCatalog.isLocalItemId(progress.contentId) ||
+            (progress.poster != null && progress.backdrop != null)
+        ) {
+            return@map progress
+        }
+        val artwork = runCatching {
+            localCatalog.cachedArtworkForContentId(progress.contentId, progress.videoId)
+        }.getOrNull() ?: return@map progress
+        progress.copy(
+            poster = artwork.posterUri ?: progress.poster,
+            backdrop = artwork.backdropUri ?: progress.backdrop
+        )
+    }
+}
+
+private suspend fun HomeViewModel.retainAvailableLocalProgress(
+    items: List<WatchProgress>
+): List<WatchProgress> {
+    if (items.none { LocalCatalog.isLocalItemId(it.contentId) }) return items
+    return items.filter { progress ->
+        !LocalCatalog.isLocalItemId(progress.contentId) ||
+            localCatalog.isContentAvailable(progress.contentId, progress.videoId)
+    }
 }
 
 private fun shouldTreatAsInProgressForContinueWatching(progress: WatchProgress): Boolean {

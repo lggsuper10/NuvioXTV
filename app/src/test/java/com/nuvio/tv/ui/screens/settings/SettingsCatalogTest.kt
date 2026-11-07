@@ -17,7 +17,6 @@ class SettingsCatalogTest {
 
         assertEquals(
             listOf(
-                SettingsCategory.ACCOUNT,
                 SettingsCategory.PROFILES,
                 SettingsCategory.APPEARANCE,
                 SettingsCategory.LAYOUT,
@@ -111,16 +110,18 @@ class SettingsCatalogTest {
     }
 
     @Test
-    fun `watch party shows for every profile only while available`() {
+    fun `account and watch party are hidden for every profile`() {
         listOf(true, false).forEach { primary ->
             val available = visibleSettingsCategories(primary, isEssentialMode = false, isDebugBuild = false, isWatchPartyAvailable = true)
             val unavailable = visibleSettingsCategories(primary, isEssentialMode = false, isDebugBuild = false, isWatchPartyAvailable = false)
-            assertTrue(SettingsCategory.WATCH_PARTY in available)
+            assertFalse(SettingsCategory.ACCOUNT in available)
+            assertFalse(SettingsCategory.ACCOUNT in unavailable)
+            assertFalse(SettingsCategory.WATCH_PARTY in available)
             assertFalse(SettingsCategory.WATCH_PARTY in unavailable)
         }
         assertEquals(
-            listOf(SettingsCategory.ACCOUNT, SettingsCategory.PROFILES, SettingsCategory.WATCH_PARTY),
-            visibleSettingsCategories(true, isEssentialMode = false, isDebugBuild = false, isWatchPartyAvailable = true).take(3)
+            SettingsCategory.PROFILES,
+            visibleSettingsCategories(true, isEssentialMode = false, isDebugBuild = false, isWatchPartyAvailable = true).first()
         )
     }
 

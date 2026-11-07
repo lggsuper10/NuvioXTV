@@ -9,13 +9,18 @@ import android.util.Log
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Divider
@@ -35,7 +40,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -64,6 +71,7 @@ import com.nuvio.tv.core.tracking.LOCAL_LIBRARY_LIST_KEY
 import com.nuvio.tv.core.tracking.supportsMembershipFor
 import com.nuvio.tv.data.local.StartupAuthNotice
 import com.nuvio.tv.ui.components.posteroptions.TrackingRemovalConfirmationDialog
+import com.nuvio.tv.ui.theme.NuvioPrimitives
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
@@ -95,7 +103,8 @@ fun HomeScreen(
     onContinueWatchingStartFromBeginning: (ContinueWatchingItem) -> Unit = onContinueWatchingClick,
     onContinueWatchingPlayManually: (ContinueWatchingItem) -> Unit = onContinueWatchingClick,
     onNavigateToCatalogSeeAll: (String, String, String) -> Unit = { _, _, _ -> },
-    onNavigateToFolderDetail: (String, String) -> Unit = { _, _ -> }
+    onNavigateToFolderDetail: (String, String) -> Unit = { _, _ -> },
+    onNavigateToLocalMedia: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -265,6 +274,13 @@ fun HomeScreen(
 
             uiState.isLoading && !hasAnyContent -> {
                 Unit
+            }
+
+            uiState.localSourceCount == 0 &&
+                !hasAnyContent &&
+                !uiState.isLoading &&
+                homeStableGateReleased -> {
+                HomeLocalMediaEmptyState(onAddLocalFolder = onNavigateToLocalMedia)
             }
 
             uiState.error == noAddonsError && uiState.catalogRows.isEmpty() -> {
@@ -790,6 +806,74 @@ private fun HomePosterOptionsDialog(
                         stringResource(R.string.hero_mark_watched)
                     }
                 )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun HomeLocalMediaEmptyState(
+    onAddLocalFolder: () -> Unit
+) {
+    val addFolderFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        runCatching { addFolderFocusRequester.requestFocus() }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = 560.dp)
+                .padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            Image(
+                painter = painterResource(R.drawable.app_logo_mark),
+                contentDescription = null,
+                modifier = Modifier.size(104.dp)
+            )
+            Text(
+                text = stringResource(R.string.home_empty_local_title),
+                style = MaterialTheme.typography.headlineSmall,
+                color = NuvioTheme.colors.TextPrimary,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = stringResource(R.string.home_empty_local_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = NuvioTheme.colors.TextSecondary,
+                textAlign = TextAlign.Center
+            )
+            Button(
+                onClick = onAddLocalFolder,
+                modifier = Modifier
+                    .widthIn(min = 260.dp)
+                    .height(56.dp)
+                    .focusRequester(addFolderFocusRequester),
+                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
+                colors = ButtonDefaults.colors(
+                    containerColor = NuvioTheme.colors.Success,
+                    contentColor = NuvioPrimitives.white,
+                    focusedContainerColor = NuvioPrimitives.green300,
+                    focusedContentColor = NuvioPrimitives.white
+                )
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.home_empty_local_action),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
+                    )
+                }
             }
         }
     }

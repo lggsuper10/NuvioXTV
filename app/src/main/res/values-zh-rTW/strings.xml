@@ -98,6 +98,9 @@
 
     <string name="home_no_addons">未安裝擴充套件。請新增一個以開始使用。</string>
     <string name="home_no_catalog_addons">未安裝目錄擴充套件。請安裝目錄擴充套件以瀏覽內容。</string>
+    <string name="home_empty_local_title">本機媒體庫為空</string>
+    <string name="home_empty_local_message">新增電視或 USB 儲存裝置中的影片資料夾，開始享受您的私人影院。</string>
+    <string name="home_empty_local_action">新增本機資料夾</string>
     <string name="auth_notice_nuvio_logged_out">您已登出 Nuvio。請重新登入。</string>
     <string name="auth_notice_trakt_logged_out">您已登出 Trakt。請重新連線。</string>
     <string name="error_generic">發生錯誤</string>
@@ -529,11 +532,11 @@
     <string name="settings_playback">播放</string>
     <string name="settings_trakt_subtitle">開啟 Trakt 連線畫面</string>
     <string name="settings_tracking_title">追蹤</string>
-    <string name="settings_tracking_description">連接追蹤提供者，並選擇由哪一個為您提供媒體庫和繼續觀看資料。</string>
+    <string name="settings_tracking_description">管理用於繼續播放和繼續觀看的本機觀看進度。</string>
     <string name="tracking_accounts_title">帳戶</string>
     <string name="tracking_accounts_subtitle">連接並管理追蹤服務</string>
-    <string name="tracking_sources_title">來源</string>
-    <string name="tracking_sources_subtitle">選擇 Nuvio 從哪裡讀取您的媒體庫和觀看進度。播放記錄會同步到所有已連接的服務。</string>
+    <string name="tracking_sources_title">本機進度</string>
+    <string name="tracking_sources_subtitle">繼續播放和繼續觀看使用 Nuvio 儲存的本機觀看進度。</string>
     <string name="tracking_trakt_features_title">Trakt 功能</string>
     <string name="tracking_trakt_features_subtitle">Trakt 專屬的歷史記錄、評論和推薦</string>
     <string name="tracking_simkl_features_title">Simkl 功能</string>
@@ -550,7 +553,7 @@
     <string name="tracking_status_connecting">正在連線</string>
     <string name="tracking_finish_connection">完成連線批准</string>
     <string name="tracking_connecting_provider">正在啟動 %1$s 連線…</string>
-    <string name="tracking_watch_progress_dialog_subtitle">選擇 Nuvio 從哪裡讀取繼續播放和繼續觀看資料。所有已連接的服務仍會保持記錄。</string>
+    <string name="tracking_watch_progress_dialog_subtitle">繼續播放和繼續觀看使用儲存在本機的觀看進度。</string>
     <string name="tracking_library_source_dialog_subtitle">選擇 Nuvio 從哪裡讀取您的媒體庫。播放記錄會同步到所有已連接的服務。</string>
     <string name="tracking_trakt_progress_required">當 Trakt 為觀看進度來源時可用</string>
     <string name="trakt_name">Trakt</string>
@@ -683,8 +686,11 @@
     <string name="advanced_remember_last_profile">記住上次使用的個人資料</string>
     <string name="advanced_remember_last_profile_subtitle">在啟動時記住上次選擇的個人資料</string>
     <string name="advanced_confirm_exit">關閉時完全退出</string>
-    <string name="advanced_confirm_exit_subtitle">退出時完全終止應用程式並釋放記憶體。需要按兩次返回鍵以確認。</string>
+    <string name="advanced_confirm_exit_subtitle">退出時完全終止應用程式並釋放記憶體。退出前會顯示確認提示。</string>
     <string name="confirm_exit_toast">再按一次返回鍵退出</string>
+    <string name="exit_confirm_title">退出 Nuvio</string>
+    <string name="exit_confirm_message">退出後將返回電視桌面，播放進度會儲存，下次開啟可繼續觀看。</string>
+    <string name="exit_confirm_action">退出</string>
     <string name="settings_debug">除錯</string>
     <string name="settings_plugins_section_subtitle">管理倉庫、提供者和外掛狀態</string>
     <string name="settings_account_section_subtitle">帳戶與同步狀態</string>
@@ -1482,11 +1488,11 @@
     <string name="trakt_login_instruction">按下「登入」以啟動 Trakt 裝置驗證。QR 碼將在此顯示。</string>
     <string name="trakt_missing_credentials">local.properties 中缺少 TRAKT_CLIENT_ID / TRAKT_CLIENT_SECRET。</string>
     <string name="trakt_watch_progress_title">觀看進度</string>
-    <string name="trakt_watch_progress_subtitle">選擇哪個進度來源提供繼續播放和繼續觀看功能</string>
+    <string name="trakt_watch_progress_subtitle">用於繼續播放和繼續觀看的本機進度</string>
     <string name="trakt_watch_progress_dialog_title">觀看進度</string>
-    <string name="trakt_watch_progress_dialog_subtitle">選擇繼續播放和繼續觀看應使用 Trakt 還是 Nuvio Sync，同時 Trakt 記錄保持啟用。</string>
+    <string name="trakt_watch_progress_dialog_subtitle">繼續播放和繼續觀看使用儲存在本機的觀看進度。</string>
     <string name="trakt_watch_progress_source_trakt">Trakt</string>
-    <string name="trakt_watch_progress_source_nuvio">Nuvio Sync</string>
+    <string name="trakt_watch_progress_source_nuvio">本機</string>
     <string name="trakt_library_source_title">媒體庫來源</string>
     <string name="trakt_library_source_subtitle">選擇 Nuvio 從哪裡讀取您的媒體庫</string>
     <string name="trakt_library_source_dialog_title">媒體庫來源</string>

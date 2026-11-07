@@ -11,6 +11,7 @@ import com.nuvio.tv.data.local.TraktSettingsDataStore
 import com.nuvio.tv.data.local.WatchProgressSource
 import com.nuvio.tv.data.local.WatchProgressPreferences
 import com.nuvio.tv.data.local.WatchedItemsPreferences
+import com.nuvio.tv.data.locallibrary.LocalCatalog
 import com.nuvio.tv.data.mediaserver.ServerItemRef
 import com.nuvio.tv.data.mediaserver.ServerWatchMark
 import com.nuvio.tv.data.mediaserver.ServerWatched
@@ -495,6 +496,9 @@ class WatchProgressRepositoryImpl @Inject constructor(
     }
 
     override fun getProgress(contentId: String, profileId: Int): Flow<WatchProgress?> {
+        if (LocalCatalog.isLocalItemId(contentId)) {
+            return watchProgressPreferences.getProgress(contentId, profileId)
+        }
         return profileProgressProviderFlow(profileId)
             .flatMapLatest { provider ->
                 if (provider != null) {
@@ -521,6 +525,9 @@ class WatchProgressRepositoryImpl @Inject constructor(
         episode: Int,
         profileId: Int
     ): Flow<WatchProgress?> {
+        if (LocalCatalog.isLocalItemId(contentId)) {
+            return watchProgressPreferences.getEpisodeProgress(contentId, season, episode, profileId)
+        }
         return profileProgressProviderFlow(profileId)
             .flatMapLatest { provider ->
                 if (provider != null) {
@@ -552,6 +559,9 @@ class WatchProgressRepositoryImpl @Inject constructor(
         contentId: String,
         profileId: Int
     ): Flow<Map<Pair<Int, Int>, WatchProgress>> {
+        if (LocalCatalog.isLocalItemId(contentId)) {
+            return watchProgressPreferences.getAllEpisodeProgress(contentId, profileId)
+        }
         return profileProgressProviderFlow(profileId)
             .flatMapLatest { provider ->
                 if (provider != null) {
@@ -1214,14 +1224,17 @@ class WatchProgressRepositoryImpl @Inject constructor(
             ?.shouldUseAsNextUpSeed(progress, nowEpochMs)
             ?: progress.isCompleted()
 
-    override suspend fun normalizeParentContentId(parentContentId: String, videoId: String?): String =
-        activeProgressProvider()?.normalizeParentContentId(parentContentId, videoId) ?: parentContentId
+    override suspend fun normalizeParentContentId(parentContentId: String, videoId: String?): String {
+        if (LocalCatalog.isLocalItemId(parentContentId)) return parentContentId
+        return activeProgressProvider()?.normalizeParentContentId(parentContentId, videoId) ?: parentContentId
+    }
 
     override suspend fun normalizeParentContentId(
         parentContentId: String,
         videoId: String?,
         profileId: Int
     ): String {
+        if (LocalCatalog.isLocalItemId(parentContentId)) return parentContentId
         if (profileManager.activeProfileId.value != profileId) return parentContentId
         return activeProgressProvider()?.normalizeParentContentId(parentContentId, videoId)
             ?: parentContentId

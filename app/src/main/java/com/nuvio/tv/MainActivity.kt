@@ -41,10 +41,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -129,6 +131,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
+import androidx.tv.material3.Button
+import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
@@ -175,6 +179,7 @@ import com.nuvio.tv.domain.model.resolveCustomThemeColors
 import com.nuvio.tv.domain.deeplink.AppDeepLink
 import com.nuvio.tv.domain.repository.AddonRepository
 import com.nuvio.tv.ui.components.NuvioScrollDefaults
+import com.nuvio.tv.ui.components.NuvioDialog
 import com.nuvio.tv.ui.components.BrandWordmark
 import com.nuvio.tv.ui.components.LocalCardDepthStyle
 import com.nuvio.tv.ui.components.LocalLandscapePosterMode
@@ -192,7 +197,6 @@ import com.nuvio.tv.ui.screens.profile.ProfileSelectionScreen
 import com.nuvio.tv.ui.theme.NuvioComponents
 import com.nuvio.tv.ui.theme.NuvioLayout
 import com.nuvio.tv.ui.theme.NuvioMotion
-import com.nuvio.tv.ui.theme.NuvioPrimitives
 import com.nuvio.tv.ui.theme.NuvioRadii
 import com.nuvio.tv.ui.theme.NuvioStrokes
 import com.nuvio.tv.ui.theme.NuvioTheme
@@ -1116,26 +1120,16 @@ open class MainActivity : ComponentActivity() {
                     val selectedDrawerItem = drawerItems.firstOrNull { it.route == selectedDrawerRoute } ?: drawerItems.first()
 
                     val confirmExitEnabled by profileManager.confirmExitEnabled.collectAsState()
-                    var backPressedOnce by remember { mutableStateOf(false) }
-                    LaunchedEffect(backPressedOnce) {
-                        if (backPressedOnce) {
-                            delay(2000L)
-                            backPressedOnce = false
+                    var showExitConfirmDialog by rememberSaveable { mutableStateOf(false) }
+                    val performExitApp: () -> Unit = {
+                        finishAffinity()
+                        finishAndRemoveTask()
+                        if (confirmExitEnabled) {
+                            // Kill the process to free RAM on low-memory devices.
+                            android.os.Process.killProcess(android.os.Process.myPid())
                         }
                     }
-                    val handleExitApp: () -> Unit = {
-                        if (!confirmExitEnabled || backPressedOnce) {
-                            finishAffinity()
-                            finishAndRemoveTask()
-                            if (confirmExitEnabled) {
-                                // Kill the process to free RAM on low-memory devices.
-                                android.os.Process.killProcess(android.os.Process.myPid())
-                            }
-                        } else {
-                            backPressedOnce = true
-                            Toast.makeText(this@MainActivity, getString(R.string.confirm_exit_toast), Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                    val handleExitApp: () -> Unit = { showExitConfirmDialog = true }
 
                     val updateViewModel: UpdateViewModel = hiltViewModel(this@MainActivity)
                     val updateState by updateViewModel.uiState.collectAsState()
@@ -1231,6 +1225,16 @@ open class MainActivity : ComponentActivity() {
                                     !isTrailerPlaying,
                                 onShown = { trailerPlayerPool.stop() }
                             )
+
+                            if (showExitConfirmDialog) {
+                                ExitConfirmationDialog(
+                                    onConfirm = {
+                                        showExitConfirmDialog = false
+                                        performExitApp()
+                                    },
+                                    onDismiss = { showExitConfirmDialog = false }
+                                )
+                            }
                         }
                     }
                 } 
@@ -1391,6 +1395,87 @@ open class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         PluginRuntimeHooks.onActivityDestroy()
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun ExitConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val cancelFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        cancelFocusRequester.requestFocus()
+    }
+
+    NuvioDialog(
+        onDismiss = onDismiss,
+        title = stringResource(R.string.exit_confirm_title),
+        subtitle = stringResource(R.string.exit_confirm_message),
+        width = 440.dp,
+        titleTextAlign = TextAlign.Center,
+        subtitleTextAlign = TextAlign.Center,
+        suppressFirstKeyUp = true
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp)
+                    .focusRequester(cancelFocusRequester),
+                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
+                scale = ButtonDefaults.scale(focusedScale = 1.02f),
+                colors = ButtonDefaults.colors(
+                    containerColor = NuvioTheme.colors.BackgroundCard,
+                    contentColor = NuvioTheme.colors.TextPrimary,
+                    focusedContainerColor = NuvioTheme.colors.Secondary,
+                    focusedContentColor = NuvioTheme.colors.OnSecondary
+                )
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.action_cancel),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
+                    )
+                }
+            }
+            Button(
+                onClick = onConfirm,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp),
+                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
+                scale = ButtonDefaults.scale(focusedScale = 1.02f),
+                colors = ButtonDefaults.colors(
+                    containerColor = NuvioTheme.colors.BackgroundCard,
+                    contentColor = NuvioTheme.colors.TextPrimary,
+                    focusedContainerColor = NuvioTheme.colors.Secondary,
+                    focusedContentColor = NuvioTheme.colors.OnSecondary
+                )
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.exit_confirm_action),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
+                    )
+                }
+            }
+        }
     }
 }
 

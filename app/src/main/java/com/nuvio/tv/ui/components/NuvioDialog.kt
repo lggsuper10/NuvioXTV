@@ -47,6 +47,7 @@ fun NuvioDialog(
     subtitle: String? = null,
     width: Dp = 520.dp,
     titleTextAlign: TextAlign = TextAlign.Start,
+    subtitleTextAlign: TextAlign = TextAlign.Start,
     suppressFirstKeyUp: Boolean = true,
     usePlatformDefaultWidth: Boolean = true,
     containerBrush: Brush? = null,
@@ -121,7 +122,9 @@ fun NuvioDialog(
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = NuvioTheme.colors.TextSecondary
+                        color = NuvioTheme.colors.TextSecondary,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = subtitleTextAlign
                     )
                 }
 

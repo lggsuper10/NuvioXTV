@@ -25,6 +25,7 @@ data class HomeUiState(
     val error: String? = null,
     val selectedItemId: String? = null,
     val installedAddonsCount: Int = 0,
+    val localSourceCount: Int = 0,
     val homeLayout: HomeLayout = HomeLayout.MODERN,
     val modernLandscapePostersEnabled: Boolean = false,
     val alwaysShowLandscapeClearlogo: Boolean = false,
