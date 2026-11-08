@@ -40,6 +40,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import com.nuvio.tv.core.network.IPv4FirstDns
 import com.nuvio.tv.core.network.NoDelaySocketFactory
+import com.nuvio.tv.core.smb.SmbConnectionManager
+import com.nuvio.tv.core.smb.SmbDataSource
 import com.nuvio.tv.data.local.PlayerSettings
 import com.nuvio.tv.data.local.VodCacheSizeMode
 import okhttp3.ConnectionPool
@@ -62,7 +64,10 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
-internal class PlayerMediaSourceFactory(private val context: Context) {
+internal class PlayerMediaSourceFactory(
+    private val context: Context,
+    private val smbConnectionManager: SmbConnectionManager
+) {
     private var customExtractorsFactory: ExtractorsFactory? = null
     private var customSubtitleParserFactory: SubtitleParser.Factory? = null
     private val loadErrorHandlingPolicy = PlayerLoadErrorHandlingPolicy()
@@ -223,9 +228,12 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
         // SAF content URIs are served by Android's ContentResolver through DefaultDataSource,
         // not by the HTTP range pipeline used for network streams.
         val isLocalContent = isLocalContentUrl(url)
+        val isSmbContent = isSmbUrl(url)
         val useChunkSessionSource = useParallelConnections && !isHls && !isDash && !isLocalContent
         parallelStartupPrefetchUnlocked.set(!useChunkSessionSource)
-        val networkProgressiveFactory: DataSource.Factory = if (useChunkSessionSource) {
+        val networkProgressiveFactory: DataSource.Factory = if (isSmbContent) {
+            SmbDataSource.Factory(smbConnectionManager)
+        } else if (useChunkSessionSource) {
             val sessionConnections = parallelConnectionCount
             val okHttpFactory = OkHttpDataSource.Factory(playbackHttpClient).apply {
                 setDefaultRequestProperties(sanitizedHeaders)
@@ -264,7 +272,8 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
         }
 
         // 2. VOD disk cache (opt-in).
-        val useVodCache = ENABLE_VOD_CACHE && vodCacheEnabled && !isHls && !isDash && shouldUseVodCache(url)
+        val useVodCache = ENABLE_VOD_CACHE && vodCacheEnabled && !isHls && !isDash &&
+            !isSmbContent && shouldUseVodCache(url)
         // A playback started inside the delay window would have its own data swept out from under it.
         pendingEvictionJob?.cancel()
         pendingEvictionJob = null
@@ -587,7 +596,11 @@ internal class PlayerMediaSourceFactory(private val context: Context) {
 
         internal fun isLocalContentUrl(url: String): Boolean {
             val scheme = Uri.parse(url).scheme?.lowercase(Locale.US)
-            return scheme == "content" || scheme == "file"
+            return scheme == "content" || scheme == "file" || scheme == "smb"
+        }
+
+        internal fun isSmbUrl(url: String): Boolean {
+            return Uri.parse(url).scheme?.lowercase(Locale.US) == "smb"
         }
 
         fun parseHeaders(headers: String?): Map<String, String> {

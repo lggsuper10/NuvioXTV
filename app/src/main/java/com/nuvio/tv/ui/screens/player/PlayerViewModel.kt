@@ -16,6 +16,7 @@ import com.nuvio.tv.core.player.StreamAutoPlayPolicy
 import com.nuvio.tv.core.tracking.TrackingScrobbleCoordinator
 import com.nuvio.tv.core.torrent.TorrentService
 import com.nuvio.tv.core.torrent.TorrentSettings
+import com.nuvio.tv.core.smb.SmbConnectionManager
 import com.nuvio.tv.data.local.AudioDelayRouteDataStore
 import com.nuvio.tv.data.local.PlayerSettingsDataStore
 import com.nuvio.tv.data.local.DeviceLocalPlayerPreferences
@@ -100,6 +101,7 @@ class PlayerViewModel @Inject constructor(
     private val tvRecommendationManager: com.nuvio.tv.core.recommendations.TvRecommendationManager,
     private val serverPlayback: com.nuvio.tv.data.mediaserver.ServerPlayback,
     private val serverStreams: com.nuvio.tv.data.mediaserver.ServerStreams,
+    private val smbConnectionManager: SmbConnectionManager,
     partyRepository: com.nuvio.tv.core.party.PartyRepository,
     profileManager: com.nuvio.tv.core.profile.ProfileManager,
     savedStateHandle: SavedStateHandle
@@ -150,6 +152,7 @@ class PlayerViewModel @Inject constructor(
         serverPlayback = serverPlayback,
         serverStreams = serverStreams,
         party = partyRepository,
+        smbConnectionManager = smbConnectionManager,
         profileId = savedStateHandle.get<String>("profileId")?.toIntOrNull()
             ?: profileManager.activeProfileId.value,
         savedStateHandle = savedStateHandle,

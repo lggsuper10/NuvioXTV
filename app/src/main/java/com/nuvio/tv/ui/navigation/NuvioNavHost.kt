@@ -303,6 +303,9 @@ private fun PlaybackNavHost(
                 },
                 onNavigateToLocalMedia = {
                     navController.navigate(Screen.LocalMedia.route)
+                },
+                onNavigateToSmb = {
+                    navController.navigate(Screen.LocalMediaSmb.route)
                 }
             )
         }
@@ -1301,6 +1304,13 @@ private fun PlaybackNavHost(
 
         composable(Screen.LocalMedia.route) {
             LocalMediaScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.LocalMediaSmb.route) {
+            LocalMediaScreen(
+                onBack = { navController.popBackStack() },
+                openSmbOnStart = true
+            )
         }
 
         composable(

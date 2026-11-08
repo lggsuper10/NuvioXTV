@@ -20,6 +20,7 @@ import com.nuvio.tv.core.cloud.CloudLibraryPlaybackProgressStore
 import com.nuvio.tv.core.cloud.CloudLibraryPlaybackSessionStore
 import com.nuvio.tv.core.cloud.CloudLibraryRepository
 import com.nuvio.tv.core.plugin.PluginManager
+import com.nuvio.tv.core.smb.SmbConnectionManager
 import com.nuvio.tv.core.tracking.TrackingMediaReference
 import com.nuvio.tv.core.tracking.TrackingScrobbleCoordinator
 import com.nuvio.tv.core.torrent.TorrentService
@@ -107,6 +108,7 @@ class PlayerRuntimeController(
     internal val serverPlayback: ServerPlayback,
     internal val serverStreams: ServerStreams,
     internal val party: com.nuvio.tv.core.party.PartyRepository,
+    internal val smbConnectionManager: SmbConnectionManager,
     internal val profileId: Int,
     savedStateHandle: SavedStateHandle,
     internal val scope: CoroutineScope
@@ -194,7 +196,10 @@ class PlayerRuntimeController(
     internal val rememberedAudioLanguage: String? = navigationArgs.rememberedAudioLanguage
     internal val rememberedAudioName: String? = navigationArgs.rememberedAudioName
     internal val cloudSessionToken: String? = navigationArgs.cloudSessionToken
-    internal val mediaSourceFactory = PlayerMediaSourceFactory(context.applicationContext).apply {
+    internal val mediaSourceFactory = PlayerMediaSourceFactory(
+        context.applicationContext,
+        smbConnectionManager
+    ).apply {
         onStreamRedirected = { requestedUrl, resolvedUrl -> handleStreamRedirect(requestedUrl, resolvedUrl) }
     }
 

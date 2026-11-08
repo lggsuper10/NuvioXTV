@@ -37,6 +37,16 @@
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
 
+# SMBJ / SMB client. SMBJ loads security providers and its event bus reflectively.
+-keep class com.hierynomus.** { *; }
+-keep class net.engio.mbassy.** { *; }
+-keep class org.bouncycastle.** { *; }
+-keep class org.slf4j.** { *; }
+-dontwarn com.hierynomus.**
+-dontwarn net.engio.mbassy.**
+-dontwarn org.slf4j.**
+-dontwarn javax.naming.**
+
 # ── Data classes (DTOs) ────────────────────────────────────────────────────────
 # Keep all DTO classes used with Moshi/Retrofit
 -keep class com.nuvio.tv.data.remote.dto.** { *; }

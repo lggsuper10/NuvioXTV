@@ -305,7 +305,7 @@ android {
         abi {
             isEnable = !buildingAppBundle
             reset()
-            include("armeabi-v7a")
+            include("armeabi-v7a", "x86_64")
             isUniversalApk = false
         }
     }
@@ -581,6 +581,7 @@ dependencies {
     add("fullImplementation", libs.crypto.js)
     // QR code + local server for addon management
     implementation(libs.nanohttpd)
+    implementation(libs.smbj)
     implementation(libs.zxing.core)
 
 

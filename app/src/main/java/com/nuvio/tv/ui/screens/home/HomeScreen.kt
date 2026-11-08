@@ -49,6 +49,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
+import androidx.tv.material3.Border
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -71,7 +72,6 @@ import com.nuvio.tv.core.tracking.LOCAL_LIBRARY_LIST_KEY
 import com.nuvio.tv.core.tracking.supportsMembershipFor
 import com.nuvio.tv.data.local.StartupAuthNotice
 import com.nuvio.tv.ui.components.posteroptions.TrackingRemovalConfirmationDialog
-import com.nuvio.tv.ui.theme.NuvioPrimitives
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
@@ -104,7 +104,8 @@ fun HomeScreen(
     onContinueWatchingPlayManually: (ContinueWatchingItem) -> Unit = onContinueWatchingClick,
     onNavigateToCatalogSeeAll: (String, String, String) -> Unit = { _, _, _ -> },
     onNavigateToFolderDetail: (String, String) -> Unit = { _, _ -> },
-    onNavigateToLocalMedia: () -> Unit = {}
+    onNavigateToLocalMedia: () -> Unit = {},
+    onNavigateToSmb: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -280,7 +281,10 @@ fun HomeScreen(
                 !hasAnyContent &&
                 !uiState.isLoading &&
                 homeStableGateReleased -> {
-                HomeLocalMediaEmptyState(onAddLocalFolder = onNavigateToLocalMedia)
+                HomeLocalMediaEmptyState(
+                    onAddLocalFolder = onNavigateToLocalMedia,
+                    onAddSmb = onNavigateToSmb
+                )
             }
 
             uiState.error == noAddonsError && uiState.catalogRows.isEmpty() -> {
@@ -814,9 +818,11 @@ private fun HomePosterOptionsDialog(
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun HomeLocalMediaEmptyState(
-    onAddLocalFolder: () -> Unit
+    onAddLocalFolder: () -> Unit,
+    onAddSmb: () -> Unit
 ) {
     val addFolderFocusRequester = remember { FocusRequester() }
+    val actionShape = RoundedCornerShape(10.dp)
 
     LaunchedEffect(Unit) {
         runCatching { addFolderFocusRequester.requestFocus() }
@@ -853,15 +859,21 @@ private fun HomeLocalMediaEmptyState(
             Button(
                 onClick = onAddLocalFolder,
                 modifier = Modifier
-                    .widthIn(min = 260.dp)
+                    .widthIn(min = 260.dp, max = 300.dp)
                     .height(56.dp)
                     .focusRequester(addFolderFocusRequester),
-                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
+                shape = ButtonDefaults.shape(actionShape),
                 colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.Success,
-                    contentColor = NuvioPrimitives.white,
-                    focusedContainerColor = NuvioPrimitives.green300,
-                    focusedContentColor = NuvioPrimitives.white
+                    containerColor = NuvioTheme.colors.BackgroundCard,
+                    contentColor = NuvioTheme.colors.TextPrimary,
+                    focusedContainerColor = NuvioTheme.colors.FocusBackground,
+                    focusedContentColor = NuvioTheme.colors.TextPrimary
+                ),
+                border = ButtonDefaults.border(
+                    focusedBorder = Border(
+                        border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
+                        shape = actionShape
+                    )
                 )
             ) {
                 Box(
@@ -871,7 +883,39 @@ private fun HomeLocalMediaEmptyState(
                     Text(
                         text = stringResource(R.string.home_empty_local_action),
                         textAlign = TextAlign.Center,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            Button(
+                onClick = onAddSmb,
+                modifier = Modifier
+                    .widthIn(min = 260.dp, max = 300.dp)
+                    .height(56.dp),
+                shape = ButtonDefaults.shape(actionShape),
+                colors = ButtonDefaults.colors(
+                    containerColor = NuvioTheme.colors.BackgroundCard,
+                    contentColor = NuvioTheme.colors.TextPrimary,
+                    focusedContainerColor = NuvioTheme.colors.FocusBackground,
+                    focusedContentColor = NuvioTheme.colors.TextPrimary
+                ),
+                border = ButtonDefaults.border(
+                    focusedBorder = Border(
+                        border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
+                        shape = actionShape
+                    )
+                )
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.home_empty_smb_action),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }

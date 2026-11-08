@@ -149,6 +149,7 @@ sealed class Screen(val route: String) {
     data object Library : Screen("library")
     data object Settings : Screen("settings")
     data object LocalMedia : Screen("local_media")
+    data object LocalMediaSmb : Screen("local_media_smb")
     data object Tracking : Screen("trakt")
     data object WatchParty : Screen("watch_party?code={code}") {
         fun createRoute(code: String = ""): String = "watch_party?code=$code"
