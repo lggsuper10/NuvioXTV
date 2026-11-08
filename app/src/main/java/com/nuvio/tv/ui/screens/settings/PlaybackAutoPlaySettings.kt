@@ -68,6 +68,7 @@ import com.nuvio.tv.data.local.NextEpisodeThresholdMode
 import com.nuvio.tv.data.local.StreamAutoPlayMode
 import com.nuvio.tv.data.local.StreamAutoPlaySource
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import kotlin.math.roundToInt
 import java.util.Locale
 
@@ -863,59 +864,36 @@ private fun StreamRegexDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Button(
+                    NuvioDialogButton(
+                        text = stringResource(R.string.action_cancel),
                         onClick = onDismiss,
-                        colors = ButtonDefaults.colors(
-                            containerColor = NuvioTheme.colors.BackgroundElevated,
-                            contentColor = NuvioTheme.colors.TextPrimary,
-                            focusedContainerColor = NuvioTheme.colors.FocusBackground,
-                            focusedContentColor = NuvioTheme.colors.Primary
-                        ),
-                        shape = ButtonDefaults.shape(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
-                    ) {
-                        Text(stringResource(R.string.action_cancel))
-                    }
-                    Spacer(modifier = Modifier.width(NuvioTheme.spacing.sm))
-                    Button(
+                        modifier = Modifier.weight(1f)
+                    )
+                    NuvioDialogButton(
+                        text = stringResource(R.string.action_none),
                         onClick = {
                             regex = ""
                             regexError = null
                         },
-                        colors = ButtonDefaults.colors(
-                            containerColor = NuvioTheme.colors.BackgroundElevated,
-                            contentColor = NuvioTheme.colors.TextPrimary,
-                            focusedContainerColor = NuvioTheme.colors.FocusBackground,
-                            focusedContentColor = NuvioTheme.colors.Primary
-                        ),
-                        shape = ButtonDefaults.shape(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
-                    ) {
-                        Text(stringResource(R.string.action_none))
-                    }
-                    Spacer(modifier = Modifier.width(NuvioTheme.spacing.sm))
-                    Button(
+                        modifier = Modifier.weight(1f)
+                    )
+                    NuvioDialogButton(
+                        text = stringResource(R.string.action_save),
                         onClick = {
                             val value = regex.trim()
                             if (value.isNotEmpty()) {
                                 val valid = runCatching { Regex(value, RegexOption.IGNORE_CASE) }.isSuccess
                                 if (!valid) {
                                     regexError = strInvalidRegex
-                                    return@Button
+                                    return@NuvioDialogButton
                                 }
                             }
                             onSave(value)
                         },
-                        colors = ButtonDefaults.colors(
-                            containerColor = NuvioTheme.colors.BackgroundCard,
-                            contentColor = NuvioTheme.colors.TextPrimary,
-                            focusedContainerColor = NuvioTheme.colors.FocusBackground,
-                            focusedContentColor = NuvioTheme.colors.Primary
-                        ),
-                        shape = ButtonDefaults.shape(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
-                    ) {
-                        Text(stringResource(R.string.action_save))
-                    }
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }

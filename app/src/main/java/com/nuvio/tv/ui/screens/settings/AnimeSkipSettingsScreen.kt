@@ -51,6 +51,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.nuvio.tv.R
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 
 @Composable
 fun AnimeSkipSettingsContent(
@@ -205,32 +206,23 @@ private fun AnimeSkipClientIdDialog(
             }
         }
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            Button(
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            NuvioDialogButton(
+                text = stringResource(R.string.action_cancel),
                 onClick = onDismiss,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundElevated,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                )
-            ) { Text(stringResource(R.string.action_cancel)) }
-            Spacer(modifier = Modifier.width(NuvioTheme.spacing.sm))
-            Button(
+                modifier = Modifier.weight(1f)
+            )
+            NuvioDialogButton(
+                text = stringResource(R.string.action_clear),
                 onClick = onClear,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundElevated,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                )
-            ) { Text(stringResource(R.string.action_clear)) }
-            Spacer(modifier = Modifier.width(NuvioTheme.spacing.sm))
-            Button(
+                modifier = Modifier.weight(1f)
+            )
+            NuvioDialogButton(
+                text = if (validating) stringResource(R.string.action_saving) else stringResource(R.string.action_save),
                 onClick = { if (!validating) viewModel.validateAndSave(value, onSaved) },
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                )
-            ) {
-                Text(if (validating) stringResource(R.string.action_saving) else stringResource(R.string.action_save))
-            }
+                enabled = !validating,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }

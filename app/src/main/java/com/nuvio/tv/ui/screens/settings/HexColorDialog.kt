@@ -34,6 +34,7 @@ import com.nuvio.tv.R
 import com.nuvio.tv.domain.model.formatHexColor
 import com.nuvio.tv.domain.model.parseHexColor
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.screens.detail.requestFocusAfterFrames
 import com.nuvio.tv.ui.theme.NuvioTheme
 
@@ -134,20 +135,14 @@ internal fun HexColorEditor(
             "0123456789ABCDEF".chunked(4).forEachIndexed { rowIndex, row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     row.forEachIndexed { columnIndex, character ->
-                        Button(
+                        NuvioDialogButton(
+                            text = character.toString(),
                             onClick = { enter(character) },
+                            height = 44.dp,
                             modifier = Modifier
-                                .weight(1f)
-                                .height(36.dp)
-                                .then(
-                                    if (rowIndex == 0 && columnIndex == 0) Modifier.focusRequester(firstKeyFocusRequester)
-                                    else Modifier
-                                )
-                        ) {
-                            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                Text(character.toString(), style = MaterialTheme.typography.bodyMedium)
-                            }
-                        }
+                                .weight(1f),
+                            focusRequester = if (rowIndex == 0 && columnIndex == 0) firstKeyFocusRequester else null
+                        )
                     }
                 }
             }
@@ -157,35 +152,36 @@ internal fun HexColorEditor(
             modifier = Modifier.settingsOptionRow(clearFocusRequester),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(
+            NuvioDialogButton(
+                text = stringResource(R.string.custom_theme_hex_clear),
                 onClick = { digits = ""; replaceOnInput = false },
-                modifier = Modifier.weight(1f).height(36.dp).focusRequester(clearFocusRequester)
-            ) { Text(stringResource(R.string.custom_theme_hex_clear)) }
-            Button(onClick = ::delete, modifier = Modifier.weight(1f).height(36.dp)) {
-                Text(stringResource(R.string.custom_theme_hex_delete))
-            }
+                height = 44.dp,
+                focusRequester = clearFocusRequester,
+                modifier = Modifier.weight(1f)
+            )
+            NuvioDialogButton(
+                text = stringResource(R.string.custom_theme_hex_delete),
+                onClick = ::delete,
+                height = 44.dp,
+                modifier = Modifier.weight(1f)
+            )
         }
         Row(
             modifier = Modifier.settingsOptionRow(cancelFocusRequester),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Button(
+            NuvioDialogButton(
+                text = stringResource(R.string.action_cancel),
                 onClick = onDismiss,
-                modifier = Modifier.weight(1f).height(36.dp).focusRequester(cancelFocusRequester)
-            ) {
-                Text(stringResource(R.string.action_cancel))
-            }
-            Button(
+                focusRequester = cancelFocusRequester,
+                modifier = Modifier.weight(1f)
+            )
+            NuvioDialogButton(
+                text = stringResource(R.string.custom_theme_use_color),
                 onClick = { color?.let(onConfirm) },
                 enabled = color != null,
-                modifier = Modifier.weight(1f).height(36.dp),
-                colors = ButtonDefaults.colors(
-                    containerColor = Color.White,
-                    contentColor = Color.Black,
-                    focusedContainerColor = Color.White,
-                    focusedContentColor = Color.Black
-                )
-            ) { Text(stringResource(R.string.custom_theme_use_color)) }
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }

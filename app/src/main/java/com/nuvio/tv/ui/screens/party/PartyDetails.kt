@@ -62,6 +62,8 @@ import com.nuvio.tv.core.party.ActiveParty
 import com.nuvio.tv.core.party.PartyMember
 import com.nuvio.tv.core.qr.QrCodeGenerator
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
+import com.nuvio.tv.ui.components.NuvioDialogConfirmationButtons
 import com.nuvio.tv.ui.screens.detail.formatPlaybackTime
 import com.nuvio.tv.ui.screens.detail.requestFocusAfterFrames
 import com.nuvio.tv.ui.screens.settings.SettingsActionRow
@@ -435,19 +437,12 @@ internal fun ConfirmDialog(
         title = title,
         subtitle = message,
     ) {
-        SettingsDialogActionRow {
-            Box(modifier = Modifier.focusRequester(cancelFocusRequester)) {
-                SettingsDialogActionButton(
-                    text = stringResource(R.string.action_cancel),
-                    onClick = onDismiss,
-                )
-            }
-            SettingsDialogActionButton(
-                text = confirmLabel,
-                onClick = onConfirm,
-                primary = true,
-            )
-        }
+        NuvioDialogConfirmationButtons(
+            confirmLabel = confirmLabel,
+            onConfirm = onConfirm,
+            onDismiss = onDismiss,
+            dismissFocusRequester = cancelFocusRequester,
+        )
     }
 }
 
@@ -497,14 +492,11 @@ private fun InviteDialog(
                 )
             }
         }
-        SettingsDialogActionRow {
-            Box(modifier = Modifier.focusRequester(closeFocusRequester)) {
-                SettingsDialogActionButton(
-                    text = stringResource(R.string.action_close),
-                    onClick = onDismiss,
-                    primary = true,
-                )
-            }
-        }
+        NuvioDialogButton(
+            text = stringResource(R.string.action_close),
+            onClick = onDismiss,
+            focusRequester = closeFocusRequester,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }

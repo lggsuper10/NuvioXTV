@@ -3,6 +3,7 @@
 package com.nuvio.tv.ui.screens.settings
 
 import com.nuvio.tv.ui.theme.NuvioTheme
+import com.nuvio.tv.ui.components.NuvioDialogButton
 
 import androidx.annotation.RawRes
 import androidx.compose.animation.animateColorAsState
@@ -79,8 +80,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.Border
-import androidx.tv.material3.Button
-import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardBorder
 import androidx.tv.material3.CardColors
@@ -1157,13 +1156,14 @@ internal fun <T> SettingsMultiChoiceDialog(
             }
             SettingsDialogActionRow {
                 SettingsDialogActionButton(
+                    modifier = Modifier.weight(1f),
                     text = stringResource(R.string.action_clear),
                     onClick = { selected.clear() }
                 )
                 SettingsDialogActionButton(
+                    modifier = Modifier.weight(1f),
                     text = stringResource(R.string.action_save),
                     onClick = { onValuesSelected(options.map { it.value }.filter { selected.contains(it) }) },
-                    primary = true
                 )
             }
         }
@@ -1177,7 +1177,7 @@ internal fun SettingsDialogActionRow(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm, horizontalAlignment),
+        horizontalArrangement = Arrangement.spacedBy(16.dp, horizontalAlignment),
         verticalAlignment = Alignment.CenterVertically,
         content = content
     )
@@ -1187,23 +1187,17 @@ internal fun SettingsDialogActionRow(
 internal fun SettingsDialogActionButton(
     text: String,
     onClick: () -> Unit,
-    primary: Boolean = false,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    requestInitialFocus: Boolean = false
 ) {
-    Button(
+    NuvioDialogButton(
+        text = text,
         onClick = onClick,
         enabled = enabled,
-        colors = ButtonDefaults.colors(
-            containerColor = if (primary) NuvioTheme.colors.FocusBackground else NuvioTheme.colors.BackgroundCard,
-            contentColor = NuvioTheme.colors.TextPrimary
-        )
-    ) {
-        Text(
-            text = text,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
+        requestInitialFocus = requestInitialFocus,
+        modifier = modifier
+    )
 }
 
 @Composable

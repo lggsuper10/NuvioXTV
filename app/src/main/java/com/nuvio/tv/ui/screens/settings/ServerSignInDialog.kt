@@ -109,14 +109,15 @@ internal fun ServerSignInDialog(
         }
         SettingsDialogActionRow {
             SettingsDialogActionButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.action_cancel),
                 onClick = onDismiss,
                 enabled = !state.connecting
             )
             SettingsDialogActionButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(if (state.connecting) R.string.servers_connecting else R.string.servers_connect),
                 onClick = connect,
-                primary = true,
                 enabled = canConnect
             )
         }

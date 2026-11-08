@@ -34,8 +34,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Border
-import androidx.tv.material3.Button
-import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -46,6 +44,7 @@ import com.nuvio.tv.R
 import com.nuvio.tv.domain.model.AppIconOption
 import com.nuvio.tv.launcher.AppIconSettingsState
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogConfirmationButtons
 import com.nuvio.tv.ui.screens.detail.requestFocusAfterFrames
 import com.nuvio.tv.ui.theme.NuvioTheme
 
@@ -112,12 +111,6 @@ internal fun AppIconChangeConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val confirmFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        confirmFocusRequester.requestFocusAfterFrames()
-    }
-
     NuvioDialog(
         onDismiss = onDismiss,
         title = stringResource(R.string.appearance_app_icon_confirmation_title),
@@ -125,35 +118,14 @@ internal fun AppIconChangeConfirmationDialog(
             R.string.appearance_app_icon_confirmation_message,
             option.localizedName()
         ),
+        width = 440.dp,
         suppressFirstKeyUp = false
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)
-        ) {
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                )
-            ) {
-                Text(stringResource(R.string.action_cancel))
-            }
-            Button(
-                onClick = onConfirm,
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(confirmFocusRequester),
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                )
-            ) {
-                Text(stringResource(android.R.string.ok))
-            }
-        }
+        NuvioDialogConfirmationButtons(
+            confirmLabel = stringResource(android.R.string.ok),
+            onConfirm = onConfirm,
+            onDismiss = onDismiss
+        )
     }
 }
 

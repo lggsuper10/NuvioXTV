@@ -49,6 +49,7 @@ import androidx.tv.material3.SwitchDefaults
 import androidx.tv.material3.Text
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.screens.account.InputField
 
 @Composable
@@ -410,30 +411,11 @@ private fun DebugDialogButton(
     text: String,
     onClick: () -> Unit
 ) {
-    var isFocused by remember { mutableStateOf(false) }
-
-    Card(
+    NuvioDialogButton(
+        text = text,
         onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .onFocusChanged { isFocused = it.isFocused },
-        colors = CardDefaults.colors(
-            containerColor = NuvioTheme.colors.BackgroundCard,
-            focusedContainerColor = NuvioTheme.colors.Secondary
-        ),
-        shape = CardDefaults.shape(RoundedCornerShape(NuvioTheme.radii.sm)),
-        scale = CardDefaults.scale(focusedScale = 1.0f)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (isFocused) NuvioTheme.colors.TextPrimary else NuvioTheme.colors.TextSecondary,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = NuvioTheme.spacing.md, horizontal = NuvioTheme.spacing.lg),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
-    }
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 @Composable

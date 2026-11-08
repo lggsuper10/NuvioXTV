@@ -193,16 +193,17 @@ internal fun MediaServerSettingsContent(
         ) {
             SettingsDialogActionRow {
                 SettingsDialogActionButton(
+                    modifier = Modifier.weight(1f),
                     text = stringResource(R.string.action_cancel),
                     onClick = { confirmRemove = false }
                 )
                 SettingsDialogActionButton(
+                    modifier = Modifier.weight(1f),
                     text = stringResource(R.string.servers_remove),
                     onClick = {
                         confirmRemove = false
                         viewModel.remove(connection.id)
                     },
-                    primary = true
                 )
             }
         }

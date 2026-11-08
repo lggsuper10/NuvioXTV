@@ -310,6 +310,7 @@ fun TrackingSettingsContent(
         ) {
             SettingsDialogActionRow {
                 SettingsDialogActionButton(
+                    modifier = Modifier.weight(1f),
                     text = stringResource(R.string.action_cancel),
                     onClick = {
                         disconnectProvider = null
@@ -317,6 +318,7 @@ fun TrackingSettingsContent(
                     }
                 )
                 SettingsDialogActionButton(
+                    modifier = Modifier.weight(1f),
                     text = stringResource(R.string.trakt_disconnect),
                     onClick = {
                         disconnectProvider = null
@@ -326,7 +328,6 @@ fun TrackingSettingsContent(
                             TrackingProviderId.MDBLIST -> mdbListViewModel.onDisconnect()
                         }
                     },
-                    primary = true
                 )
             }
         }

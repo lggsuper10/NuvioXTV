@@ -1129,66 +1129,39 @@ fun ContinueWatchingOptionsDialog(
         is ContinueWatchingItem.NextUp -> item.info.name
     }
 
-    val detailsFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        detailsFocusRequester.requestFocus()
-    }
-
     NuvioDialog(
         onDismiss = onDismiss,
         title = title,
         subtitle = stringResource(R.string.cw_dialog_subtitle)
     ) {
-        Button(
+        NuvioDialogButton(
+            text = stringResource(R.string.cw_action_go_to_details),
             onClick = onDetails,
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(detailsFocusRequester),
-            colors = ButtonDefaults.colors(
-                containerColor = NuvioTheme.colors.BackgroundCard,
-                contentColor = NuvioTheme.colors.TextPrimary
-            )
-        ) {
-            Text(stringResource(R.string.cw_action_go_to_details))
-        }
+            requestInitialFocus = true,
+            modifier = Modifier.fillMaxWidth()
+        )
 
         if (showPlayManually && isPlayEnabled) {
-            Button(
+            NuvioDialogButton(
+                text = stringResource(R.string.play_manually),
                 onClick = onPlayManually,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                ),
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.play_manually))
-            }
+            )
         }
 
         if (item is ContinueWatchingItem.InProgress && isPlayEnabled) {
-            Button(
+            NuvioDialogButton(
+                text = stringResource(R.string.cw_action_start_from_beginning),
                 onClick = onStartFromBeginning,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                ),
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.cw_action_start_from_beginning))
-            }
+            )
         }
 
-        Button(
+        NuvioDialogButton(
+            text = stringResource(R.string.cw_action_remove),
             onClick = onRemove,
-            colors = ButtonDefaults.colors(
-                containerColor = NuvioTheme.colors.BackgroundCard,
-                contentColor = NuvioTheme.colors.TextPrimary
-            ),
             modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(stringResource(R.string.cw_action_remove))
-        }
+        )
     }
 }
 

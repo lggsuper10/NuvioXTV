@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -64,6 +65,7 @@ import com.nuvio.tv.ui.components.LocalStartupLoadingState
 import com.nuvio.tv.ui.components.LocalStartupSplashEnabled
 import com.nuvio.tv.ui.components.shouldShowHomeStartupLoader
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.components.PosterCardDefaults
 import com.nuvio.tv.ui.components.PosterCardStyle
 import androidx.compose.ui.res.stringResource
@@ -747,70 +749,45 @@ private fun HomePosterOptionsDialog(
     onToggleLibrary: () -> Unit,
     onToggleWatched: () -> Unit
 ) {
-    val primaryFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        primaryFocusRequester.requestFocus()
-    }
-
     NuvioDialog(
         onDismiss = onDismiss,
         title = title,
         subtitle = stringResource(R.string.home_poster_dialog_subtitle)
     ) {
-        Button(
+        NuvioDialogButton(
+            text = stringResource(R.string.cw_action_go_to_details),
             onClick = onDetails,
+            requestInitialFocus = true,
             modifier = Modifier
                 .fillMaxWidth()
-                .focusRequester(primaryFocusRequester),
-            colors = ButtonDefaults.colors(
-                containerColor = NuvioTheme.colors.BackgroundCard,
-                contentColor = NuvioTheme.colors.TextPrimary
-            )
-        ) {
-            Text(stringResource(R.string.cw_action_go_to_details))
-        }
+        )
 
-        Button(
+        NuvioDialogButton(
+            text = if (showManageLists) {
+                stringResource(R.string.library_manage_lists)
+            } else {
+                if (isInLibrary) {
+                    stringResource(R.string.hero_remove_from_library)
+                } else {
+                    stringResource(R.string.hero_add_to_library)
+                }
+            },
             onClick = onToggleLibrary,
             enabled = !isLibraryPending,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.colors(
-                containerColor = NuvioTheme.colors.BackgroundCard,
-                contentColor = NuvioTheme.colors.TextPrimary
-            )
-        ) {
-            Text(
-                if (showManageLists) {
-                    stringResource(R.string.library_manage_lists)
-                } else {
-                    if (isInLibrary) {
-                        stringResource(R.string.hero_remove_from_library)
-                    } else {
-                        stringResource(R.string.hero_add_to_library)
-                    }
-                }
-            )
-        }
+            modifier = Modifier.fillMaxWidth()
+        )
 
         if (isMovie || isSeries) {
-            Button(
+            NuvioDialogButton(
+                text = if (isWatched) {
+                    stringResource(R.string.hero_mark_unwatched)
+                } else {
+                    stringResource(R.string.hero_mark_watched)
+                },
                 onClick = onToggleWatched,
                 enabled = !isWatchedPending,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                )
-            ) {
-                Text(
-                    if (isWatched) {
-                        stringResource(R.string.hero_mark_unwatched)
-                    } else {
-                        stringResource(R.string.hero_mark_watched)
-                    }
-                )
-            }
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -860,20 +837,14 @@ private fun HomeLocalMediaEmptyState(
                 onClick = onAddLocalFolder,
                 modifier = Modifier
                     .widthIn(min = 260.dp, max = 300.dp)
-                    .height(56.dp)
+                    .height(52.dp)
                     .focusRequester(addFolderFocusRequester),
                 shape = ButtonDefaults.shape(actionShape),
                 colors = ButtonDefaults.colors(
                     containerColor = NuvioTheme.colors.BackgroundCard,
                     contentColor = NuvioTheme.colors.TextPrimary,
-                    focusedContainerColor = NuvioTheme.colors.FocusBackground,
-                    focusedContentColor = NuvioTheme.colors.TextPrimary
-                ),
-                border = ButtonDefaults.border(
-                    focusedBorder = Border(
-                        border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                        shape = actionShape
-                    )
+                    focusedContainerColor = NuvioTheme.colors.Secondary,
+                    focusedContentColor = NuvioTheme.colors.OnSecondary
                 )
             ) {
                 Box(
@@ -892,19 +863,13 @@ private fun HomeLocalMediaEmptyState(
                 onClick = onAddSmb,
                 modifier = Modifier
                     .widthIn(min = 260.dp, max = 300.dp)
-                    .height(56.dp),
+                    .height(52.dp),
                 shape = ButtonDefaults.shape(actionShape),
                 colors = ButtonDefaults.colors(
                     containerColor = NuvioTheme.colors.BackgroundCard,
                     contentColor = NuvioTheme.colors.TextPrimary,
-                    focusedContainerColor = NuvioTheme.colors.FocusBackground,
-                    focusedContentColor = NuvioTheme.colors.TextPrimary
-                ),
-                border = ButtonDefaults.border(
-                    focusedBorder = Border(
-                        border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                        shape = actionShape
-                    )
+                    focusedContainerColor = NuvioTheme.colors.Secondary,
+                    focusedContentColor = NuvioTheme.colors.OnSecondary
                 )
             ) {
                 Box(
@@ -935,12 +900,6 @@ private fun HomeLibraryListPickerDialog(
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val primaryFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        primaryFocusRequester.requestFocus()
-    }
-
     NuvioDialog(
         onDismiss = onDismiss,
         title = title,
@@ -963,44 +922,26 @@ private fun HomeLibraryListPickerDialog(
         ) {
             items(tabs, key = { it.key }) { tab ->
                 val selected = membership[tab.key] == true
-                val titleText = if (selected) "\u2713 ${tab.localizedMembershipTitle()}" else tab.localizedMembershipTitle()
-                Button(
+                NuvioDialogButton(
+                    text = tab.localizedMembershipTitle(),
                     onClick = { onToggle(tab.key) },
                     enabled = !isPending,
-                    modifier = if (tab.key == tabs.firstOrNull()?.key) {
-                        Modifier
-                            .fillMaxWidth()
-                            .focusRequester(primaryFocusRequester)
-                    } else {
-                        Modifier.fillMaxWidth()
-                    },
-                    colors = ButtonDefaults.colors(
-                        containerColor = if (selected) NuvioTheme.colors.FocusBackground else NuvioTheme.colors.BackgroundCard,
-                        contentColor = NuvioTheme.colors.TextPrimary
-                    )
-                ) {
-                    Text(
-                        text = titleText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                    selected = selected,
+                    requestInitialFocus = tab.key == tabs.firstOrNull()?.key,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
 
         Divider(color = NuvioTheme.colors.Border, thickness = NuvioTheme.spacing.hairline)
 
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-            Button(
+            NuvioDialogButton(
+                text = if (isPending) stringResource(R.string.action_saving) else stringResource(R.string.action_save),
                 onClick = onSave,
                 enabled = !isPending,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                )
-            ) {
-                Text(if (isPending) stringResource(R.string.action_saving) else stringResource(R.string.action_save))
-            }
+                modifier = Modifier.width(160.dp)
+            )
         }
     }
 }

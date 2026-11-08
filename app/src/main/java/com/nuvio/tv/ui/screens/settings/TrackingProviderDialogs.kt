@@ -63,6 +63,7 @@ import com.nuvio.tv.data.simkl.SIMKL_AUTOMATIC_REFRESH_INTERVAL_MINUTES
 import com.nuvio.tv.data.simkl.SimklConnectionMode
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.theme.NuvioMotion
 import com.nuvio.tv.ui.theme.NuvioPrimitives
 import com.nuvio.tv.ui.theme.NuvioTheme
@@ -423,21 +424,22 @@ internal fun TrackingDeviceAuthContent(
 
     SettingsDialogActionRow(horizontalAlignment = Alignment.CenterHorizontally) {
         SettingsDialogActionButton(
+            modifier = Modifier.weight(1f),
             text = stringResource(R.string.action_cancel),
             onClick = onDismiss
         )
         if (!isLoading && userCode.isNullOrBlank()) {
             SettingsDialogActionButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.action_retry),
                 onClick = onStartConnection,
-                primary = true,
                 enabled = credentialsConfigured
             )
         } else if (!isLoading && !isPolling && errorMessage != null && !userCode.isNullOrBlank()) {
             SettingsDialogActionButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.action_retry),
                 onClick = onRetryPolling,
-                primary = true
             )
         }
     }
@@ -685,33 +687,16 @@ private fun TrackingBrandPrimaryButton(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
-    Button(
+    NuvioDialogButton(
+        text = label,
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        colors = ButtonDefaults.colors(
-            containerColor = Color.White,
-            focusedContainerColor = Color.White,
-            contentColor = TrackingBrandButtonContent,
-            focusedContentColor = TrackingBrandButtonContent,
-            disabledContainerColor = Color.White.copy(alpha = 0.34f),
-            disabledContentColor = Color.White.copy(alpha = 0.7f)
-        ),
-        scale = ButtonDefaults.scale(focusedScale = 1.02f),
-        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md)),
-        contentPadding = PaddingValues(0.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        modifier = Modifier.fillMaxWidth(),
+        leadingContent = {
             if (loading) {
                 LoadingIndicator(
                     modifier = Modifier.size(20.dp),
-                    color = TrackingBrandButtonContent
+                    color = NuvioTheme.colors.TextPrimary
                 )
             } else {
                 Icon(
@@ -720,14 +705,8 @@ private fun TrackingBrandPrimaryButton(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
-            )
         }
-    }
+    )
 }
 
 @Composable
@@ -738,33 +717,12 @@ private fun TrackingBrandFooterButton(
     enabled: Boolean = true,
     fillContentWidth: Boolean = false
 ) {
-    Button(
+    NuvioDialogButton(
+        text = text,
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier,
-        colors = ButtonDefaults.colors(
-            containerColor = Color.Transparent,
-            focusedContainerColor = Color.White.copy(alpha = 0.18f),
-            contentColor = Color.White.copy(alpha = 0.84f),
-            focusedContentColor = Color.White,
-            disabledContainerColor = Color.Transparent,
-            disabledContentColor = Color.White.copy(alpha = 0.38f)
-        ),
-        scale = ButtonDefaults.scale(focusedScale = 1.02f),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-    ) {
-        Box(
-            modifier = if (fillContentWidth) Modifier.fillMaxWidth() else Modifier,
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
+        modifier = if (fillContentWidth) modifier.fillMaxWidth() else modifier
+    )
 }
 
 @Composable

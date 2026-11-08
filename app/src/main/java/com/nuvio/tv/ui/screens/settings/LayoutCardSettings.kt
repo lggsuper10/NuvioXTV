@@ -71,6 +71,7 @@ import com.nuvio.tv.domain.model.FocusedPosterTrailerPlaybackTarget
 import com.nuvio.tv.domain.model.HomeLayout
 import com.nuvio.tv.ui.components.CardCwStylePreview
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.components.PosterCwStylePreview
 import com.nuvio.tv.ui.components.WideCwStylePreview
 import com.nuvio.tv.ui.components.cardDepthVisual
@@ -724,32 +725,11 @@ private fun CardDepthResetButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(SettingsSecondaryCardRadius)
-    Button(
+    NuvioDialogButton(
+        text = stringResource(R.string.layout_reset_default),
         onClick = onClick,
-        modifier = modifier,
-        shape = ButtonDefaults.shape(shape = shape),
-        colors = ButtonDefaults.colors(
-            containerColor = NuvioTheme.colors.Background,
-            focusedContainerColor = NuvioTheme.colors.Background
-        ),
-        border = ButtonDefaults.border(
-            border = Border(
-                border = BorderStroke(NuvioTheme.spacing.hairline, NuvioTheme.colors.Border),
-                shape = shape
-            ),
-            focusedBorder = Border(
-                border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                shape = shape
-            )
-        )
-    ) {
-        Text(
-            text = stringResource(R.string.layout_reset_default),
-            style = MaterialTheme.typography.titleMedium,
-            color = NuvioTheme.colors.TextPrimary
-        )
-    }
+        modifier = modifier
+    )
 }
 
 @Composable

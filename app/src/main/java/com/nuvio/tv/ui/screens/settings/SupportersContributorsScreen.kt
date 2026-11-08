@@ -83,6 +83,7 @@ import com.nuvio.tv.data.repository.GitHubContributor
 import com.nuvio.tv.data.repository.SupporterMember
 import com.nuvio.tv.domain.model.MemberTier
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.screens.detail.requestFocusAfterFrames
 import java.time.Instant
 import java.time.ZoneId
@@ -1056,39 +1057,25 @@ private fun SponsorDetailsDialog(
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)) {
-            Button(
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            NuvioDialogButton(
+                text = stringResource(R.string.sponsors_open_channel),
                 onClick = {
-                    val channelUrl = sponsor.channelUrl ?: return@Button
+                    val channelUrl = sponsor.channelUrl ?: return@NuvioDialogButton
                     runCatching {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(channelUrl)))
                     }
                 },
                 enabled = sponsor.channelUrl != null,
-                modifier = Modifier.focusRequester(primaryFocusRequester),
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.Secondary,
-                    focusedContainerColor = NuvioTheme.colors.SecondaryVariant,
-                    contentColor = NuvioTheme.colors.OnSecondary,
-                    focusedContentColor = NuvioTheme.colors.OnSecondaryVariant
-                ),
-                shape = ButtonDefaults.shape(RoundedCornerShape(50))
-            ) {
-                Text(text = stringResource(R.string.sponsors_open_channel))
-            }
+                focusRequester = primaryFocusRequester,
+                modifier = Modifier.weight(1f)
+            )
 
-            Button(
+            NuvioDialogButton(
+                text = stringResource(R.string.action_close),
                 onClick = onDismiss,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    focusedContainerColor = NuvioTheme.colors.FocusBackground,
-                    contentColor = NuvioTheme.colors.TextPrimary,
-                    focusedContentColor = NuvioTheme.colors.Primary
-                ),
-                shape = ButtonDefaults.shape(RoundedCornerShape(50))
-            ) {
-                Text(text = stringResource(R.string.action_close))
-            }
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -1131,37 +1118,23 @@ private fun SupporterDetailsDialog(
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)) {
-            Button(
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            NuvioDialogButton(
+                text = stringResource(R.string.supporters_open_donations),
                 onClick = {
                     runCatching {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(SUPPORT_URL)))
                     }
                 },
-                modifier = Modifier.focusRequester(primaryFocusRequester),
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.Secondary,
-                    focusedContainerColor = NuvioTheme.colors.SecondaryVariant,
-                    contentColor = NuvioTheme.colors.OnSecondary,
-                    focusedContentColor = NuvioTheme.colors.OnSecondaryVariant
-                ),
-                shape = ButtonDefaults.shape(RoundedCornerShape(50))
-            ) {
-                Text(text = stringResource(R.string.supporters_open_donations))
-            }
+                focusRequester = primaryFocusRequester,
+                modifier = Modifier.weight(1f)
+            )
 
-            Button(
+            NuvioDialogButton(
+                text = stringResource(R.string.action_close),
                 onClick = onDismiss,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    focusedContainerColor = NuvioTheme.colors.FocusBackground,
-                    contentColor = NuvioTheme.colors.TextPrimary,
-                    focusedContentColor = NuvioTheme.colors.Primary
-                ),
-                shape = ButtonDefaults.shape(RoundedCornerShape(50))
-            ) {
-                Text(text = stringResource(R.string.action_close))
-            }
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -1240,10 +1213,11 @@ private fun ContributorDetailsDialog(
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)) {
-            Button(
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            NuvioDialogButton(
+                text = stringResource(R.string.contributors_open_github),
                 onClick = {
-                    val profileUrl = contributor.profileUrl ?: return@Button
+                    val profileUrl = contributor.profileUrl ?: return@NuvioDialogButton
                     runCatching {
                         context.startActivity(
                             Intent(Intent.ACTION_VIEW, Uri.parse(profileUrl))
@@ -1251,53 +1225,29 @@ private fun ContributorDetailsDialog(
                     }
                 },
                 enabled = contributor.profileUrl != null,
-                modifier = Modifier.focusRequester(primaryFocusRequester),
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.Secondary,
-                    focusedContainerColor = NuvioTheme.colors.SecondaryVariant,
-                    contentColor = NuvioTheme.colors.OnSecondary,
-                    focusedContentColor = NuvioTheme.colors.OnSecondaryVariant
-                ),
-                shape = ButtonDefaults.shape(RoundedCornerShape(50))
-            ) {
-                Text(text = stringResource(R.string.contributors_open_github))
-            }
+                focusRequester = primaryFocusRequester,
+                modifier = Modifier.weight(1f)
+            )
 
             supportLink?.kofiUrl?.let {
-                Button(
-                    onClick = { showSupportQr = !showSupportQr },
-                    colors = ButtonDefaults.colors(
-                        containerColor = NuvioTheme.colors.BackgroundCard,
-                        focusedContainerColor = NuvioTheme.colors.FocusBackground,
-                        contentColor = NuvioTheme.colors.TextPrimary,
-                        focusedContentColor = NuvioTheme.colors.Primary
+                NuvioDialogButton(
+                    text = stringResource(
+                        if (showSupportQr) {
+                            R.string.contributors_hide_kofi_qr
+                        } else {
+                            R.string.contributors_show_kofi_qr
+                        }
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(50))
-                ) {
-                    Text(
-                        text = stringResource(
-                            if (showSupportQr) {
-                                R.string.contributors_hide_kofi_qr
-                            } else {
-                                R.string.contributors_show_kofi_qr
-                            }
-                        )
-                    )
-                }
+                    onClick = { showSupportQr = !showSupportQr },
+                    modifier = Modifier.weight(1f)
+                )
             }
 
-            Button(
+            NuvioDialogButton(
+                text = stringResource(R.string.action_close),
                 onClick = onDismiss,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    focusedContainerColor = NuvioTheme.colors.FocusBackground,
-                    contentColor = NuvioTheme.colors.TextPrimary,
-                    focusedContentColor = NuvioTheme.colors.Primary
-                ),
-                shape = ButtonDefaults.shape(RoundedCornerShape(50))
-            ) {
-                Text(text = stringResource(R.string.action_close))
-            }
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }

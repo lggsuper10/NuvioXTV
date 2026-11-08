@@ -31,6 +31,7 @@ import androidx.tv.material3.Text
 import com.nuvio.tv.R
 import com.nuvio.tv.domain.model.UserProfile
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.theme.NuvioTheme
 
 @Composable
@@ -123,19 +124,15 @@ internal fun ProfileSettingsSourceDialog(
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(
-                NuvioTheme.components.dialog.actionSpacing
-            )
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SourceProfileButton(
+            NuvioDialogButton(
                 text = stringResource(R.string.profile_cancel),
-                selected = false,
                 modifier = Modifier.weight(1f),
                 onClick = onDismiss
             )
-            SourceProfileButton(
+            NuvioDialogButton(
                 text = stringResource(R.string.profile_copy_settings_apply),
-                selected = true,
                 modifier = Modifier.weight(1f),
                 onClick = {
                     onConfirm(pendingSourceProfileId, pendingCopyProviderCredentials)
@@ -229,18 +226,15 @@ internal fun CopyProfileSettingsDialog(
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(
-                NuvioTheme.components.dialog.actionSpacing
-            )
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SourceProfileButton(
+            NuvioDialogButton(
                 text = stringResource(R.string.profile_cancel),
                 onClick = onDismiss,
                 enabled = !isCopying,
-                modifier = Modifier.weight(1f),
-                selected = false
+                modifier = Modifier.weight(1f)
             )
-            SourceProfileButton(
+            NuvioDialogButton(
                 text = if (isCopying) {
                     stringResource(R.string.profile_copy_settings_copying)
                 } else {
@@ -252,8 +246,7 @@ internal fun CopyProfileSettingsDialog(
                     }
                 },
                 enabled = selectedSourceId != null && !isCopying,
-                modifier = Modifier.weight(1f),
-                selected = true
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -267,39 +260,13 @@ private fun SourceProfileButton(
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    Button(
+    NuvioDialogButton(
+        text = text,
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.fillMaxWidth(),
-        colors = ButtonDefaults.colors(
-            containerColor = if (selected) {
-                NuvioTheme.colors.Secondary
-            } else {
-                NuvioTheme.colors.BackgroundCard
-            },
-            contentColor = if (selected) {
-                NuvioTheme.colors.OnSecondary
-            } else {
-                NuvioTheme.colors.TextPrimary
-            },
-            focusedContainerColor = if (selected) {
-                NuvioTheme.colors.SecondaryVariant
-            } else {
-                NuvioTheme.colors.FocusBackground
-            },
-            focusedContentColor = if (selected) {
-                NuvioTheme.colors.OnSecondaryVariant
-            } else {
-                NuvioTheme.colors.FocusContent
-            }
-        )
-    ) {
-        Text(
-            text = text,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
+        selected = selected
+    )
 }
 
 @Composable

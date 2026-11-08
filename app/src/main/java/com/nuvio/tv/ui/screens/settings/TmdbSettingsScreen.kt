@@ -53,6 +53,7 @@ import com.nuvio.tv.core.build.AppFeaturePolicy
 import com.nuvio.tv.data.local.AVAILABLE_TMDB_LANGUAGES
 import com.nuvio.tv.data.local.displayName
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 
 @Composable
 fun TmdbSettingsScreen(
@@ -416,37 +417,23 @@ private fun TmdbApiKeyDialog(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Button(
+            NuvioDialogButton(
+                text = stringResource(R.string.action_cancel),
                 onClick = onDismiss,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundElevated,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                )
-            ) {
-                Text(stringResource(R.string.action_cancel))
-            }
-            Spacer(modifier = Modifier.width(NuvioTheme.spacing.sm))
-            Button(
+                modifier = Modifier.weight(1f)
+            )
+            NuvioDialogButton(
+                text = stringResource(R.string.action_clear),
                 onClick = onClear,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundElevated,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                )
-            ) {
-                Text(stringResource(R.string.action_clear))
-            }
-            Spacer(modifier = Modifier.width(NuvioTheme.spacing.sm))
-            Button(
+                modifier = Modifier.weight(1f)
+            )
+            NuvioDialogButton(
+                text = stringResource(R.string.action_save),
                 onClick = { onSave(value) },
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                )
-            ) {
-                Text(stringResource(R.string.action_save))
-            }
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }

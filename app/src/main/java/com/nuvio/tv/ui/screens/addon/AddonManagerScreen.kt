@@ -110,6 +110,7 @@ import com.nuvio.tv.domain.model.Addon
 import com.nuvio.tv.domain.model.ExperienceMode
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogConfirmationButtons
 import com.nuvio.tv.ui.util.contentTextDirection
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -627,28 +628,16 @@ fun AddonManagerScreen(
                 subtitle = stringResource(R.string.addon_delete_confirm_message),
                 suppressFirstKeyUp = false
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md, Alignment.End)
-                ) {
-                    Button(
-                        onClick = { addonUrlPendingDeletion = null },
-                        modifier = Modifier
-                            .focusRequester(deleteDialogFocusRequester)
-                            .semantics { role = Role.Button }
-                    ) {
-                        Text(stringResource(R.string.addon_delete_no))
-                    }
-                    Button(
-                        onClick = {
-                            viewModel.removeAddon(addonUrl)
-                            addonUrlPendingDeletion = null
-                        },
-                        modifier = Modifier.semantics { role = Role.Button }
-                    ) {
-                        Text(stringResource(R.string.addon_delete_yes))
-                    }
-                }
+                NuvioDialogConfirmationButtons(
+                    confirmLabel = stringResource(R.string.addon_delete_yes),
+                    onConfirm = {
+                        viewModel.removeAddon(addonUrl)
+                        addonUrlPendingDeletion = null
+                    },
+                    onDismiss = { addonUrlPendingDeletion = null },
+                    dismissLabel = stringResource(R.string.addon_delete_no),
+                    dismissFocusRequester = deleteDialogFocusRequester
+                )
             }
         }
 

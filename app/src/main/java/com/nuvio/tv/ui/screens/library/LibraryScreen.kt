@@ -97,6 +97,7 @@ import com.nuvio.tv.domain.model.LibrarySourceMode
 import com.nuvio.tv.domain.model.PosterShape
 import com.nuvio.tv.data.local.PlayerPreference
 import com.nuvio.tv.data.locallibrary.LocalSourceEntity
+import com.nuvio.tv.data.locallibrary.LocalSourceType
 import com.nuvio.tv.ui.components.EmptyScreenState
 import com.nuvio.tv.ui.components.GridContentCard
 import com.nuvio.tv.ui.screens.detail.requestFocusAfterFrames
@@ -108,6 +109,7 @@ import com.nuvio.tv.ui.components.PosterCardDefaults
 import com.nuvio.tv.domain.model.localizedTitle
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogConfirmationButtons
 import com.nuvio.tv.ui.theme.NuvioTheme
 import com.nuvio.tv.ui.util.localizedContentType
 import com.nuvio.tv.ui.util.localizedGenreLabel
@@ -367,7 +369,15 @@ fun LibraryScreen(
                 )
                 Text(
                     text = when {
-                        viewMode == LibraryViewMode.Local -> stringResource(R.string.library_local_media_button).uppercase()
+                        viewMode == LibraryViewMode.Local -> if (localLibrary.sources.isEmpty()) {
+                            ""
+                        } else {
+                            stringResource(
+                                R.string.library_media_source_summary,
+                                localLibrary.sources.size,
+                                localLibrary.sources.sumOf { it.itemCount }
+                            )
+                        }
                         viewMode == LibraryViewMode.Cloud -> stringResource(R.string.library_source_cloud).uppercase()
                         viewMode == LibraryViewMode.Servers -> stringResource(R.string.library_source_servers).uppercase()
                         uiState.sourceMode == LibrarySourceMode.TRAKT -> "TRAKT"
@@ -418,14 +428,16 @@ fun LibraryScreen(
                             )
                         }
                         }
-                        Button(
-                            onClick = onNavigateToLocalMedia,
-                            colors = ButtonDefaults.colors(
-                                containerColor = NuvioTheme.colors.BackgroundCard,
-                                contentColor = NuvioTheme.colors.TextPrimary
-                            )
-                        ) {
-                            Text(stringResource(R.string.library_local_media_button))
+                        if (viewMode == LibraryViewMode.Local) {
+                            Button(
+                                onClick = onNavigateToLocalMedia,
+                                colors = ButtonDefaults.colors(
+                                    containerColor = NuvioTheme.colors.BackgroundCard,
+                                    contentColor = NuvioTheme.colors.TextPrimary
+                                )
+                            ) {
+                                Text(stringResource(R.string.library_manage_sources))
+                            }
                         }
                     }
                 }
@@ -505,6 +517,7 @@ fun LibraryScreen(
                     LocalLibraryEmptyState(
                         title = stringResource(R.string.local_library_empty_title),
                         subtitle = stringResource(R.string.local_library_empty_subtitle),
+                        action = stringResource(R.string.local_library_manage_folders),
                         onAddFolder = onNavigateToLocalMedia
                     )
                 }
@@ -589,12 +602,15 @@ fun LibraryScreen(
 
             if (uiState.visibleItems.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    val selectedTypeLabel = uiState.selectedTypeTab?.let { localizedTypeLabel(it.key) }?.lowercase() ?: stringResource(R.string.library_type_items)
+                    val selectedTypeTab = uiState.selectedTypeTab
+                    val selectedTypeLabel = selectedTypeTab?.let { localizedTypeLabel(it.key) }?.lowercase() ?: stringResource(R.string.library_type_items)
                     val title = when {
                         uiState.sourceMode == LibrarySourceMode.TRAKT && !uiState.isTrackingAuthenticated -> stringResource(R.string.library_empty_trakt_not_auth_title)
                         uiState.sourceMode == LibrarySourceMode.SIMKL && !uiState.isTrackingAuthenticated -> stringResource(R.string.library_empty_simkl_not_auth_title)
                         uiState.sourceMode == LibrarySourceMode.TRAKT || uiState.sourceMode == LibrarySourceMode.MDBLIST -> stringResource(R.string.library_empty_trakt_title, selectedTypeLabel)
                         uiState.sourceMode == LibrarySourceMode.SIMKL -> stringResource(R.string.library_empty_simkl_title, selectedTypeLabel)
+                        selectedTypeTab == null || selectedTypeTab.key == LibraryTypeTab.ALL_KEY ->
+                            stringResource(R.string.library_empty_saved_title)
                         else -> stringResource(R.string.library_empty_local_title, selectedTypeLabel)
                     }
                     val subtitle = when {
@@ -857,6 +873,17 @@ fun LibraryScreen(
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
+private fun localSourceLabel(source: LocalSourceEntity): String = stringResource(
+    if (source.type == LocalSourceType.SMB) {
+        R.string.local_source_display_name_smb
+    } else {
+        R.string.local_source_display_name
+    },
+    source.name
+)
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
 private fun LocalLibraryFilterRow(
     state: LocalLibraryUiState,
     expandedPicker: String?,
@@ -913,12 +940,12 @@ private fun LocalLibraryFilterRow(
         LibraryDropdownPicker(
             modifier = Modifier.weight(1f),
             upFocusRequester = upFocusRequester,
-            title = stringResource(R.string.local_library_all_folders),
-            value = selectedSource?.name ?: allFolders,
+            title = stringResource(R.string.local_library_source_filter),
+            value = selectedSource?.let { localSourceLabel(it) } ?: allFolders,
             selectedValue = state.selectedSourceId?.toString() ?: ALL_FOLDERS_VALUE,
             expanded = expandedPicker == "local_source",
             options = listOf(LibraryOption(allFolders, ALL_FOLDERS_VALUE)) +
-                state.sources.map { LibraryOption(it.name, it.id.toString()) },
+                state.sources.map { LibraryOption(localSourceLabel(it), it.id.toString()) },
             onExpandedChange = { onExpandedChange("local_source", it) },
             onSelect = { option ->
                 onSelectSource(option.value.takeUnless { it == ALL_FOLDERS_VALUE }?.toLongOrNull())
@@ -999,7 +1026,7 @@ private fun LocalLibraryEmptyState(
                 contentColor = NuvioTheme.colors.TextPrimary
             )
         ) {
-            Text(action ?: stringResource(R.string.local_media_add_folder))
+            Text(action ?: stringResource(R.string.local_media_add_source))
         }
         Spacer(modifier = Modifier.height(NuvioTheme.spacing.lg))
     }
@@ -1048,7 +1075,7 @@ private fun LocalFolderCard(
             Spacer(modifier = Modifier.width(NuvioTheme.spacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = source.name,
+                    text = localSourceLabel(source),
                     style = MaterialTheme.typography.titleSmall,
                     color = NuvioTheme.colors.TextPrimary,
                     fontWeight = FontWeight.SemiBold,
@@ -1114,7 +1141,7 @@ private fun LibraryViewModeRow(
                 ) {
                     Text(
                         text = when (mode) {
-                            LibraryViewMode.Local -> stringResource(R.string.library_local_media_button)
+                            LibraryViewMode.Local -> stringResource(R.string.library_my_media_tab)
                             LibraryViewMode.Saved -> stringResource(R.string.library_source_saved)
                             LibraryViewMode.Cloud -> stringResource(R.string.library_source_cloud)
                             LibraryViewMode.Servers -> stringResource(R.string.library_source_servers)
@@ -1915,16 +1942,11 @@ private fun ConfirmDeleteDialog(
         subtitle = stringResource(R.string.library_delete_subtitle),
         width = 420.dp
     ) {
-        Button(
-            onClick = onConfirm,
-            enabled = !pending,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.colors(
-                containerColor = Color(0xFF4A2323),
-                contentColor = NuvioTheme.colors.TextPrimary
-            )
-        ) {
-            Text(stringResource(R.string.library_list_delete))
-        }
+        NuvioDialogConfirmationButtons(
+            confirmLabel = stringResource(R.string.library_list_delete),
+            onConfirm = onConfirm,
+            onDismiss = onCancel,
+            enabled = !pending
+        )
     }
 }

@@ -961,13 +961,14 @@ private fun DebridTextListDialog(
 
         SettingsDialogActionRow {
             SettingsDialogActionButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.action_clear),
                 onClick = { value = "" }
             )
             SettingsDialogActionButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.action_save),
                 onClick = { submit() },
-                primary = true
             )
         }
     }
@@ -1397,21 +1398,23 @@ private fun DebridDeviceAuthDialog(
 
         SettingsDialogActionRow(horizontalAlignment = Alignment.CenterHorizontally) {
             SettingsDialogActionButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.action_cancel),
                 onClick = onDismiss
             )
             if (isConnected) {
                 SettingsDialogActionButton(
+                    modifier = Modifier.weight(1f),
                     text = stringResource(R.string.debrid_disconnect),
                     onClick = {
                         onDisconnect()
                         onDismiss()
                     },
-                    primary = true
                 )
             }
             if (!isConnected && !isStarting && session == null) {
                 SettingsDialogActionButton(
+                    modifier = Modifier.weight(1f),
                     text = stringResource(R.string.action_retry),
                     onClick = { restartNonce += 1 }
                 )
@@ -1579,17 +1582,19 @@ private fun DebridApiKeyDialog(
 
         SettingsDialogActionRow {
             SettingsDialogActionButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.action_cancel),
                 onClick = onDismiss
             )
             SettingsDialogActionButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.action_clear),
                 onClick = onClear
             )
             SettingsDialogActionButton(
+                modifier = Modifier.weight(1f),
                 text = if (validating) stringResource(R.string.action_saving) else stringResource(R.string.action_save),
                 onClick = { submit() },
-                primary = true,
                 enabled = !validating
             )
         }

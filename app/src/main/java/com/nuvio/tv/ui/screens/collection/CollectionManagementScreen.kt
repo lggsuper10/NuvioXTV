@@ -71,6 +71,7 @@ import com.nuvio.tv.data.local.ValidationResult
 import com.nuvio.tv.domain.model.Collection
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogConfirmationButtons
 import com.nuvio.tv.ui.util.contentTextDirection
 import com.nuvio.tv.R
 import androidx.compose.ui.res.stringResource
@@ -299,25 +300,16 @@ fun CollectionManagementScreen(
             subtitle = stringResource(R.string.collections_delete_confirm_subtitle, collection.title),
             suppressFirstKeyUp = false
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md, Alignment.End)
-            ) {
-                NuvioButton(
-                    onClick = { collectionToDelete = null },
-                    modifier = Modifier.focusRequester(deleteDialogFocusRequester)
-                ) {
-                    Text(stringResource(R.string.collections_cancel))
-                }
-                NuvioButton(
-                    onClick = {
-                        viewModel.deleteCollection(collection.id)
-                        collectionToDelete = null
-                    }
-                ) {
-                    Text(stringResource(R.string.collections_delete_confirm))
-                }
-            }
+            NuvioDialogConfirmationButtons(
+                confirmLabel = stringResource(R.string.collections_delete_confirm),
+                onConfirm = {
+                    viewModel.deleteCollection(collection.id)
+                    collectionToDelete = null
+                },
+                onDismiss = { collectionToDelete = null },
+                dismissLabel = stringResource(R.string.collections_cancel),
+                dismissFocusRequester = deleteDialogFocusRequester
+            )
         }
     }
     }

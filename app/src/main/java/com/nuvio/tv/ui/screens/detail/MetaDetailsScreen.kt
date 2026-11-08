@@ -142,6 +142,7 @@ import com.nuvio.tv.domain.model.WatchProgress
 import com.nuvio.tv.ui.components.ErrorState
 import com.nuvio.tv.ui.components.MetaDetailsSkeleton
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.components.PlayManualOverrideDialog
 import com.nuvio.tv.ui.components.SynopsisOverlay
 import com.nuvio.tv.ui.components.TrailerPlayer
@@ -3487,12 +3488,6 @@ private fun LibraryListPickerDialog(
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val primaryFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        primaryFocusRequester.requestFocus()
-    }
-
     NuvioDialog(
         onDismiss = onDismiss,
         title = title,
@@ -3518,47 +3513,29 @@ private fun LibraryListPickerDialog(
                 // The membership state is exposed through semantics below instead of a leading
                 // glyph in the label, so screen readers hear one clean name plus the state.
                 val titleText = tab.localizedMembershipTitle()
-                val rowModifier = if (tab.key == tabs.firstOrNull()?.key) {
-                    Modifier
-                        .fillMaxWidth()
-                        .focusRequester(primaryFocusRequester)
-                } else {
-                    Modifier.fillMaxWidth()
-                }
-                Button(
+                NuvioDialogButton(
+                    text = titleText,
                     onClick = { onToggle(tab.key) },
                     enabled = !isPending,
-                    modifier = rowModifier.semantics {
+                    modifier = Modifier.fillMaxWidth().semantics {
                         role = Role.Checkbox
                         toggleableState = if (selected) ToggleableState.On else ToggleableState.Off
                     },
-                    colors = ButtonDefaults.colors(
-                        containerColor = if (selected) NuvioTheme.colors.FocusBackground else NuvioTheme.colors.BackgroundCard,
-                        contentColor = NuvioTheme.colors.TextPrimary
-                    )
-                ) {
-                    Text(
-                        text = titleText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                    requestInitialFocus = tab.key == tabs.firstOrNull()?.key,
+                    selected = selected
+                )
             }
         }
 
         HorizontalDivider(color = NuvioTheme.colors.Border, thickness = NuvioTheme.spacing.hairline)
 
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-            Button(
+            NuvioDialogButton(
+                text = if (isPending) stringResource(R.string.action_saving) else stringResource(R.string.action_save),
                 onClick = onSave,
                 enabled = !isPending,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                )
-            ) {
-                Text(if (isPending) stringResource(R.string.action_saving) else stringResource(R.string.action_save))
-            }
+                modifier = Modifier.width(160.dp)
+            )
         }
     }
 }

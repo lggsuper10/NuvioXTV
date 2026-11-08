@@ -47,6 +47,7 @@ import com.nuvio.tv.domain.model.LibraryListPrivacy
 import kotlinx.coroutines.delay
 import com.nuvio.tv.domain.model.localizedTitle
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.theme.NuvioTheme
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDirection
@@ -121,89 +122,69 @@ internal fun ManageListsDialog(
                     ) {
                         items(personalTabs, key = { it.key }) { tab ->
                             val selected = tab.key == selectedKey
-                            Button(
+                            NuvioDialogButton(
+                                text = tab.localizedTitle(),
                                 onClick = { onSelect(tab.key) },
                                 enabled = !pending,
                                 modifier = (if (tab.key == personalTabs.firstOrNull()?.key) {
                                     Modifier
                                         .fillMaxWidth()
-                                        .focusRequester(firstFocusRequester)
                                 } else {
                                     Modifier.fillMaxWidth()
                                 }).semantics {
                                     role = Role.Tab
                                     this.selected = selected
                                 },
-                                colors = ButtonDefaults.colors(
-                                    containerColor = if (selected) NuvioTheme.colors.FocusBackground else NuvioTheme.colors.BackgroundCard,
-                                    contentColor = NuvioTheme.colors.TextPrimary
-                                )
-                            ) {
-                                Text(
-                                    text = tab.localizedTitle(),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
+                                focusRequester = if (tab.key == personalTabs.firstOrNull()?.key) firstFocusRequester else null,
+                                selected = selected
+                            )
                         }
                     }
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    NuvioDialogButton(
+                        text = stringResource(R.string.library_list_create),
                         onClick = onCreate,
-                        modifier = if (personalTabs.isEmpty()) Modifier.focusRequester(firstFocusRequester) else Modifier,
+                        focusRequester = if (personalTabs.isEmpty()) firstFocusRequester else null,
                         enabled = !pending,
-                        colors = ButtonDefaults.colors(
-                            containerColor = NuvioTheme.colors.BackgroundCard,
-                            contentColor = NuvioTheme.colors.TextPrimary
-                        )
-                    ) { Text(stringResource(R.string.library_list_create)) }
-                    Button(
+                        modifier = Modifier.weight(1f)
+                    )
+                    NuvioDialogButton(
+                        text = stringResource(R.string.library_list_edit),
                         onClick = onEdit,
                         enabled = !pending && selectedKey != null,
-                        colors = ButtonDefaults.colors(
-                            containerColor = NuvioTheme.colors.BackgroundCard,
-                            contentColor = NuvioTheme.colors.TextPrimary
-                        )
-                    ) { Text(stringResource(R.string.library_list_edit)) }
+                        modifier = Modifier.weight(1f)
+                    )
                     if (capabilities.supportsReordering) {
-                        Button(
+                        NuvioDialogButton(
+                            text = stringResource(R.string.library_list_move_up),
                             onClick = onMoveUp,
                             enabled = !pending && selectedKey != null,
-                            colors = ButtonDefaults.colors(
-                                containerColor = NuvioTheme.colors.BackgroundCard,
-                                contentColor = NuvioTheme.colors.TextPrimary
-                            )
-                        ) { Text(stringResource(R.string.library_list_move_up)) }
-                        Button(
+                            modifier = Modifier.weight(1f)
+                        )
+                        NuvioDialogButton(
+                            text = stringResource(R.string.library_list_move_down),
                             onClick = onMoveDown,
                             enabled = !pending && selectedKey != null,
-                            colors = ButtonDefaults.colors(
-                                containerColor = NuvioTheme.colors.BackgroundCard,
-                                contentColor = NuvioTheme.colors.TextPrimary
-                            )
-                        ) { Text(stringResource(R.string.library_list_move_down)) }
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    NuvioDialogButton(
+                        text = stringResource(R.string.library_list_delete),
                         onClick = onDelete,
                         enabled = !pending && selectedKey != null,
-                        colors = ButtonDefaults.colors(
-                            containerColor = Color(0xFF4A2323),
-                            contentColor = NuvioTheme.colors.TextPrimary
-                        )
-                    ) { Text(stringResource(R.string.library_list_delete)) }
-                    Button(
+                        modifier = Modifier.weight(1f)
+                    )
+                    NuvioDialogButton(
+                        text = stringResource(R.string.library_list_close),
                         onClick = onDismiss,
                         enabled = !pending,
-                        colors = ButtonDefaults.colors(
-                            containerColor = NuvioTheme.colors.BackgroundCard,
-                            contentColor = NuvioTheme.colors.TextPrimary
-                        )
-                    ) { Text(stringResource(R.string.library_list_close)) }
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
@@ -343,7 +324,8 @@ internal fun ListEditorDialog(
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             items(capabilities.privacyOptions, key = { it.name }) { privacy ->
                 val selected = privacy == state.privacy
-                Button(
+                NuvioDialogButton(
+                    text = privacy.apiValue.replaceFirstChar { it.uppercase() },
                     onClick = { onPrivacyChanged(privacy) },
                     enabled = !pending,
                     modifier = Modifier.semantics {
@@ -352,26 +334,16 @@ internal fun ListEditorDialog(
                         // instead of reading the write-only semantics property.
                         this.selected = privacy == state.privacy
                     },
-                    colors = ButtonDefaults.colors(
-                        containerColor = if (selected) NuvioTheme.colors.FocusBackground else NuvioTheme.colors.BackgroundCard,
-                        contentColor = NuvioTheme.colors.TextPrimary
-                    )
-                ) {
-                    Text(privacy.apiValue.replaceFirstChar { it.uppercase() })
-                }
+                    selected = selected
+                )
             }
         }
 
-        Button(
+        NuvioDialogButton(
+            text = if (pending) stringResource(R.string.action_saving) else stringResource(R.string.action_save),
             onClick = onSave,
             enabled = !pending,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.colors(
-                containerColor = NuvioTheme.colors.BackgroundCard,
-                contentColor = NuvioTheme.colors.TextPrimary
-            )
-        ) {
-            Text(if (pending) stringResource(R.string.action_saving) else stringResource(R.string.action_save))
-        }
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

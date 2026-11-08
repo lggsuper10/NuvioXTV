@@ -119,6 +119,8 @@ import com.nuvio.tv.ui.components.AvatarPickerGrid
 import com.nuvio.tv.ui.components.CustomProfileBackgroundImage
 import com.nuvio.tv.ui.components.MemberBrandWordmark
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
+import com.nuvio.tv.ui.components.NuvioDialogConfirmationButtons
 import com.nuvio.tv.ui.components.ProfileBackgroundImage
 import com.nuvio.tv.ui.components.ProfileBackgroundPicker
 import com.nuvio.tv.ui.components.ProfileAvatarCircle
@@ -650,40 +652,34 @@ fun ProfileSelectionScreen(
                 width = 360.dp,
                 suppressFirstKeyUp = suppressOptionsDialogFirstKeyUp
             ) {
-                Button(
+                NuvioDialogButton(
+                    text = stringResource(R.string.profile_edit_label),
                     onClick = {
                         longPressedProfile = null
                         profileToEdit = profile
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(primaryDialogFocusRequester),
-                    colors = ButtonDefaults.colors(
-                        containerColor = NuvioTheme.colors.BackgroundCard,
-                        contentColor = NuvioTheme.colors.TextPrimary
-                    )
-                ) {
-                    Text(stringResource(R.string.profile_edit_label))
-                }
+                    focusRequester = primaryDialogFocusRequester,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 if (profiles.size > 1) {
-                    Button(
+                    NuvioDialogButton(
+                        text = stringResource(R.string.profile_copy_settings_label),
                         onClick = {
                             longPressedProfile = null
                             settingsCopyError = null
                             settingsCopyTarget = profile
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.colors(
-                            containerColor = NuvioTheme.colors.BackgroundCard,
-                            contentColor = NuvioTheme.colors.TextPrimary
-                        )
-                    ) {
-                        Text(stringResource(R.string.profile_copy_settings_label))
-                    }
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
 
-                Button(
+                NuvioDialogButton(
+                    text = if (profilePinEnabled[profile.id] == true) {
+                        stringResource(R.string.profile_pin_change)
+                    } else {
+                        stringResource(R.string.profile_pin_set)
+                    },
                     onClick = {
                         longPressedProfile = null
                         pinOverlayError = null
@@ -693,40 +689,24 @@ fun ProfileSelectionScreen(
                             ProfilePinOverlayState.Set(profile)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.colors(
-                        containerColor = NuvioTheme.colors.BackgroundCard,
-                        contentColor = NuvioTheme.colors.TextPrimary
-                    )
-                ) {
-                    Text(
-                        if (profilePinEnabled[profile.id] == true) {
-                            stringResource(R.string.profile_pin_change)
-                        } else {
-                            stringResource(R.string.profile_pin_set)
-                        }
-                    )
-                }
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 if (profilePinEnabled[profile.id] == true) {
-                    Button(
+                    NuvioDialogButton(
+                        text = stringResource(R.string.profile_pin_remove),
                         onClick = {
                             longPressedProfile = null
                             pinOverlayError = null
                             pinOverlayState = ProfilePinOverlayState.VerifyCurrentForRemove(profile)
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.colors(
-                            containerColor = NuvioTheme.colors.BackgroundCard,
-                            contentColor = NuvioTheme.colors.TextPrimary
-                        )
-                    ) {
-                        Text(stringResource(R.string.profile_pin_remove))
-                    }
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
 
                 if (!profile.isPrimary) {
-                    Button(
+                    NuvioDialogButton(
+                        text = stringResource(R.string.profile_delete),
                         onClick = {
                             longPressedProfile = null
                             if (profilePinEnabled[profile.id] == true) {
@@ -736,14 +716,8 @@ fun ProfileSelectionScreen(
                                 profileToDelete = profile
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.colors(
-                            containerColor = Color(0xFF4A2323),
-                            contentColor = NuvioTheme.colors.TextPrimary
-                        )
-                    ) {
-                        Text(stringResource(R.string.profile_delete))
-                    }
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
@@ -783,11 +757,6 @@ fun ProfileSelectionScreen(
 
         // Delete confirmation dialog
         profileToDelete?.let { profile ->
-            val primaryDialogFocusRequester = remember(profile.id) { FocusRequester() }
-            LaunchedEffect(profile.id) {
-                repeat(2) { withFrameNanos { } }
-                runCatching { primaryDialogFocusRequester.requestFocus() }
-            }
             NuvioDialog(
                 onDismiss = { profileToDelete = null },
                 title = stringResource(R.string.profile_delete_confirm_title),
@@ -795,21 +764,14 @@ fun ProfileSelectionScreen(
                 width = 420.dp,
                 suppressFirstKeyUp = false
             ) {
-                Button(
-                    onClick = {
+                NuvioDialogConfirmationButtons(
+                    confirmLabel = stringResource(R.string.profile_delete_btn),
+                    onConfirm = {
                         viewModel.deleteProfile(profile.id)
                         profileToDelete = null
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(primaryDialogFocusRequester),
-                    colors = ButtonDefaults.colors(
-                        containerColor = Color(0xFF4A2323),
-                        contentColor = NuvioTheme.colors.TextPrimary
-                    )
-                ) {
-                    Text(stringResource(R.string.profile_delete_btn))
-                }
+                    onDismiss = { profileToDelete = null }
+                )
             }
         }
     }

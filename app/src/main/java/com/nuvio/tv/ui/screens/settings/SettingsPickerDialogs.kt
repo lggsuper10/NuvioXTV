@@ -48,7 +48,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Border
 import androidx.tv.material3.Card
@@ -64,6 +63,7 @@ import com.nuvio.tv.data.local.AudioLanguageOption
 import com.nuvio.tv.data.local.displayName
 import com.nuvio.tv.domain.model.formatHexColor
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.screens.detail.requestFocusAfterFrames
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -273,59 +273,19 @@ internal fun ColorSelectionDialog(
             Spacer(modifier = Modifier.height(NuvioTheme.spacing.lg))
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Card(
+                NuvioDialogButton(
+                    text = stringResource(R.string.action_cancel),
                     onClick = onDismiss,
-                    colors = CardDefaults.colors(
-                        containerColor = NuvioTheme.colors.BackgroundElevated,
-                        focusedContainerColor = NuvioTheme.colors.Primary
-                    ),
-                    border = CardDefaults.border(
-                        focusedBorder = Border(
-                            border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                            shape = RoundedCornerShape(NuvioTheme.radii.sm)
-                        )
-                    ),
-                    shape = CardDefaults.shape(shape = RoundedCornerShape(NuvioTheme.radii.sm)),
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = stringResource(R.string.action_cancel),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = NuvioTheme.colors.TextPrimary,
-                        modifier = Modifier
-                            .padding(NuvioTheme.spacing.md)
-                            .fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-                }
-                Card(
+                )
+                NuvioDialogButton(
+                    text = stringResource(R.string.action_apply),
                     onClick = { onColorSelected(currentChipColor.copy(alpha = alphaPercent / 100f)) },
-                    colors = CardDefaults.colors(
-                        containerColor = NuvioTheme.colors.BackgroundElevated,
-                        focusedContainerColor = NuvioTheme.colors.Primary
-                    ),
-                    border = CardDefaults.border(
-                        focusedBorder = Border(
-                            border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                            shape = RoundedCornerShape(NuvioTheme.radii.sm)
-                        )
-                    ),
-                    shape = CardDefaults.shape(shape = RoundedCornerShape(NuvioTheme.radii.sm)),
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = stringResource(R.string.action_apply),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = NuvioTheme.colors.TextPrimary,
-                        modifier = Modifier
-                            .padding(NuvioTheme.spacing.md)
-                            .fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-                }
+                )
             }
         }
     }

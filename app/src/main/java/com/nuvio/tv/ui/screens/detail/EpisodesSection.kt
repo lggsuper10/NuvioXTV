@@ -96,6 +96,7 @@ import com.nuvio.tv.ui.components.FocusMarqueeText
 import com.nuvio.tv.ui.components.ImdbRatingSourceLabel
 import com.nuvio.tv.ui.components.LightweightCard
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.components.WatchedMarker
 import com.nuvio.tv.ui.theme.NuvioTheme
 import com.nuvio.tv.domain.model.CardDepthSurface
@@ -1144,41 +1145,24 @@ fun SeasonOptionsDialog(
     onMarkSeasonUnwatched: () -> Unit,
     onMarkPreviousSeasonsWatched: () -> Unit = {}
 ) {
-    val primaryFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        primaryFocusRequester.requestFocus()
-    }
-
     NuvioDialog(
         onDismiss = onDismiss,
         title = if (season == 0) stringResource(R.string.episodes_specials) else stringResource(R.string.episodes_season, season),
         subtitle = stringResource(R.string.episodes_season_actions)
     ) {
-        Button(
+        NuvioDialogButton(
+            text = if (isFullyWatched) stringResource(R.string.episodes_mark_season_unwatched) else stringResource(R.string.episodes_mark_season_watched),
             onClick = if (isFullyWatched) onMarkSeasonUnwatched else onMarkSeasonWatched,
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(primaryFocusRequester),
-            colors = ButtonDefaults.colors(
-                containerColor = NuvioTheme.colors.BackgroundCard,
-                contentColor = NuvioTheme.colors.TextPrimary
-            )
-        ) {
-            Text(if (isFullyWatched) stringResource(R.string.episodes_mark_season_unwatched) else stringResource(R.string.episodes_mark_season_watched))
-        }
+            requestInitialFocus = true,
+            modifier = Modifier.fillMaxWidth()
+        )
 
         if (hasPreviousSeasons && season > 0) {
-            Button(
+            NuvioDialogButton(
+                text = stringResource(R.string.episodes_mark_previous_seasons_watched),
                 onClick = onMarkPreviousSeasonsWatched,
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
-                ),
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.episodes_mark_previous_seasons_watched))
-            }
+            )
         }
     }
 }

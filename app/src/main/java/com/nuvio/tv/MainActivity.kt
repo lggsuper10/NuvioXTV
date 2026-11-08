@@ -131,8 +131,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
-import androidx.tv.material3.Button
-import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
@@ -180,6 +178,7 @@ import com.nuvio.tv.domain.deeplink.AppDeepLink
 import com.nuvio.tv.domain.repository.AddonRepository
 import com.nuvio.tv.ui.components.NuvioScrollDefaults
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogConfirmationButtons
 import com.nuvio.tv.ui.components.BrandWordmark
 import com.nuvio.tv.ui.components.LocalCardDepthStyle
 import com.nuvio.tv.ui.components.LocalLandscapePosterMode
@@ -1404,12 +1403,6 @@ private fun ExitConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val cancelFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        cancelFocusRequester.requestFocus()
-    }
-
     NuvioDialog(
         onDismiss = onDismiss,
         title = stringResource(R.string.exit_confirm_title),
@@ -1419,63 +1412,11 @@ private fun ExitConfirmationDialog(
         subtitleTextAlign = TextAlign.Center,
         suppressFirstKeyUp = true
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp)
-                    .focusRequester(cancelFocusRequester),
-                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
-                scale = ButtonDefaults.scale(focusedScale = 1.02f),
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary,
-                    focusedContainerColor = NuvioTheme.colors.Secondary,
-                    focusedContentColor = NuvioTheme.colors.OnSecondary
-                )
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.action_cancel),
-                        textAlign = TextAlign.Center,
-                        maxLines = 1
-                    )
-                }
-            }
-            Button(
-                onClick = onConfirm,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
-                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
-                scale = ButtonDefaults.scale(focusedScale = 1.02f),
-                colors = ButtonDefaults.colors(
-                    containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary,
-                    focusedContainerColor = NuvioTheme.colors.Secondary,
-                    focusedContentColor = NuvioTheme.colors.OnSecondary
-                )
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.exit_confirm_action),
-                        textAlign = TextAlign.Center,
-                        maxLines = 1
-                    )
-                }
-            }
-        }
+        NuvioDialogConfirmationButtons(
+            confirmLabel = stringResource(R.string.exit_confirm_action),
+            onConfirm = onConfirm,
+            onDismiss = onDismiss
+        )
     }
 }
 

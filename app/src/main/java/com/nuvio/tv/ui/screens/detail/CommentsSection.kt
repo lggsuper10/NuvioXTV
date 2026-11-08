@@ -89,6 +89,7 @@ import com.nuvio.tv.R
 import com.nuvio.tv.domain.model.TraktCommentReview
 import com.nuvio.tv.domain.model.Video
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.util.contentTextDirection
 import com.nuvio.tv.ui.util.localizeEpisodeTitle
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -512,8 +513,14 @@ private fun CommentModeButton(
                 this.selected = selected
             },
         colors = ButtonDefaults.colors(
-            containerColor = if (selected) NuvioTheme.colors.Secondary else NuvioTheme.colors.BackgroundCard,
-            contentColor = if (selected) NuvioTheme.colors.OnSecondary else NuvioTheme.colors.TextPrimary
+            containerColor = if (selected) {
+                NuvioTheme.colors.Secondary.copy(alpha = 0.18f)
+            } else {
+                NuvioTheme.colors.BackgroundCard
+            },
+            contentColor = if (selected) NuvioTheme.colors.Secondary else NuvioTheme.colors.TextPrimary,
+            focusedContainerColor = NuvioTheme.colors.Secondary,
+            focusedContentColor = NuvioTheme.colors.OnSecondary
         )
     ) {
         Text(text)
@@ -692,33 +699,19 @@ private fun EpisodeCommentPickerDialog(
                         } else {
                             Modifier
                         }
-                        Button(
+                        NuvioDialogButton(
+                            text = if (seasonNumber == 0) {
+                                stringResource(R.string.episodes_specials)
+                            } else {
+                                stringResource(R.string.episodes_season, seasonNumber)
+                            },
                             onClick = { onSeasonSelected(seasonNumber) },
                             modifier = seasonModifier.semantics {
                                 role = Role.Tab
                                 selected = seasonNumber == season
                             },
-                            colors = ButtonDefaults.colors(
-                                containerColor = if (seasonNumber == season) {
-                                    NuvioTheme.colors.Secondary
-                                } else {
-                                    NuvioTheme.colors.BackgroundCard
-                                },
-                                contentColor = if (seasonNumber == season) {
-                                    NuvioTheme.colors.OnSecondary
-                                } else {
-                                    NuvioTheme.colors.TextPrimary
-                                }
-                            )
-                        ) {
-                            Text(
-                                text = if (seasonNumber == 0) {
-                                    stringResource(R.string.episodes_specials)
-                                } else {
-                                    stringResource(R.string.episodes_season, seasonNumber)
-                                }
-                            )
-                        }
+                            selected = seasonNumber == season
+                        )
                     }
                 }
             }
@@ -740,24 +733,12 @@ private fun EpisodeCommentPickerDialog(
                             .focusRequester(primaryFocusRequester)
                         else -> Modifier.fillMaxWidth()
                     }
-                    Button(
+                    NuvioDialogButton(
+                        text = "${selectedEpisodeLabel(episode)}  ${episode.title.localizeEpisodeTitle(androidx.compose.ui.platform.LocalContext.current)}",
                         onClick = { onEpisodeSelected(episode) },
                         modifier = episodeModifier,
-                        colors = ButtonDefaults.colors(
-                            containerColor = if (episode.id == selectedEpisodeId) {
-                                NuvioTheme.colors.FocusBackground
-                            } else {
-                                NuvioTheme.colors.BackgroundCard
-                            },
-                            contentColor = NuvioTheme.colors.TextPrimary
-                        )
-                    ) {
-                        Text(
-                            text = "${selectedEpisodeLabel(episode)}  ${episode.title.localizeEpisodeTitle(androidx.compose.ui.platform.LocalContext.current)}",
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                        selected = episode.id == selectedEpisodeId
+                    )
                 }
             }
         }

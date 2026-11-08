@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -507,9 +508,13 @@ internal fun EpisodeOptionsOverlay(
                                         Modifier
                                     }
                                 ),
+                            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
+                            scale = ButtonDefaults.scale(focusedScale = 1.02f),
                             colors = ButtonDefaults.colors(
                                 containerColor = NuvioTheme.colors.BackgroundCard,
-                                contentColor = NuvioTheme.colors.TextPrimary
+                                contentColor = NuvioTheme.colors.TextPrimary,
+                                focusedContainerColor = NuvioTheme.colors.Secondary,
+                                focusedContentColor = NuvioTheme.colors.OnSecondary
                             )
                         ) {
                             Text(action.label)

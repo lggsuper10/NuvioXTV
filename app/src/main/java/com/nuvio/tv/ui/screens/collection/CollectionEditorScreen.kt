@@ -92,6 +92,7 @@ import com.nuvio.tv.domain.model.TmdbCollectionSource
 import com.nuvio.tv.domain.model.TmdbCollectionSourceType
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogConfirmationButtons
 import com.nuvio.tv.ui.util.contentTextDirection
 import com.nuvio.tv.R
 import androidx.compose.ui.res.stringResource
@@ -503,25 +504,16 @@ fun CollectionEditorScreen(
             subtitle = stringResource(R.string.collections_editor_delete_folder_subtitle, folder.title),
             suppressFirstKeyUp = false
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md, Alignment.End)
-            ) {
-                NuvioButton(
-                    onClick = { folderToDelete = null },
-                    modifier = Modifier.focusRequester(deleteDialogFocusRequester)
-                ) {
-                    Text(stringResource(R.string.collections_cancel))
-                }
-                NuvioButton(
-                    onClick = {
-                        viewModel.removeFolder(folder.id)
-                        folderToDelete = null
-                    }
-                ) {
-                    Text(stringResource(R.string.cd_delete))
-                }
-            }
+            NuvioDialogConfirmationButtons(
+                confirmLabel = stringResource(R.string.cd_delete),
+                onConfirm = {
+                    viewModel.removeFolder(folder.id)
+                    folderToDelete = null
+                },
+                onDismiss = { folderToDelete = null },
+                dismissLabel = stringResource(R.string.collections_cancel),
+                dismissFocusRequester = deleteDialogFocusRequester
+            )
         }
     }
 }

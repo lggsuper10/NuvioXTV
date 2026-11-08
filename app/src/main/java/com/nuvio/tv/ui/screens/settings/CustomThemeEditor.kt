@@ -51,6 +51,7 @@ import com.nuvio.tv.R
 import com.nuvio.tv.domain.model.CustomThemeColors
 import com.nuvio.tv.domain.model.formatHexColor
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.screens.detail.requestFocusAfterFrames
 import com.nuvio.tv.ui.theme.LocalNuvioFocusRingStyle
 import com.nuvio.tv.ui.theme.NuvioTheme
@@ -228,7 +229,7 @@ internal fun CustomThemeEditor(
         Row(
             modifier = Modifier.fillMaxWidth().settingsOptionRow(cancelFocusRequester),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 stringResource(R.string.custom_theme_remote_hint),
@@ -236,25 +237,18 @@ internal fun CustomThemeEditor(
                 color = NuvioTheme.colors.TextSecondary,
                 modifier = Modifier.weight(1f)
             )
-            Button(
+            NuvioDialogButton(
+                text = stringResource(R.string.action_cancel),
                 onClick = onDismiss,
+                focusRequester = cancelFocusRequester,
                 modifier = Modifier
-                    .height(36.dp)
-                    .focusRequester(cancelFocusRequester)
                     .focusProperties { up = hexFocusRequester }
-            ) {
-                Text(stringResource(R.string.action_cancel))
-            }
-            Button(
+            )
+            NuvioDialogButton(
+                text = stringResource(R.string.custom_theme_save),
                 onClick = { onSave(colors) },
-                modifier = Modifier.height(36.dp).focusProperties { up = hexFocusRequester },
-                colors = ButtonDefaults.colors(
-                    containerColor = Color.White,
-                    contentColor = Color.Black,
-                    focusedContainerColor = Color.White,
-                    focusedContentColor = Color.Black
-                )
-            ) { Text(stringResource(R.string.custom_theme_save)) }
+                modifier = Modifier.focusProperties { up = hexFocusRequester }
+            )
         }
     }
 
