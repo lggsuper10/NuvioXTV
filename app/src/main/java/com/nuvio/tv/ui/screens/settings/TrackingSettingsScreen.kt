@@ -6,12 +6,11 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -68,7 +67,8 @@ fun TrackingSettingsContent(
     simklViewModel: SimklSettingsViewModel = hiltViewModel(),
     mdbListViewModel: MdbListTrackerViewModel = hiltViewModel(),
     trackingViewModel: TrackingSettingsViewModel = hiltViewModel(),
-    initialFocusRequester: FocusRequester? = null
+    initialFocusRequester: FocusRequester? = null,
+    embedded: Boolean = false
 ) {
     val traktState by traktViewModel.uiState.collectAsStateWithLifecycle()
     val simklState by simklViewModel.uiState.collectAsStateWithLifecycle()
@@ -221,7 +221,8 @@ fun TrackingSettingsContent(
         onMdbListLibraryListsClick = {
             mdbListViewModel.onLibraryListsOpened()
             showMdbListLibraryListsDialog = true
-        }
+        },
+        embedded = embedded
     )
 
     when (activeProvider) {
@@ -495,9 +496,36 @@ internal fun TrackingSettingsOverview(
     onMoreLikeThisClick: () -> Unit,
     onAnimeIdClick: () -> Unit,
     mdbListLibraryLists: MdbListLibraryListsUiState = MdbListLibraryListsUiState(),
-    onMdbListLibraryListsClick: () -> Unit = {}
+    onMdbListLibraryListsClick: () -> Unit = {},
+    embedded: Boolean = false
 ) {
-    val listState = rememberLazyListState()
+    val sourcesCard: @Composable () -> Unit = {
+        SettingsGroupCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(TrackingSettingsTestTags.OVERVIEW_LIST),
+            title = stringResource(R.string.tracking_sources_title),
+            subtitle = stringResource(R.string.tracking_sources_subtitle)
+        ) {
+            SettingsActionRow(
+                title = stringResource(R.string.trakt_watch_progress_title),
+                subtitle = stringResource(R.string.trakt_watch_progress_subtitle),
+                value = watchProgressSourceLabel(trackingState.watchProgressSource),
+                enabled = trackingState.isReady,
+                onClick = onWatchProgressClick,
+                modifier = Modifier
+                    .focusRequester(watchProgressFocusRequester)
+                    .testTag(TrackingSettingsTestTags.WATCH_PROGRESS_SOURCE)
+            )
+        }
+    }
+
+    if (embedded) {
+        sourcesCard()
+        return
+    }
+
+    val scrollState = rememberScrollState()
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -506,34 +534,19 @@ internal fun TrackingSettingsOverview(
             title = stringResource(R.string.settings_tracking_title),
             subtitle = stringResource(R.string.settings_tracking_description)
         )
-        Box(modifier = Modifier.weight(1f)) {
-            LazyColumn(
-                state = listState,
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .testTag(TrackingSettingsTestTags.OVERVIEW_LIST),
-                contentPadding = PaddingValues(bottom = NuvioTheme.spacing.md),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                    .verticalScroll(scrollState)
             ) {
-                item(key = "tracking_sources") {
-                    SettingsGroupCard(
-                        title = stringResource(R.string.tracking_sources_title),
-                        subtitle = stringResource(R.string.tracking_sources_subtitle)
-                    ) {
-                        SettingsActionRow(
-                            title = stringResource(R.string.trakt_watch_progress_title),
-                            subtitle = stringResource(R.string.trakt_watch_progress_subtitle),
-                            value = watchProgressSourceLabel(trackingState.watchProgressSource),
-                            enabled = trackingState.isReady,
-                            onClick = onWatchProgressClick,
-                            modifier = Modifier
-                                .focusRequester(watchProgressFocusRequester)
-                                .testTag(TrackingSettingsTestTags.WATCH_PROGRESS_SOURCE)
-                        )
-                    }
-                }
+                sourcesCard()
             }
-            SettingsVerticalScrollIndicators(state = listState)
+            SettingsVerticalScrollIndicators(state = scrollState)
         }
     }
 }

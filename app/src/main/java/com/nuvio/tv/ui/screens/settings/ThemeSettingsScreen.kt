@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -99,7 +100,9 @@ fun ThemeSettingsScreen(
 @Composable
 fun ThemeSettingsContent(
     viewModel: ThemeSettingsViewModel = hiltViewModel(),
-    initialFocusRequester: FocusRequester? = null
+    initialFocusRequester: FocusRequester? = null,
+    showHeader: Boolean = true,
+    leadingContent: (@Composable ColumnScope.() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val appIconState by viewModel.appIconState.collectAsStateWithLifecycle()
@@ -182,10 +185,13 @@ fun ThemeSettingsContent(
                 .verticalScroll(themeScrollState),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            SettingsDetailHeader(
-                title = stringResource(R.string.appearance_title),
-                subtitle = stringResource(R.string.appearance_subtitle)
-            )
+            leadingContent?.invoke(this)
+            if (showHeader) {
+                SettingsDetailHeader(
+                    title = stringResource(R.string.appearance_title),
+                    subtitle = stringResource(R.string.appearance_subtitle)
+                )
+            }
 
             SettingsGroupCard(
                 modifier = Modifier.fillMaxWidth(),

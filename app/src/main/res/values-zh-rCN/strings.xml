@@ -454,6 +454,12 @@
     <string name="settings_account">账户</string>
     <string name="settings_profiles">个人资料</string>
     <string name="settings_layout">布局</string>
+    <string name="settings_layout_and_appearance">布局与外观</string>
+    <string name="settings_layout_and_appearance_subtitle">自定义首页布局、主题、字体和语言</string>
+    <string name="settings_layout_and_appearance_layout">布局</string>
+    <string name="settings_layout_and_appearance_layout_desc">首页结构、导航和卡片行为</string>
+    <string name="settings_layout_and_appearance_appearance">外观</string>
+    <string name="settings_layout_and_appearance_appearance_desc">主题、设置样式、启动图、字体和语言</string>
     <string name="settings_content_discovery">内容与发现</string>
     <string name="settings_content_discovery_subtitle">扩展、插件、目录与发现来源</string>
     <string name="settings_content_discovery_addons_subtitle">管理扩展、目录顺序和收藏</string>

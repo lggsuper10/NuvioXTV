@@ -19,11 +19,8 @@ class SettingsCatalogTest {
             listOf(
                 SettingsCategory.PROFILES,
                 SettingsCategory.APPEARANCE,
-                SettingsCategory.LAYOUT,
                 SettingsCategory.CONTENT_DISCOVERY,
                 SettingsCategory.PLAYBACK,
-                SettingsCategory.INTEGRATION,
-                SettingsCategory.TRACKING,
                 SettingsCategory.ADVANCED,
                 SettingsCategory.ABOUT,
                 SettingsCategory.DEBUG
@@ -90,7 +87,6 @@ class SettingsCatalogTest {
             listOf(
                 SettingsCategory.APPEARANCE,
                 SettingsCategory.CONTENT_DISCOVERY,
-                SettingsCategory.INTEGRATION,
                 SettingsCategory.ADVANCED
             ),
             dividerBefore

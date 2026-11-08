@@ -453,6 +453,12 @@
     <string name="settings_account">帳戶</string>
     <string name="settings_profiles">個人資料</string>
     <string name="settings_layout">佈局</string>
+    <string name="settings_layout_and_appearance">佈局與外觀</string>
+    <string name="settings_layout_and_appearance_subtitle">自訂首頁佈局、主題、字型與語言</string>
+    <string name="settings_layout_and_appearance_layout">佈局</string>
+    <string name="settings_layout_and_appearance_layout_desc">首頁結構、導覽與卡片行為</string>
+    <string name="settings_layout_and_appearance_appearance">外觀</string>
+    <string name="settings_layout_and_appearance_appearance_desc">主題、設定樣式、啟動畫面、字型與語言</string>
     <string name="settings_content_discovery">內容與探索</string>
     <string name="settings_content_discovery_subtitle">擴充套件、外掛、目錄與探索來源</string>
     <string name="settings_content_discovery_addons_subtitle">管理擴充套件、目錄順序和收藏</string>

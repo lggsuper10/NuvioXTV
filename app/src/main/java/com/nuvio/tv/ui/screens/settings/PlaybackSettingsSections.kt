@@ -4,8 +4,10 @@ import com.nuvio.tv.ui.theme.NuvioTheme
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -34,11 +36,44 @@ internal fun PlaybackSettingsSections(
     onOpenDialog: (PlaybackDialog) -> Unit,
     onMemorySettingChanged: () -> Unit,
     onClearTorrentCache: () -> Unit,
-    initialFocusRequester: FocusRequester? = null
+    initialFocusRequester: FocusRequester? = null,
+    scrollable: Boolean = true
 ) {
     val sections = visiblePlaybackSections(playerSettings)
     var expandedSections by rememberSaveable { mutableStateOf(emptyList<String>()) }
     val listState = rememberLazyListState()
+
+    val onToggleSection: (PlaybackSection) -> Unit = { section ->
+        expandedSections = if (section.name in expandedSections) {
+            expandedSections - section.name
+        } else {
+            expandedSections + section.name
+        }
+    }
+
+    if (!scrollable) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)
+        ) {
+            sections.forEach { section ->
+                PlaybackSectionEntry(
+                    section = section,
+                    expanded = section.name in expandedSections,
+                    onToggle = { onToggleSection(section) },
+                    focusRequester = if (section == sections.first()) initialFocusRequester else null,
+                    playerSettings = playerSettings,
+                    p2p = p2p,
+                    transparentLetterbox = transparentLetterbox,
+                    onUpdate = onUpdate,
+                    onOpenDialog = onOpenDialog,
+                    onMemorySettingChanged = onMemorySettingChanged,
+                    onClearTorrentCache = onClearTorrentCache
+                )
+            }
+        }
+        return
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -48,36 +83,58 @@ internal fun PlaybackSettingsSections(
             verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)
         ) {
             items(items = sections, key = { it.name }) { section ->
-                val expanded = section.name in expandedSections
-                SettingsCollapsibleSection(
-                    title = stringResource(section.title),
-                    description = stringResource(section.description),
-                    icon = section.icon,
-                    expanded = expanded,
-                    onToggle = {
-                        expandedSections = if (expanded) {
-                            expandedSections - section.name
-                        } else {
-                            expandedSections + section.name
-                        }
-                    },
+                PlaybackSectionEntry(
+                    section = section,
+                    expanded = section.name in expandedSections,
+                    onToggle = { onToggleSection(section) },
                     focusRequester = if (section == sections.first()) initialFocusRequester else null,
-                    modifier = Modifier.testTag(PlaybackSettingsTestTags.section(section))
-                ) {
-                    PlaybackSectionContent(
-                        section = section,
-                        playerSettings = playerSettings,
-                        p2p = p2p,
-                        transparentLetterbox = transparentLetterbox,
-                        onUpdate = onUpdate,
-                        onOpenDialog = onOpenDialog,
-                        onMemorySettingChanged = onMemorySettingChanged,
-                        onClearTorrentCache = onClearTorrentCache
-                    )
-                }
+                    playerSettings = playerSettings,
+                    p2p = p2p,
+                    transparentLetterbox = transparentLetterbox,
+                    onUpdate = onUpdate,
+                    onOpenDialog = onOpenDialog,
+                    onMemorySettingChanged = onMemorySettingChanged,
+                    onClearTorrentCache = onClearTorrentCache
+                )
             }
         }
         SettingsVerticalScrollIndicators(state = listState)
+    }
+}
+
+@Composable
+private fun PlaybackSectionEntry(
+    section: PlaybackSection,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    focusRequester: FocusRequester?,
+    playerSettings: PlayerSettings,
+    p2p: P2pSettingsUi,
+    transparentLetterbox: Boolean,
+    onUpdate: PlaybackSettingsUpdate,
+    onOpenDialog: (PlaybackDialog) -> Unit,
+    onMemorySettingChanged: () -> Unit,
+    onClearTorrentCache: () -> Unit
+) {
+    SettingsCollapsibleSection(
+        title = stringResource(section.title),
+        description = stringResource(section.description),
+        icon = section.icon,
+        expanded = expanded,
+        onToggle = onToggle,
+        focusRequester = focusRequester,
+        modifier = Modifier.testTag(PlaybackSettingsTestTags.section(section))
+    ) {
+        PlaybackSectionContent(
+            section = section,
+            playerSettings = playerSettings,
+            p2p = p2p,
+            transparentLetterbox = transparentLetterbox,
+            onUpdate = onUpdate,
+            onOpenDialog = onOpenDialog,
+            onMemorySettingChanged = onMemorySettingChanged,
+            onClearTorrentCache = onClearTorrentCache
+        )
     }
 }
 

@@ -7,12 +7,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -90,43 +88,29 @@ fun LayoutSettingsContent(
                 .weight(1f)
         ) {
             SettingsGroupCard(modifier = Modifier.fillMaxSize()) {
-                val listState = rememberLazyListState()
+                val scrollState = rememberScrollState()
                 Box(modifier = Modifier.fillMaxSize()) {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 18.dp),
-                        verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)
-                    ) {
-                        items(items = sections, key = { it.name }) { section ->
-                            val expanded = section.name in expandedSections
-                            SettingsCollapsibleSection(
-                                title = stringResource(section.title),
-                                description = stringResource(section.description),
-                                icon = section.icon,
-                                expanded = expanded,
-                                onToggle = {
-                                    expandedSections = if (expanded) {
-                                        expandedSections - section.name
-                                    } else {
-                                        expandedSections + section.name
-                                    }
-                                },
-                                focusRequester = if (section == sections.first()) initialFocusRequester else null,
-                                modifier = Modifier.testTag(LayoutSettingsTestTags.section(section))
-                            ) {
-                                LayoutSectionContent(
-                                    section = section,
-                                    uiState = uiState,
-                                    streamBadgeUiState = streamBadgeUiState,
-                                    viewModel = viewModel,
-                                    customPosterQrFocusRequester = customPosterQrFocusRequester,
-                                    streamBadgeQrFocusRequester = streamBadgeQrFocusRequester
-                                )
+                    LayoutSettingsSections(
+                        sections = sections,
+                        uiState = uiState,
+                        streamBadgeUiState = streamBadgeUiState,
+                        expandedSections = expandedSections,
+                        onToggleSection = { section ->
+                            expandedSections = if (section.name in expandedSections) {
+                                expandedSections - section.name
+                            } else {
+                                expandedSections + section.name
                             }
-                        }
-                    }
-                    SettingsVerticalScrollIndicators(state = listState)
+                        },
+                        viewModel = viewModel,
+                        customPosterQrFocusRequester = customPosterQrFocusRequester,
+                        streamBadgeQrFocusRequester = streamBadgeQrFocusRequester,
+                        firstSectionFocusRequester = initialFocusRequester,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollState)
+                    )
+                    SettingsVerticalScrollIndicators(state = scrollState)
                 }
             }
 
@@ -157,6 +141,46 @@ fun LayoutSettingsContent(
                 modifier = Modifier.clip(settingsGroupShape())
             )
         }
+        }
+    }
+}
+
+@Composable
+internal fun LayoutSettingsSections(
+    sections: List<LayoutSection>,
+    uiState: LayoutSettingsUiState,
+    streamBadgeUiState: StreamBadgeSettingsUiState,
+    expandedSections: List<String>,
+    onToggleSection: (LayoutSection) -> Unit,
+    viewModel: LayoutSettingsViewModel,
+    customPosterQrFocusRequester: FocusRequester,
+    streamBadgeQrFocusRequester: FocusRequester,
+    firstSectionFocusRequester: FocusRequester? = null,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)
+    ) {
+        sections.forEach { section ->
+            SettingsCollapsibleSection(
+                title = stringResource(section.title),
+                description = stringResource(section.description),
+                icon = section.icon,
+                expanded = section.name in expandedSections,
+                onToggle = { onToggleSection(section) },
+                focusRequester = if (section == sections.first()) firstSectionFocusRequester else null,
+                modifier = Modifier.testTag(LayoutSettingsTestTags.section(section))
+            ) {
+                LayoutSectionContent(
+                    section = section,
+                    uiState = uiState,
+                    streamBadgeUiState = streamBadgeUiState,
+                    viewModel = viewModel,
+                    customPosterQrFocusRequester = customPosterQrFocusRequester,
+                    streamBadgeQrFocusRequester = streamBadgeQrFocusRequester
+                )
+            }
         }
     }
 }

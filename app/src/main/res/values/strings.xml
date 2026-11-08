@@ -473,6 +473,12 @@
     <string name="settings_account">Account</string>
     <string name="settings_profiles">Profiles</string>
     <string name="settings_layout">Layout</string>
+    <string name="settings_layout_and_appearance">Layout &amp; Appearance</string>
+    <string name="settings_layout_and_appearance_subtitle">Customize your home layout, theme, font, and language</string>
+    <string name="settings_layout_and_appearance_layout">Layout</string>
+    <string name="settings_layout_and_appearance_layout_desc">Home structure, navigation, and card behavior</string>
+    <string name="settings_layout_and_appearance_appearance">Appearance</string>
+    <string name="settings_layout_and_appearance_appearance_desc">Theme, settings style, artwork, font, and language</string>
     <string name="settings_content_discovery">Content &amp; Discovery</string>
     <string name="settings_content_discovery_subtitle">Add-ons, plugins, catalogs, and discovery sources</string>
     <string name="settings_content_discovery_addons_subtitle">Manage add-ons, catalog order, and collections</string>

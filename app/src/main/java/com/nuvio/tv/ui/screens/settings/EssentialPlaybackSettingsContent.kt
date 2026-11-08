@@ -4,10 +4,11 @@ import com.nuvio.tv.ui.theme.NuvioTheme
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,7 +31,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun EssentialPlaybackSettingsContent(
     initialFocusRequester: FocusRequester? = null,
-    viewModel: PlaybackSettingsViewModel = hiltViewModel()
+    viewModel: PlaybackSettingsViewModel = hiltViewModel(),
+    embedded: Boolean = false
 ) {
     val playerSettings by viewModel.playerSettings.collectAsStateWithLifecycle(initialValue = null)
     val torrentSettings by viewModel.torrentSettingsFlow.collectAsStateWithLifecycle(initialValue = null)
@@ -41,22 +43,16 @@ fun EssentialPlaybackSettingsContent(
     var showP2pConsentDialog by remember { mutableStateOf(false) }
     val settings = playerSettings
 
-    val listState = rememberLazyListState()
+    val scrollState = rememberScrollState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)
-        ) {
-            item(key = "header") {
-                SettingsDetailHeader(
-                    title = stringResource(R.string.essential_playback_header_title),
-                    subtitle = stringResource(R.string.essential_playback_header_subtitle)
-                )
-            }
-            item(key = "playback_basics") {
-                SettingsGroupCard(modifier = Modifier.fillMaxWidth(), title = stringResource(R.string.essential_playback_basics)) {
+    val content: @Composable () -> Unit = {
+        if (!embedded) {
+            SettingsDetailHeader(
+                title = stringResource(R.string.essential_playback_header_title),
+                subtitle = stringResource(R.string.essential_playback_header_subtitle)
+            )
+        }
+        SettingsGroupCard(modifier = Modifier.fillMaxWidth(), title = stringResource(R.string.essential_playback_basics)) {
                     SettingsActionRow(
                         title = stringResource(R.string.essential_stream_selection),
                         subtitle = stringResource(R.string.essential_stream_selection_subtitle),
@@ -121,9 +117,7 @@ fun EssentialPlaybackSettingsContent(
                         enabled = torrentSettings != null
                     )
                 }
-            }
-            item(key = "subtitles_audio") {
-                SettingsGroupCard(modifier = Modifier.fillMaxWidth(), title = stringResource(R.string.essential_subtitles_and_audio)) {
+        SettingsGroupCard(modifier = Modifier.fillMaxWidth(), title = stringResource(R.string.essential_subtitles_and_audio)) {
                     SettingsActionRow(
                         title = stringResource(R.string.essential_subtitle_language),
                         subtitle = stringResource(R.string.essential_subtitle_language_subtitle),
@@ -156,9 +150,27 @@ fun EssentialPlaybackSettingsContent(
                         enabled = settings != null
                     )
                 }
-            }
+    }
+
+    if (embedded) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)
+        ) {
+            content()
         }
-        SettingsVerticalScrollIndicators(state = listState)
+    } else {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)
+            ) {
+                content()
+            }
+            SettingsVerticalScrollIndicators(state = scrollState)
+        }
     }
 
     if (showSubtitleLanguageDialog && settings != null) {
