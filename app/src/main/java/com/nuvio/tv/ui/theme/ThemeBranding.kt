@@ -14,3 +14,14 @@ val AppTheme.brandWordmarkResource: Int
         AppTheme.GRAPHITE -> R.drawable.app_logo_wordmark_graphite
         else -> R.drawable.app_logo_wordmark
     }
+
+@get:DrawableRes
+val AppTheme.brandWordmarkResourceOnLight: Int
+    get() = when (this) {
+        AppTheme.GOLD -> R.drawable.app_logo_wordmark_gold_light
+        AppTheme.JADE -> R.drawable.app_logo_wordmark_jade_light
+        AppTheme.ROSE_GOLD -> R.drawable.app_logo_wordmark_rose_gold_light
+        AppTheme.ARCTIC_BLUE -> R.drawable.app_logo_wordmark_arctic_blue_light
+        AppTheme.GRAPHITE -> R.drawable.app_logo_wordmark_graphite_light
+        else -> R.drawable.app_logo_wordmark_light
+    }

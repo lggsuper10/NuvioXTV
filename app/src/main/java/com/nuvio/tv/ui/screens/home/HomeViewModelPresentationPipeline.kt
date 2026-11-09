@@ -565,15 +565,22 @@ private suspend fun HomeViewModel.fetchLocalEnrichment(item: MetaPreview): TmdbE
                 language = tmdbSettingsDataStore.settings.value.language
             )
         }.getOrNull()
-        if (enrichment != null) return enrichment
+        if (enrichment != null) {
+            localCatalog.cacheSearchMetadata(item.id, enrichment)
+            return enrichment
+        }
     }
-    return runCatching {
+    val doubanEnrichment = runCatching {
         doubanService.fetchDetails(
             title = item.name,
             year = year,
             isSeries = isSeries
         )?.toTmdbEnrichment()
     }.getOrNull()
+    if (doubanEnrichment != null) {
+        localCatalog.cacheSearchMetadata(item.id, doubanEnrichment)
+    }
+    return doubanEnrichment
 }
 
 private suspend fun HomeViewModel.fetchExternalMetaOutcome(item: MetaPreview): ExternalMetaOutcome =

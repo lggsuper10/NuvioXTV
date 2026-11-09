@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.style.TextAlign
@@ -72,7 +74,9 @@ import androidx.compose.ui.res.stringResource
 import com.nuvio.tv.R
 import com.nuvio.tv.core.tracking.LOCAL_LIBRARY_LIST_KEY
 import com.nuvio.tv.core.tracking.supportsMembershipFor
+import com.nuvio.tv.data.locallibrary.LocalCatalog
 import com.nuvio.tv.data.local.StartupAuthNotice
+import com.nuvio.tv.ui.components.NuvioDialogConfirmationButtons
 import com.nuvio.tv.ui.components.posteroptions.TrackingRemovalConfirmationDialog
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
@@ -110,6 +114,7 @@ fun HomeScreen(
     onNavigateToSmb: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     // Home was the only major screen without a lifecycle observer, so nothing ever told it to
     // look at its catalogs again.
@@ -144,6 +149,7 @@ fun HomeScreen(
     // Track that catalog loading has started at least once (isLoading went true→false).
     var catalogLoadingStarted by rememberSaveable { mutableStateOf(false) }
     var posterOptionsTarget by remember { mutableStateOf<HomePosterOptionsTarget?>(null) }
+    var pendingLocalDelete by remember { mutableStateOf<HomePosterOptionsTarget?>(null) }
 
     LaunchedEffect(uiState.homeLayout) {
         if (uiState.homeLayout != HomeLayout.MODERN) {
@@ -168,6 +174,7 @@ fun HomeScreen(
         { item, addonBaseUrl ->
             posterOptionsTarget = HomePosterOptionsTarget(item, addonBaseUrl)
             viewModel.refreshPosterLibraryStatus(item)
+            viewModel.refreshPosterLocalDeleteState(item)
         }
     }
 
@@ -485,6 +492,7 @@ fun HomeScreen(
             isSeries = isSeries,
             isWatched = movieWatchedStatus[statusKey] == true,
             isWatchedPending = statusKey in uiState.movieWatchedPending,
+            localDeleteCount = uiState.posterLocalDeleteCounts[statusKey] ?: 0,
             onDismiss = { posterOptionsTarget = null },
             onDetails = {
                 onNavigateToDetail(item.id, item.apiType, selectedPoster.addonBaseUrl)
@@ -505,8 +513,66 @@ fun HomeScreen(
                     viewModel.togglePosterSeriesWatched(item)
                 }
                 posterOptionsTarget = null
+            },
+            onDelete = {
+                pendingLocalDelete = selectedPoster
+                posterOptionsTarget = null
             }
         )
+    }
+
+    val pendingDelete = pendingLocalDelete
+    if (pendingDelete != null) {
+        val item = pendingDelete.item
+        val statusKey = homeItemStatusKey(item.id, item.apiType)
+        val fileCount = uiState.posterLocalDeleteCounts[statusKey] ?: 0
+        val deleting = statusKey in uiState.posterLocalDeletePending
+        NuvioDialog(
+            onDismiss = { if (!deleting) pendingLocalDelete = null },
+            title = stringResource(R.string.home_poster_delete_local_confirm_title),
+            subtitle = stringResource(
+                R.string.home_poster_delete_local_confirm_subtitle,
+                item.name,
+                fileCount
+            )
+        ) {
+            NuvioDialogConfirmationButtons(
+                confirmLabel = if (deleting) {
+                    stringResource(R.string.home_poster_delete_local_deleting)
+                } else {
+                    stringResource(R.string.action_delete)
+                },
+                onConfirm = {
+                    if (!deleting) {
+                        viewModel.deletePosterLocalMedia(item) { result ->
+                            pendingLocalDelete = null
+                            val message = when {
+                                result.deletedCount > 0 && result.failedCount == 0 ->
+                                    context.getString(
+                                        R.string.home_poster_delete_local_done,
+                                        result.deletedCount
+                                    )
+
+                                result.deletedCount > 0 ->
+                                    context.getString(
+                                        R.string.home_poster_delete_local_partial,
+                                        result.deletedCount,
+                                        result.failedCount
+                                    )
+
+                                result.requestedCount == 0 ->
+                                    context.getString(R.string.home_poster_delete_local_unavailable)
+
+                                else -> context.getString(R.string.home_poster_delete_local_failed)
+                            }
+                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                },
+                onDismiss = { if (!deleting) pendingLocalDelete = null },
+                enabled = !deleting
+            )
+        }
     }
 
     if (uiState.showPosterListPicker) {
@@ -744,10 +810,12 @@ private fun HomePosterOptionsDialog(
     isSeries: Boolean = false,
     isWatched: Boolean,
     isWatchedPending: Boolean,
+    localDeleteCount: Int,
     onDismiss: () -> Unit,
     onDetails: () -> Unit,
     onToggleLibrary: () -> Unit,
-    onToggleWatched: () -> Unit
+    onToggleWatched: () -> Unit,
+    onDelete: () -> Unit
 ) {
     NuvioDialog(
         onDismiss = onDismiss,
@@ -786,6 +854,19 @@ private fun HomePosterOptionsDialog(
                 },
                 onClick = onToggleWatched,
                 enabled = !isWatchedPending,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        if (localDeleteCount > 0) {
+            NuvioDialogButton(
+                text = stringResource(
+                    R.string.home_poster_delete_local,
+                    localDeleteCount
+                ),
+                onClick = onDelete,
+                containerColor = NuvioTheme.colors.Error.copy(alpha = 0.14f),
+                contentColor = NuvioTheme.colors.Error,
                 modifier = Modifier.fillMaxWidth()
             )
         }

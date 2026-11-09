@@ -98,6 +98,15 @@ private const val PLAYER_REBUILD_SETTLE_DELAY_MS = 120L
 private const val ADAPTIVE_QUALITY_INCREASE_MIN_DURATION_MS = 2_000
 private const val ADAPTIVE_INITIAL_BITRATE_ESTIMATE_BPS = 25_000_000L
 
+// Local media (device storage, content URIs, SMB shares) has no network spin-up to absorb, so the
+// stock 2.5 s playback threshold is pure latency before the first frame. Keep a healthy forward
+// buffer, but start as soon as a fraction of a second is available.
+private const val LOCAL_MIN_BUFFER_MS = 15_000
+private const val LOCAL_MAX_BUFFER_MS = 60_000
+private const val LOCAL_BUFFER_FOR_PLAYBACK_MS = 800
+private const val LOCAL_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS = 2_000
+private const val LOCAL_TARGET_BUFFER_BYTES = 64 * 1024 * 1024
+
 internal data class StartupSubtitlePreparation(
     val fetchedSubtitles: List<Subtitle>,
     val attachedSubtitles: List<Subtitle>,
@@ -530,7 +539,31 @@ internal fun PlayerRuntimeController.initializePlayer(
             }
             currentParallelChunkOverheadMb = parallelOverheadMb
 
-            val loadControl = if (playerSettings.nuvioPerformanceModeEnabled) {
+            val isLocalPlayback = PlayerMediaSourceFactory.isLocalContentUrl(url)
+            val loadControl = if (isLocalPlayback) {
+                // Local files load from disk or the LAN with no connection handshake to wait for,
+                // so trade the stock 2.5 s threshold for a sub-second start.
+                effectiveBackBufferDurationMs = 1_500
+                currentBitrateAwareLoadControl = null
+                Log.i(
+                    PlayerRuntimeController.TAG,
+                    "BUFFER_GATE: engine=exo-local fastStart=${LOCAL_BUFFER_FOR_PLAYBACK_MS}ms " +
+                            "backBufferMs=1500 host=${url.safeHost()}"
+                )
+                DefaultLoadControl.Builder()
+                    .setTargetBufferBytes(LOCAL_TARGET_BUFFER_BYTES)
+                    .setBufferDurationsMs(
+                        LOCAL_MIN_BUFFER_MS,
+                        LOCAL_MAX_BUFFER_MS,
+                        LOCAL_BUFFER_FOR_PLAYBACK_MS,
+                        LOCAL_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
+                    )
+                    // Keep the byte cap authoritative: a high-bitrate 4K file must not be allowed
+                    // to grow the front buffer past 64 MB on a 2.5 GB TV.
+                    .setPrioritizeTimeOverSizeThresholds(false)
+                    .setBackBuffer(1_500, /* retainBackBufferFromKeyframe = */ true)
+                    .build()
+            } else if (playerSettings.nuvioPerformanceModeEnabled) {
                 effectiveBackBufferDurationMs = NuvioExoPlayerPerformanceHelper.backBufferMs
                 currentBitrateAwareLoadControl = null
                 Log.i(

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 
 @Immutable
 data class NuvioSurfaceColors(
@@ -102,41 +103,71 @@ data class NuvioContrastPair(
 class NuvioColorScheme(
     palette: ThemeColorPalette,
     amoledMode: Boolean = false,
-    amoledSurfacesMode: Boolean = false
+    amoledSurfacesMode: Boolean = false,
+    lightMode: Boolean = false
 ) {
     private val pureBlack = NuvioPrimitives.black
-    private val pureBlackSurfaces = amoledMode && amoledSurfacesMode
+    private val pureBlackSurfaces = !lightMode && amoledMode && amoledSurfacesMode
+    private val light = lightMode
 
-    val Background = if (amoledMode) pureBlack else palette.background
-    val BackgroundElevated = if (pureBlackSurfaces) pureBlack else palette.backgroundElevated
-    val BackgroundCard = if (pureBlackSurfaces) pureBlack else palette.backgroundCard
-    val Surface = if (pureBlackSurfaces) pureBlack else palette.surface
-    val SurfaceVariant = if (pureBlackSurfaces) pureBlack else palette.surfaceVariant
-    val Panel = if (pureBlackSurfaces) pureBlack else palette.panel
+    /** True when the scheme renders light surfaces. Screens use this to tune scrims. */
+    val isLight: Boolean = lightMode
+
+    // Light palette: a soft neutral canvas instead of pure white. Large white areas
+    // glare on a TV, so the canvas sits a step below white and surfaces are off-white;
+    // text keeps a near-neutral ink tone rather than pure black.
+    private val lightBackground = Color(0xFFE7EAF0)
+    private val lightElevated = Color(0xFFFAFBFC)
+    private val lightSurface = Color(0xFFF7F8FA)
+    private val lightField = Color(0xFFEDF0F4)
+    private val lightPanel = Color(0xFFF1F3F7)
+    private val lightMenu = Color(0xFFF8F9FB)
+    private val lightSurfaceVariant = Color(0xFFDCE1E8)
+    private val lightDivider = Color(0xFFC8CED7)
+    private val lightTextPrimary = Color(0xFF17191C)
+    private val lightTextSecondary = Color(0xFF4E545C)
+    private val lightTextTertiary = Color(0xFF7C838C)
+    private val paleAccentInLight = light && palette.secondary.luminance() > 0.7f
+    private val lightFocusRing = if (palette.secondary.luminance() > 0.7f) {
+        NuvioPrimitives.neutral800
+    } else {
+        palette.secondary
+    }
+
+    val Background = when {
+        light -> lightBackground
+        amoledMode -> pureBlack
+        else -> palette.background
+    }
+    val BackgroundElevated = if (light) lightElevated else if (pureBlackSurfaces) pureBlack else palette.backgroundElevated
+    val BackgroundCard = if (light) lightSurface else if (pureBlackSurfaces) pureBlack else palette.backgroundCard
+    val Surface = if (light) lightSurface else if (pureBlackSurfaces) pureBlack else palette.surface
+    val SurfaceVariant = if (light) lightSurfaceVariant else if (pureBlackSurfaces) pureBlack else palette.surfaceVariant
+    val Panel = if (light) lightPanel else if (pureBlackSurfaces) pureBlack else palette.panel
     val Overlay = palette.overlay
-    val Field = if (pureBlackSurfaces) pureBlack else palette.field
-    val Menu = if (pureBlackSurfaces) pureBlack else palette.menu
-    val Modal = if (pureBlackSurfaces) pureBlack else palette.modal
+    val Field = if (light) lightField else if (pureBlackSurfaces) pureBlack else palette.field
+    val Menu = if (light) lightMenu else if (pureBlackSurfaces) pureBlack else palette.menu
+    val Modal = if (light) lightMenu else if (pureBlackSurfaces) pureBlack else palette.modal
     val PlayerOverlay = palette.playerOverlay
-    val Divider = NuvioPrimitives.neutral750
+    val Divider = if (light) lightDivider else NuvioPrimitives.neutral750
 
     val Primary = NuvioPrimitives.neutral500
     val PrimaryVariant = NuvioPrimitives.neutral650
     val OnPrimary = NuvioPrimitives.white
-    val Secondary = palette.secondary
-    val SecondaryVariant = palette.secondaryVariant
-    val OnSecondary = palette.onSecondary
-    val OnSecondaryVariant = palette.onSecondaryVariant
+    val Secondary = if (paleAccentInLight) NuvioPrimitives.neutral800 else palette.secondary
+    val SecondaryVariant = if (paleAccentInLight) NuvioPrimitives.neutral700 else palette.secondaryVariant
+    val OnSecondary = if (paleAccentInLight) NuvioPrimitives.white else palette.onSecondary
+    val OnSecondaryVariant = if (paleAccentInLight) NuvioPrimitives.white else palette.onSecondaryVariant
 
-    val TextPrimary = NuvioPrimitives.white
-    val TextSecondary = NuvioPrimitives.neutral400
-    val TextTertiary = NuvioPrimitives.neutral600
-    val TextDisabled = NuvioPrimitives.neutral700
-    val TextInverse = NuvioPrimitives.neutral925
+    val TextPrimary = if (light) lightTextPrimary else NuvioPrimitives.white
+    val TextSecondary = if (light) lightTextSecondary else NuvioPrimitives.neutral400
+    val TextTertiary = if (light) lightTextTertiary else NuvioPrimitives.neutral600
+    val TextDisabled = if (light) NuvioPrimitives.neutral400 else NuvioPrimitives.neutral700
+    val TextInverse = if (light) NuvioPrimitives.white else NuvioPrimitives.neutral925
 
-    val FocusRing = palette.focusRing
-    val FocusBackground = palette.focusBackground
-    val FocusContent = NuvioPrimitives.white
+    val FocusRing = if (light) lightFocusRing else palette.focusRing
+    val FocusBackground = if (light) lightFocusRing.copy(alpha = 0.14f) else palette.focusBackground
+    val FocusContent = if (light) lightTextPrimary else NuvioPrimitives.white
     val FocusScrim = NuvioPrimitives.black.copy(alpha = 0.32f)
 
     val Rating = NuvioPrimitives.rating
@@ -150,9 +181,9 @@ class NuvioColorScheme(
     val Torrent = NuvioPrimitives.torrent
     val Premium = NuvioPrimitives.premium
 
-    val Border = NuvioPrimitives.neutral750
+    val Border = if (light) lightDivider else NuvioPrimitives.neutral750
     val BorderFocused = FocusRing
-    val BorderMuted = NuvioPrimitives.neutral750.copy(alpha = 0.58f)
+    val BorderMuted = (if (light) lightDivider else NuvioPrimitives.neutral750).copy(alpha = 0.58f)
 
     val Scrim = NuvioPrimitives.black.copy(alpha = 0.62f)
     val ImageScrim = NuvioPrimitives.black.copy(alpha = 0.58f)

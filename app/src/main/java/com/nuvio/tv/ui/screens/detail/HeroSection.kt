@@ -418,6 +418,7 @@ internal fun PlayButton(
             }
         },
         modifier = modifier
+            .height(52.dp)
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .onFocusChanged {
                 if (it.isFocused) {
@@ -465,21 +466,24 @@ internal fun PlayButton(
                 }
             ),
         colors = ButtonDefaults.colors(
-            containerColor = androidx.compose.ui.graphics.Color.White,
-            focusedContainerColor = androidx.compose.ui.graphics.Color.White,
-            contentColor = androidx.compose.ui.graphics.Color.Black,
-            focusedContentColor = androidx.compose.ui.graphics.Color.Black
+            containerColor = NuvioTheme.colors.Secondary,
+            focusedContainerColor = NuvioTheme.colors.SecondaryVariant,
+            contentColor = NuvioTheme.colors.OnSecondary,
+            focusedContentColor = NuvioTheme.colors.OnSecondaryVariant,
+            disabledContainerColor = NuvioTheme.colors.Secondary.copy(alpha = 0.45f),
+            disabledContentColor = NuvioTheme.colors.OnSecondary.copy(alpha = 0.7f)
         ),
         shape = ButtonDefaults.shape(
-            shape = RoundedCornerShape(NuvioTheme.spacing.xxl)
+            shape = RoundedCornerShape(10.dp)
         ),
         border = ButtonDefaults.border(
             focusedBorder = Border(
                 border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                shape = RoundedCornerShape(NuvioTheme.spacing.xxl)
+                shape = RoundedCornerShape(10.dp)
             )
         ),
-        contentPadding = PaddingValues(horizontal = NuvioTheme.spacing.xl, vertical = 14.dp)
+        scale = ButtonDefaults.scale(focusedScale = 1.02f),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

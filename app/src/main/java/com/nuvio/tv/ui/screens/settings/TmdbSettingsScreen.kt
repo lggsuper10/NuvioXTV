@@ -413,6 +413,6 @@ private fun TmdbApiKeyDialog(
 private fun maskApiKey(key: String, notSetLabel: String): String {
     val trimmed = key.trim()
     if (trimmed.isBlank()) return notSetLabel
-    return if (trimmed.length <= 4) "\\u2022\\u2022\\u2022\\u2022"
-    else "\\u2022\\u2022\\u2022\\u2022\\u2022\\u2022${trimmed.takeLast(4)}"
+    return if (trimmed.length <= 4) "••••"
+    else "••••••${trimmed.takeLast(4)}"
 }

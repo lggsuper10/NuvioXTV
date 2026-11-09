@@ -387,6 +387,7 @@ class TmdbService @Inject constructor(
                     TmdbArtworkCandidate(
                         tmdbId = result.id,
                         title = title,
+                        originalTitle = result.originalTitle ?: result.originalName,
                         year = resultYear ?: year,
                         posterUrl = poster,
                         backdropUrl = backdrop
@@ -536,6 +537,7 @@ data class TmdbImages(val backdropUrl: String?, val posterUrl: String?, val runt
 data class TmdbArtworkCandidate(
     val tmdbId: Int,
     val title: String,
+    val originalTitle: String? = null,
     val year: String?,
     val posterUrl: String?,
     val backdropUrl: String?

@@ -5,6 +5,7 @@ import com.nuvio.tv.ui.util.contentTextDirection
 
 import android.os.SystemClock
 import android.view.KeyEvent as AndroidKeyEvent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -46,6 +47,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
+import androidx.tv.material3.Border
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -196,7 +198,7 @@ fun NuvioDialogButton(
     containerColor: Color = if (selected) {
         NuvioTheme.colors.Secondary.copy(alpha = 0.18f)
     } else {
-        NuvioTheme.colors.BackgroundCard
+        NuvioTheme.colors.Field
     },
     contentColor: Color = if (selected) {
         NuvioTheme.colors.Secondary
@@ -234,8 +236,15 @@ fun NuvioDialogButton(
             contentColor = contentColor,
             focusedContainerColor = NuvioTheme.colors.Secondary,
             focusedContentColor = NuvioTheme.colors.OnSecondary,
-            disabledContainerColor = NuvioTheme.colors.BackgroundCard.copy(alpha = 0.5f),
+            disabledContainerColor = NuvioTheme.colors.Field.copy(alpha = 0.55f),
             disabledContentColor = NuvioTheme.colors.TextTertiary
+        ),
+        border = ButtonDefaults.border(
+            border = Border(
+                border = BorderStroke(NuvioTheme.spacing.hairline, NuvioTheme.colors.Border),
+                shape = RoundedCornerShape(10.dp)
+            ),
+            focusedBorder = Border.None
         )
     ) {
         Box(

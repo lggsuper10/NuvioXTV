@@ -14,6 +14,15 @@ import com.android.build.gradle.internal.tasks.L8DexDesugarLibTask
 import java.io.File
 import java.util.Properties
 
+// Resolve BouncyCastle duplicate-class conflict: keep the Android-compatible
+// bcprov-jdk15on and drop bcprov-jdk18on (both ship identical org.bouncycastle.*
+// classes, so only one may be on the runtime classpath).
+configurations.all {
+    resolutionStrategy {
+        exclude(group = "org.bouncycastle", module = "bcprov-jdk18on")
+    }
+}
+
 // Copies the per-API dex metadata (.dm) files AGP builds next to the binary ART profile into the APK's assets, so the
 // in-app updater can install the next version together with its profile and have it compiled at install time.
 abstract class EmbedUpdateDexMetadataTask : DefaultTask() {
@@ -582,6 +591,8 @@ dependencies {
     // QR code + local server for addon management
     implementation(libs.nanohttpd)
     implementation(libs.smbj)
+    // Share enumeration + folder browsing for the SMB server picker (playback still uses SMBJ).
+    implementation(libs.jcifs.ng)
     implementation(libs.zxing.core)
 
 

@@ -55,6 +55,8 @@ data class HomeUiState(
     val movieWatchedStatus: Map<String, Boolean> = emptyMap(),
     val posterLibraryPending: Set<String> = emptySet(),
     val movieWatchedPending: Set<String> = emptySet(),
+    val posterLocalDeleteCounts: Map<String, Int> = emptyMap(),
+    val posterLocalDeletePending: Set<String> = emptySet(),
     val showPosterListPicker: Boolean = false,
     val posterListPickerTitle: String? = null,
     val posterListPickerContentType: String? = null,

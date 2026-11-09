@@ -37,9 +37,12 @@ internal fun createThemeBrush(colors: List<Color>): Brush {
     }
 }
 
-internal fun createFocusRingStyle(palette: ThemeColorPalette): NuvioFocusRingStyle {
+internal fun createFocusRingStyle(
+    palette: ThemeColorPalette,
+    overrideColor: Color? = null
+): NuvioFocusRingStyle {
     return NuvioFocusRingStyle(
-        solidColor = palette.focusRing,
-        gradientColors = palette.focusRingGradient
+        solidColor = overrideColor ?: palette.focusRing,
+        gradientColors = if (overrideColor != null) listOf(overrideColor) else palette.focusRingGradient
     )
 }

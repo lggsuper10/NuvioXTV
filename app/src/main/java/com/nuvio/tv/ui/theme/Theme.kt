@@ -1,17 +1,21 @@
 package com.nuvio.tv.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.darkColorScheme
+import androidx.tv.material3.lightColorScheme
 import com.nuvio.tv.domain.model.AppFont
 import com.nuvio.tv.domain.model.AppTheme
 import com.nuvio.tv.domain.model.CustomThemeColors
 import com.nuvio.tv.domain.model.SettingsUiStyle
+import com.nuvio.tv.domain.model.ThemeMode
 
 data class NuvioExtendedColors(
     val backgroundElevated: Color,
@@ -60,33 +64,60 @@ fun NuvioTheme(
     amoledSurfacesMode: Boolean = false,
     settingsUiStyle: SettingsUiStyle = SettingsUiStyle.CLASSIC,
     customThemeColors: CustomThemeColors = CustomThemeColors.Default,
+    themeMode: ThemeMode = ThemeMode.DARK,
     content: @Composable () -> Unit
 ) {
     val palette = androidx.compose.runtime.remember(appTheme, customThemeColors) {
         ThemeColors.getColorPalette(appTheme, customThemeColors)
     }
-    val focusRingStyle = createFocusRingStyle(palette)
+    val isLightMode = when (themeMode) {
+        ThemeMode.LIGHT -> true
+        ThemeMode.DARK -> false
+        ThemeMode.SYSTEM -> !isSystemInDarkTheme()
+    }
+    val usesPaleFocusRing = isLightMode && palette.focusRing.luminance() > 0.7f
+    val focusRingStyle = createFocusRingStyle(
+        palette = palette,
+        overrideColor = if (usesPaleFocusRing) NuvioPrimitives.neutral800 else null
+    )
     val colorScheme = NuvioColorScheme(
         palette = palette,
         amoledMode = amoledMode,
-        amoledSurfacesMode = amoledSurfacesMode
+        amoledSurfacesMode = amoledSurfacesMode,
+        lightMode = isLightMode
     )
     val typography = buildNuvioTypography(getFontFamily(appFont))
     val textStyles = buildNuvioTextStyles(typography)
 
-    val materialColorScheme = darkColorScheme(
-        primary = colorScheme.Primary,
-        onPrimary = colorScheme.OnPrimary,
-        secondary = colorScheme.Secondary,
-        onSecondary = colorScheme.OnSecondary,
-        background = colorScheme.Background,
-        surface = colorScheme.Surface,
-        surfaceVariant = colorScheme.SurfaceVariant,
-        onBackground = colorScheme.TextPrimary,
-        onSurface = colorScheme.TextPrimary,
-        onSurfaceVariant = colorScheme.TextSecondary,
-        error = colorScheme.Error
-    )
+    val materialColorScheme = if (isLightMode) {
+        lightColorScheme(
+            primary = colorScheme.Primary,
+            onPrimary = colorScheme.OnPrimary,
+            secondary = colorScheme.Secondary,
+            onSecondary = colorScheme.OnSecondary,
+            background = colorScheme.Background,
+            surface = colorScheme.Surface,
+            surfaceVariant = colorScheme.SurfaceVariant,
+            onBackground = colorScheme.TextPrimary,
+            onSurface = colorScheme.TextPrimary,
+            onSurfaceVariant = colorScheme.TextSecondary,
+            error = colorScheme.Error
+        )
+    } else {
+        darkColorScheme(
+            primary = colorScheme.Primary,
+            onPrimary = colorScheme.OnPrimary,
+            secondary = colorScheme.Secondary,
+            onSecondary = colorScheme.OnSecondary,
+            background = colorScheme.Background,
+            surface = colorScheme.Surface,
+            surfaceVariant = colorScheme.SurfaceVariant,
+            onBackground = colorScheme.TextPrimary,
+            onSurface = colorScheme.TextPrimary,
+            onSurfaceVariant = colorScheme.TextSecondary,
+            error = colorScheme.Error
+        )
+    }
 
     val extendedColors = NuvioExtendedColors(
         backgroundElevated = colorScheme.BackgroundElevated,

@@ -172,6 +172,7 @@ import com.nuvio.tv.domain.model.MemberAccess
 import com.nuvio.tv.domain.model.ProfileBackgroundSelection
 import com.nuvio.tv.domain.model.resolveProfileBackgroundSelection
 import com.nuvio.tv.domain.model.SettingsUiStyle
+import com.nuvio.tv.domain.model.ThemeMode
 import com.nuvio.tv.domain.model.resolveAppTheme
 import com.nuvio.tv.domain.model.resolveCustomThemeColors
 import com.nuvio.tv.domain.deeplink.AppDeepLink
@@ -251,6 +252,7 @@ private data class MainUiPrefs(
     val font: AppFont = AppFont.INTER,
     val amoledMode: Boolean = false,
     val amoledSurfacesMode: Boolean = false,
+    val themeMode: ThemeMode = ThemeMode.DARK,
     val hasChosenLayout: Boolean? = null,
     val experienceMode: ExperienceMode? = null,
     val experienceModeLoaded: Boolean = false,
@@ -573,10 +575,17 @@ open class MainActivity : ComponentActivity() {
                     layoutPreferenceDataStore.alwaysShowLandscapeClearlogo
                 ) { landscape, backdropWithLogo -> landscape to backdropWithLogo }
 
+                val extraFeaturesWithThemeModeFlow = combine(
+                    extraFeaturesFlow,
+                    themeDataStore.themeMode
+                ) { prefs, themeMode ->
+                    prefs.copy(themeMode = themeMode)
+                }
+
                 combine(
                     themeAndExperienceFlow,
                     layoutAndFeaturesFlow,
-                    extraFeaturesFlow,
+                    extraFeaturesWithThemeModeFlow,
                     layoutPreferenceDataStore.cardDepthStyle,
                     landscapePrefsFlow
                 ) { themePrefs, layoutPrefs, extraPrefs, cardDepthStyle, (landscapePosterMode, alwaysBackdropWithLogo) ->
@@ -591,6 +600,7 @@ open class MainActivity : ComponentActivity() {
                         fastHorizontalNavigationEnabled = extraPrefs.fastHorizontalNavigationEnabled,
                         composeHighlighterEnabled = extraPrefs.composeHighlighterEnabled,
                         settingsUiStyle = extraPrefs.settingsUiStyle,
+                        themeMode = extraPrefs.themeMode,
                         cardDepthStyle = cardDepthStyle,
                         landscapePosterMode = landscapePosterMode,
                         alwaysBackdropWithLogo = alwaysBackdropWithLogo
@@ -613,7 +623,8 @@ open class MainActivity : ComponentActivity() {
                 appFont = mainUiPrefs.font,
                 amoledMode = mainUiPrefs.amoledMode,
                 amoledSurfacesMode = mainUiPrefs.amoledSurfacesMode,
-                settingsUiStyle = mainUiPrefs.settingsUiStyle
+                settingsUiStyle = mainUiPrefs.settingsUiStyle,
+                themeMode = mainUiPrefs.themeMode
             ) {
                 val defaultBringIntoViewSpec = LocalBringIntoViewSpec.current
                 val bringIntoViewSpec = if (mainUiPrefs.smoothBringIntoViewEnabled) {
@@ -2296,13 +2307,23 @@ private fun CollapsedSidebarPill(
     val bgElevated = colors.BackgroundElevated
     val bgCard = colors.BackgroundCard
     val borderBase = colors.Border
-    val mediaColors = colors.media
-    val pillBackgroundBrush = remember(blurEnabled) {
-        val alpha = if (blurEnabled) 0.65f else 0.96f
+    val isLight = colors.isLight
+    val pillBackgroundBrush = remember(blurEnabled, isLight, bgElevated, bgCard) {
+        val alpha = when {
+            blurEnabled && isLight -> 0.94f
+            blurEnabled -> 0.72f
+            isLight -> 0.99f
+            else -> 0.97f
+        }
         Brush.verticalGradient(listOf(
-            Color(0xFF1C1C1E).copy(alpha = alpha),
-            Color(0xFF1C1C1E).copy(alpha = alpha)
+            bgElevated.copy(alpha = alpha),
+            bgCard.copy(alpha = alpha)
         ))
+    }
+    val pillBorderColor = if (isLight) {
+        borderBase.copy(alpha = 0.85f)
+    } else {
+        borderBase.copy(alpha = 0.42f)
     }
 
     Row(
@@ -2331,6 +2352,7 @@ private fun CollapsedSidebarPill(
                     }
                 )
                 .background(brush = pillBackgroundBrush, shape = pillShape)
+                .border(width = NuvioStrokes.tokens.hairline, color = pillBorderColor, shape = pillShape)
         ) {
             Row(
                 modifier = Modifier
@@ -2347,7 +2369,7 @@ private fun CollapsedSidebarPill(
                     DrawerItemIcon(
                         iconRes = iconRes,
                         icon = icon,
-                        tint = NuvioTheme.colors.text.onOverlay,
+                        tint = colors.TextPrimary,
                         modifier = Modifier
                             .size(NuvioTheme.sizes.sidebar.leadingVisual - NuvioTheme.spacing.md)
                             .offset(y = (-0.5).dp)
@@ -2369,7 +2391,7 @@ private fun CollapsedSidebarPill(
                 ) {
                     Text(
                         text = label,
-                        color = NuvioTheme.colors.text.onOverlay,
+                        color = colors.TextPrimary,
                         style = androidx.tv.material3.MaterialTheme.typography.titleLarge.copy(
                             lineHeight = 30.sp
                         ),

@@ -31,6 +31,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.focusable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -411,33 +412,41 @@ fun LibraryScreen(
                         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                     ) {
                         if (viewMode == LibraryViewMode.Cloud) {
-                        Button(
-                            onClick = viewModel::refreshCloudLibrary,
-                            enabled = !uiState.cloudLibrary.isRefreshing,
-                            colors = ButtonDefaults.colors(
-                                containerColor = NuvioTheme.colors.BackgroundCard,
-                                contentColor = NuvioTheme.colors.TextPrimary
-                            )
-                        ) {
-                            Text(
-                                if (uiState.cloudLibrary.isRefreshing) {
-                                    stringResource(R.string.library_syncing_btn)
-                                } else {
-                                    stringResource(R.string.cloud_library_refresh)
-                                }
-                            )
-                        }
-                        }
-                        if (viewMode == LibraryViewMode.Local) {
                             Button(
-                                onClick = onNavigateToLocalMedia,
+                                onClick = viewModel::refreshCloudLibrary,
+                                enabled = !uiState.cloudLibrary.isRefreshing,
                                 colors = ButtonDefaults.colors(
                                     containerColor = NuvioTheme.colors.BackgroundCard,
-                                    contentColor = NuvioTheme.colors.TextPrimary
+                                    contentColor = NuvioTheme.colors.TextPrimary,
+                                    focusedContainerColor = NuvioTheme.colors.Secondary,
+                                    focusedContentColor = NuvioTheme.colors.OnSecondary
                                 )
                             ) {
-                                Text(stringResource(R.string.library_manage_sources))
+                                Text(
+                                    if (uiState.cloudLibrary.isRefreshing) {
+                                        stringResource(R.string.library_syncing_btn)
+                                    } else {
+                                        stringResource(R.string.cloud_library_refresh)
+                                    }
+                                )
                             }
+                        }
+                        Button(
+                            onClick = onNavigateToLocalMedia,
+                            colors = ButtonDefaults.colors(
+                                containerColor = NuvioTheme.colors.BackgroundCard,
+                                contentColor = NuvioTheme.colors.TextPrimary,
+                                focusedContainerColor = NuvioTheme.colors.Secondary,
+                                focusedContentColor = NuvioTheme.colors.OnSecondary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.width(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.library_manage_sources))
                         }
                     }
                 }
@@ -994,8 +1003,18 @@ private fun LocalFilterButton(
     Button(
         onClick = onClick,
         colors = ButtonDefaults.colors(
-            containerColor = if (selected) NuvioTheme.colors.FocusBackground else NuvioTheme.colors.BackgroundCard,
-            contentColor = NuvioTheme.colors.TextPrimary
+            containerColor = if (selected) {
+                NuvioTheme.colors.Secondary.copy(alpha = 0.18f)
+            } else {
+                NuvioTheme.colors.BackgroundCard
+            },
+            contentColor = if (selected) {
+                NuvioTheme.colors.Secondary
+            } else {
+                NuvioTheme.colors.TextPrimary
+            },
+            focusedContainerColor = NuvioTheme.colors.Secondary,
+            focusedContentColor = NuvioTheme.colors.OnSecondary
         )
     ) {
         Text(label)
@@ -1023,7 +1042,9 @@ private fun LocalLibraryEmptyState(
             onClick = onAddFolder,
             colors = ButtonDefaults.colors(
                 containerColor = NuvioTheme.colors.BackgroundCard,
-                contentColor = NuvioTheme.colors.TextPrimary
+                contentColor = NuvioTheme.colors.TextPrimary,
+                focusedContainerColor = NuvioTheme.colors.Secondary,
+                focusedContentColor = NuvioTheme.colors.OnSecondary
             )
         ) {
             Text(action ?: stringResource(R.string.local_media_add_source))
@@ -1130,13 +1151,28 @@ private fun LibraryViewModeRow(
                     onClick = { onSelected(mode) },
                     modifier = Modifier
                         .then(if (selected) Modifier.focusRequester(primaryFocusRequester) else Modifier)
+                        .onFocusChanged { focusState ->
+                            if (focusState.isFocused && mode != selectedMode) {
+                                onSelected(mode)
+                            }
+                        }
                         .semantics {
                             role = Role.Tab
                             this.selected = selected
                         },
                     colors = ButtonDefaults.colors(
-                        containerColor = if (selected) NuvioTheme.colors.FocusBackground else NuvioTheme.colors.BackgroundCard,
-                        contentColor = NuvioTheme.colors.TextPrimary
+                        containerColor = if (selected) {
+                            NuvioTheme.colors.Secondary.copy(alpha = 0.18f)
+                        } else {
+                            NuvioTheme.colors.BackgroundCard
+                        },
+                        contentColor = if (selected) {
+                            NuvioTheme.colors.Secondary
+                        } else {
+                            NuvioTheme.colors.TextPrimary
+                        },
+                        focusedContainerColor = NuvioTheme.colors.Secondary,
+                        focusedContentColor = NuvioTheme.colors.OnSecondary
                     )
                 ) {
                     Text(
@@ -1337,7 +1373,9 @@ private fun CloudLibrarySearchRow(
                 },
                 colors = ButtonDefaults.colors(
                     containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
+                    contentColor = NuvioTheme.colors.TextPrimary,
+                    focusedContainerColor = NuvioTheme.colors.Secondary,
+                    focusedContentColor = NuvioTheme.colors.OnSecondary
                 )
             ) {
                 Text(stringResource(R.string.cloud_library_search_clear))
@@ -1910,7 +1948,9 @@ private fun LibraryActionsRow(
                 enabled = !pending && !isSyncing,
                 colors = ButtonDefaults.colors(
                     containerColor = NuvioTheme.colors.BackgroundCard,
-                    contentColor = NuvioTheme.colors.TextPrimary
+                    contentColor = NuvioTheme.colors.TextPrimary,
+                    focusedContainerColor = NuvioTheme.colors.Secondary,
+                    focusedContentColor = NuvioTheme.colors.OnSecondary
                 )
             ) {
                 Text(stringResource(R.string.library_manage_lists))
@@ -1921,7 +1961,9 @@ private fun LibraryActionsRow(
             enabled = !pending && !isSyncing,
             colors = ButtonDefaults.colors(
                 containerColor = NuvioTheme.colors.BackgroundCard,
-                contentColor = NuvioTheme.colors.TextPrimary
+                contentColor = NuvioTheme.colors.TextPrimary,
+                focusedContainerColor = NuvioTheme.colors.Secondary,
+                focusedContentColor = NuvioTheme.colors.OnSecondary
             )
         ) {
             Text(if (isSyncing) stringResource(R.string.library_syncing_btn) else stringResource(R.string.library_sync_btn))

@@ -2219,45 +2219,46 @@ private fun MetaDetailsContent(
         }
     }
 
-    val leftGradientBitmap = remember(backgroundColor, backdropWidthPx, backdropHeightPx, isRtl) {
+    // In light mode the backdrop scrim is bright; keep the hero text column covered but
+    // fade out earlier so the artwork on the right stays clear instead of going white.
+    val isLightBackdrop = NuvioTheme.colors.isLight
+    val leftGradientBitmap = remember(
+        backgroundColor,
+        backdropWidthPx,
+        backdropHeightPx,
+        isRtl,
+        isLightBackdrop
+    ) {
         val w = backdropWidthPx.coerceAtLeast(1)
         val h = backdropHeightPx.coerceAtLeast(1)
-        val transparent = backgroundColor.copy(alpha = 0f).toArgb()
         val bmp = android.graphics.Bitmap.createBitmap(w, 2, android.graphics.Bitmap.Config.ARGB_8888)
         val canvas = android.graphics.Canvas(bmp)
-        val fadeWidth = w * 0.78f
+        val fadeWidth = w * if (isLightBackdrop) 0.72f else 0.78f
+        val stopPositions = if (isLightBackdrop) {
+            floatArrayOf(0f, 0.18f, 0.36f, 0.50f, 0.62f, 0.74f, 0.86f, 0.95f, 1f)
+        } else {
+            floatArrayOf(0f, 0.10f, 0.22f, 0.36f, 0.52f, 0.66f, 0.78f, 0.90f, 1f)
+        }
+        val stopAlphas = if (isLightBackdrop) {
+            floatArrayOf(0.97f, 0.95f, 0.86f, 0.68f, 0.44f, 0.24f, 0.09f, 0.02f, 0f)
+        } else {
+            floatArrayOf(1f, 0.95f, 0.84f, 0.70f, 0.52f, 0.34f, 0.18f, 0.07f, 0f)
+        }
+        val shaderColors = IntArray(stopAlphas.size) { index ->
+            backgroundColor.copy(alpha = stopAlphas[index]).toArgb()
+        }
         val shader = if (isRtl) {
             android.graphics.LinearGradient(
                 w.toFloat(), 0f, w - fadeWidth, 0f,
-                intArrayOf(
-                    backgroundColor.copy(alpha = 1f).toArgb(),
-                    backgroundColor.copy(alpha = 0.95f).toArgb(),
-                    backgroundColor.copy(alpha = 0.84f).toArgb(),
-                    backgroundColor.copy(alpha = 0.70f).toArgb(),
-                    backgroundColor.copy(alpha = 0.52f).toArgb(),
-                    backgroundColor.copy(alpha = 0.34f).toArgb(),
-                    backgroundColor.copy(alpha = 0.18f).toArgb(),
-                    backgroundColor.copy(alpha = 0.07f).toArgb(),
-                    transparent
-                ),
-                floatArrayOf(0f, 0.10f, 0.22f, 0.36f, 0.52f, 0.66f, 0.78f, 0.90f, 1f),
+                shaderColors,
+                stopPositions,
                 android.graphics.Shader.TileMode.CLAMP
             )
         } else {
             android.graphics.LinearGradient(
                 0f, 0f, fadeWidth, 0f,
-                intArrayOf(
-                    backgroundColor.copy(alpha = 1f).toArgb(),
-                    backgroundColor.copy(alpha = 0.95f).toArgb(),
-                    backgroundColor.copy(alpha = 0.84f).toArgb(),
-                    backgroundColor.copy(alpha = 0.70f).toArgb(),
-                    backgroundColor.copy(alpha = 0.52f).toArgb(),
-                    backgroundColor.copy(alpha = 0.34f).toArgb(),
-                    backgroundColor.copy(alpha = 0.18f).toArgb(),
-                    backgroundColor.copy(alpha = 0.07f).toArgb(),
-                    transparent
-                ),
-                floatArrayOf(0f, 0.10f, 0.22f, 0.36f, 0.52f, 0.66f, 0.78f, 0.90f, 1f),
+                shaderColors,
+                stopPositions,
                 android.graphics.Shader.TileMode.CLAMP
             )
         }
