@@ -74,7 +74,6 @@ import com.nuvio.tv.domain.model.AppIconOption
 import com.nuvio.tv.domain.model.AppTheme
 import com.nuvio.tv.domain.model.CustomThemeColors
 import com.nuvio.tv.domain.model.SettingsUiStyle
-import com.nuvio.tv.domain.model.ThemeMode
 import com.nuvio.tv.ui.components.NuvioDialog
 import com.nuvio.tv.ui.screens.detail.requestFocusAfterFrames
 import com.nuvio.tv.ui.theme.ThemeColors
@@ -109,7 +108,6 @@ fun ThemeSettingsContent(
     val appIconState by viewModel.appIconState.collectAsStateWithLifecycle()
     var showFontDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
-    var showThemeModeDialog by remember { mutableStateOf(false) }
     var showAppIconDialog by remember { mutableStateOf(false) }
     var showCustomThemeDialog by remember(uiState.customThemeGradientEnabled) { mutableStateOf(false) }
     var restoreCustomThemeFocus by remember { mutableStateOf(false) }
@@ -192,19 +190,6 @@ fun ThemeSettingsContent(
                 SettingsDetailHeader(
                     title = stringResource(R.string.appearance_title),
                     subtitle = stringResource(R.string.appearance_subtitle)
-                )
-            }
-
-            SettingsGroupCard(
-                modifier = Modifier.fillMaxWidth(),
-                title = stringResource(R.string.appearance_theme_mode),
-                subtitle = stringResource(R.string.appearance_theme_mode_subtitle)
-            ) {
-                SettingsActionRow(
-                    title = stringResource(R.string.appearance_theme_mode_row),
-                    subtitle = stringResource(R.string.appearance_theme_mode_row_subtitle),
-                    value = themeModeLabel(uiState.themeMode),
-                    onClick = { showThemeModeDialog = true }
                 )
             }
 
@@ -351,24 +336,6 @@ fun ThemeSettingsContent(
             }
         }
         SettingsVerticalScrollIndicators(state = themeScrollState)
-    }
-
-    if (showThemeModeDialog) {
-        SettingsSingleChoiceDialog(
-            title = stringResource(R.string.appearance_theme_mode_dialog_title),
-            subtitle = stringResource(R.string.appearance_theme_mode_dialog_subtitle),
-            options = ThemeMode.entries.map { mode ->
-                SettingsPickerOption(mode, themeModeLabel(mode))
-            },
-            selectedValue = uiState.themeMode,
-            onOptionSelected = { mode ->
-                viewModel.onEvent(ThemeSettingsEvent.SelectThemeMode(mode))
-                showThemeModeDialog = false
-            },
-            onDismiss = { showThemeModeDialog = false },
-            width = 560.dp,
-            maxHeight = 360.dp
-        )
     }
 
     if (showCustomThemeDialog && AppTheme.CUSTOM in uiState.availableThemes) {
@@ -628,13 +595,6 @@ private fun SettingsUiStyle.localizedDescription(): String = when (this) {
     SettingsUiStyle.CLASSIC -> stringResource(R.string.settings_style_classic_desc)
     SettingsUiStyle.ZEN -> stringResource(R.string.settings_style_zen_desc)
     SettingsUiStyle.HORIZON -> stringResource(R.string.settings_style_horizon_desc)
-}
-
-@Composable
-private fun themeModeLabel(mode: ThemeMode): String = when (mode) {
-    ThemeMode.SYSTEM -> stringResource(R.string.appearance_theme_mode_system)
-    ThemeMode.DARK -> stringResource(R.string.appearance_theme_mode_dark)
-    ThemeMode.LIGHT -> stringResource(R.string.appearance_theme_mode_light)
 }
 
 @Composable

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -466,12 +467,12 @@ internal fun PlayButton(
                 }
             ),
         colors = ButtonDefaults.colors(
-            containerColor = NuvioTheme.colors.Secondary,
-            focusedContainerColor = NuvioTheme.colors.SecondaryVariant,
-            contentColor = NuvioTheme.colors.OnSecondary,
-            focusedContentColor = NuvioTheme.colors.OnSecondaryVariant,
-            disabledContainerColor = NuvioTheme.colors.Secondary.copy(alpha = 0.45f),
-            disabledContentColor = NuvioTheme.colors.OnSecondary.copy(alpha = 0.7f)
+            containerColor = NuvioTheme.colors.BackgroundCard,
+            focusedContainerColor = NuvioTheme.colors.Secondary,
+            contentColor = NuvioTheme.colors.TextPrimary,
+            focusedContentColor = NuvioTheme.colors.OnSecondary,
+            disabledContainerColor = NuvioTheme.colors.BackgroundCard.copy(alpha = 0.55f),
+            disabledContentColor = NuvioTheme.colors.TextTertiary
         ),
         shape = ButtonDefaults.shape(
             shape = RoundedCornerShape(10.dp)
@@ -485,30 +486,35 @@ internal fun PlayButton(
         scale = ButtonDefaults.scale(focusedScale = 1.02f),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm),
-            modifier = Modifier.animateContentSize(
-                animationSpec = tween(
-                    durationMillis = NuvioMotion.tokens.durations.fast,
-                    easing = NuvioMotion.tokens.easings.standard
-                )
-            )
+        Box(
+            modifier = Modifier.fillMaxHeight(),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(
-                painter = playPainter,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            AnimatedVisibility(
-                visible = text != null,
-                enter = fadeIn(animationSpec = tween(NuvioMotion.tokens.durations.fast)),
-                exit = fadeOut(animationSpec = tween(NuvioMotion.tokens.durations.quick))
-            ) {
-                Text(
-                    text = text ?: "",
-                    style = MaterialTheme.typography.labelLarge
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm),
+                modifier = Modifier.animateContentSize(
+                    animationSpec = tween(
+                        durationMillis = NuvioMotion.tokens.durations.fast,
+                        easing = NuvioMotion.tokens.easings.standard
+                    )
                 )
+            ) {
+                Icon(
+                    painter = playPainter,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                AnimatedVisibility(
+                    visible = text != null,
+                    enter = fadeIn(animationSpec = tween(NuvioMotion.tokens.durations.fast)),
+                    exit = fadeOut(animationSpec = tween(NuvioMotion.tokens.durations.quick))
+                ) {
+                    Text(
+                        text = text ?: "",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
             }
         }
     }

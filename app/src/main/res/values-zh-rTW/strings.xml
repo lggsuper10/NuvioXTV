@@ -372,6 +372,19 @@
     <string name="appearance_settings_style_subtitle">選擇設定介面的呈現方式</string>
     <string name="appearance_launcher_artwork">啟動器圖示</string>
     <string name="appearance_launcher_artwork_subtitle">選擇 Nuvio 在電視主畫面上的顯示方式</string>
+    <string name="ambient_mode_title">氛圍模式</string>
+    <string name="ambient_mode_subtitle">電視閒置時輪播目錄中的海報</string>
+    <string name="ambient_mode_enabled_subtitle">無遙控器操作一段時間後，全螢幕顯示背景圖</string>
+    <string name="ambient_mode_timeout">閒置後啟動</string>
+    <string name="ambient_mode_timeout_subtitle">啟動氛圍模式前的等待時間</string>
+    <plurals name="ambient_mode_timeout_minutes">
+        <item quantity="other">%1$d 分鐘</item>
+    </plurals>
+    <string name="ambient_mode_catalogs">目錄</string>
+    <string name="ambient_mode_catalogs_subtitle">最多選擇 3 個目錄作為海報來源</string>
+    <string name="ambient_mode_catalogs_dialog_subtitle">最多選擇 3 個目錄</string>
+    <string name="ambient_mode_catalogs_default">與焦點區塊相同</string>
+    <string name="ambient_mode_catalogs_count">已選 %1$d/%2$d</string>
     <string name="appearance_app_icon_and_banner">應用程式圖示與橫幅</string>
     <string name="appearance_app_icon_and_banner_subtitle">變更應用程式圖示和橫幅</string>
     <string name="appearance_app_icon_picker_title">選擇應用程式圖示與橫幅</string>
@@ -1069,6 +1082,8 @@
     <string name="layout_hero_catalogs_sub">選擇一個或多個目錄作為焦點區塊內容。</string>
     <string name="layout_section_content">首頁內容</string>
     <string name="layout_section_content_desc">控制首頁和搜尋顯示的內容。</string>
+    <string name="layout_section_sidebar">側邊導覽</string>
+    <string name="layout_section_sidebar_desc">側邊欄樣式以及「發現」的顯示位置。</string>
     <string name="layout_collapse_sidebar">摺疊側邊欄</string>
     <string name="layout_collapse_sidebar_sub">預設隱藏側邊欄；獲得焦點時顯示。</string>
     <string name="layout_hide_floating_pill">隱藏浮動膠囊</string>

@@ -53,6 +53,7 @@ internal fun SettingsCollapsibleSection(
     icon: ImageVector? = null,
     focusRequester: FocusRequester? = null,
     onFocused: () -> Unit = {},
+    summary: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
@@ -62,7 +63,7 @@ internal fun SettingsCollapsibleSection(
         SettingsActionRow(
             title = title,
             subtitle = description,
-            value = stringResource(if (expanded) R.string.layout_open else R.string.layout_closed),
+            value = summary ?: stringResource(if (expanded) R.string.layout_open else R.string.layout_closed),
             onClick = onToggle,
             leadingIcon = icon,
             trailingIcon = if (expanded) Icons.Default.ExpandMore else Icons.AutoMirrored.Filled.KeyboardArrowRight,

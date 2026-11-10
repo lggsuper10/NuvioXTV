@@ -605,7 +605,7 @@ internal fun SettingsTopBarTab(
 @Composable
 internal fun SettingsDetailHeader(
     title: String,
-    subtitle: String,
+    subtitle: String? = null,
     modifier: Modifier = Modifier
 ) {
     when (NuvioTheme.settingsUiStyle) {
@@ -620,11 +620,13 @@ internal fun SettingsDetailHeader(
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = NuvioTheme.colors.TextPrimary
             )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = NuvioTheme.colors.TextTertiary
-            )
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = NuvioTheme.colors.TextTertiary
+                )
+            }
         }
         SettingsUiStyle.HORIZON -> Column(
             modifier = modifier
@@ -637,11 +639,13 @@ internal fun SettingsDetailHeader(
                 style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.SemiBold),
                 color = NuvioTheme.colors.TextPrimary
             )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = NuvioTheme.colors.TextSecondary
-            )
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = NuvioTheme.colors.TextSecondary
+                )
+            }
         }
         SettingsUiStyle.CLASSIC -> Column(
             modifier = modifier.fillMaxWidth(),
@@ -652,11 +656,13 @@ internal fun SettingsDetailHeader(
                 style = MaterialTheme.typography.headlineMedium,
                 color = NuvioTheme.colors.TextPrimary
             )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = NuvioTheme.colors.TextSecondary
-            )
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = NuvioTheme.colors.TextSecondary
+                )
+            }
         }
     }
 }

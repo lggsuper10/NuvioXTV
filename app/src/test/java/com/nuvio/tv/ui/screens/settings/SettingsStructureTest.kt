@@ -46,34 +46,33 @@ class SettingsStructureTest {
     fun `layout sections follow the documented order`() {
         assertEquals(
             listOf(
-                LayoutSection.HOME_LAYOUT,
-                LayoutSection.HOME_CONTENT,
-                LayoutSection.SIDEBAR,
+                LayoutSection.HOME,
+                LayoutSection.CARDS,
                 LayoutSection.CONTINUE_WATCHING,
-                LayoutSection.FOCUSED_POSTER,
-                LayoutSection.POSTER_CARD,
-                LayoutSection.CARD_DEPTH,
-                LayoutSection.CUSTOM_POSTERS,
                 LayoutSection.DETAIL_PAGE,
-                LayoutSection.STREAMS
+                LayoutSection.EPISODES
             ),
-            visibleLayoutSections(essentialMode = false, focusedPosterHasOptions = true)
+            visibleLayoutSections(essentialMode = false)
         )
     }
 
     @Test
     fun `essential layout only offers the home layout`() {
         assertEquals(
-            listOf(LayoutSection.HOME_LAYOUT),
-            visibleLayoutSections(essentialMode = true, focusedPosterHasOptions = true)
+            listOf(LayoutSection.ESSENTIAL_HOME),
+            visibleLayoutSections(essentialMode = true)
         )
     }
 
     @Test
-    fun `focused poster section is hidden when it has nothing to show`() {
-        assertFalse(
-            LayoutSection.FOCUSED_POSTER in visibleLayoutSections(essentialMode = false, focusedPosterHasOptions = false)
-        )
+    fun `essential home is hidden in advanced mode`() {
+        assertFalse(LayoutSection.ESSENTIAL_HOME in visibleLayoutSections(essentialMode = false))
+    }
+
+    @Test
+    fun `first section is expanded by default`() {
+        assertEquals(listOf(LayoutSection.HOME.name), defaultExpandedSections(essentialMode = false))
+        assertEquals(listOf(LayoutSection.ESSENTIAL_HOME.name), defaultExpandedSections(essentialMode = true))
     }
 
     @Test

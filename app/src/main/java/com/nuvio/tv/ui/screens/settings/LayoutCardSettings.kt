@@ -413,8 +413,8 @@ private fun CwStyleCard(
                 this.selected = isSelected
             },
         colors = CardDefaults.colors(
-            containerColor = NuvioTheme.colors.Background,
-            focusedContainerColor = NuvioTheme.colors.Background
+            containerColor = NuvioTheme.colors.Surface,
+            focusedContainerColor = NuvioTheme.colors.Surface
         ),
         border = CardDefaults.border(
             border = if (isSelected) Border(

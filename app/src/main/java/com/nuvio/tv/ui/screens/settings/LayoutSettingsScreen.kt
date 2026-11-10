@@ -56,12 +56,9 @@ fun LayoutSettingsContent(
     val streamBadgeUiState by viewModel.streamBadgeUiState.collectAsStateWithLifecycle()
     val customPosterQrState by viewModel.customPosterQrState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val sections = visibleLayoutSections(
-        essentialMode = essentialMode,
-        focusedPosterHasOptions = uiState.focusedPosterHasOptions()
-    )
+    val sections = visibleLayoutSections(essentialMode = essentialMode)
     var expandedSections by rememberSaveable(essentialMode) {
-        mutableStateOf(if (essentialMode) listOf(LayoutSection.HOME_LAYOUT.name) else emptyList())
+        mutableStateOf(defaultExpandedSections(essentialMode))
     }
     val customPosterQrFocusRequester = remember { FocusRequester() }
     val streamBadgeQrFocusRequester = remember { FocusRequester() }
@@ -170,6 +167,7 @@ internal fun LayoutSettingsSections(
                 expanded = section.name in expandedSections,
                 onToggle = { onToggleSection(section) },
                 focusRequester = if (section == sections.first()) firstSectionFocusRequester else null,
+                summary = layoutSectionSummary(section, uiState, streamBadgeUiState),
                 modifier = Modifier.testTag(LayoutSettingsTestTags.section(section))
             ) {
                 LayoutSectionContent(
@@ -196,21 +194,35 @@ private fun LayoutSectionContent(
 ) {
     val onEvent: (LayoutSettingsEvent) -> Unit = viewModel::onEvent
     when (section) {
-        LayoutSection.HOME_LAYOUT -> LayoutHomeLayoutSection(uiState, onEvent)
-        LayoutSection.HOME_CONTENT -> LayoutHomeContentSection(uiState, onEvent)
-        LayoutSection.SIDEBAR -> LayoutSidebarSection(uiState, onEvent)
+        LayoutSection.ESSENTIAL_HOME -> LayoutHomeLayoutSection(uiState, onEvent)
+        LayoutSection.HOME -> {
+            SettingsSectionLabel(text = stringResource(R.string.layout_group_home_layout))
+            LayoutHomeLayoutSection(uiState, onEvent)
+            SettingsSectionLabel(text = stringResource(R.string.layout_group_home_content))
+            LayoutHomeContentSection(uiState, onEvent)
+            SettingsSectionLabel(text = stringResource(R.string.layout_group_home_navigation))
+            LayoutSidebarSection(uiState, onEvent)
+        }
+        LayoutSection.CARDS -> {
+            SettingsSectionLabel(text = stringResource(R.string.layout_group_card_size))
+            LayoutPosterCardSection(uiState, onEvent)
+            SettingsSectionLabel(text = stringResource(R.string.layout_group_card_depth))
+            LayoutCardDepthSection(uiState, onEvent)
+            if (uiState.focusedPosterHasOptions()) {
+                SettingsSectionLabel(text = stringResource(R.string.layout_group_card_focused))
+                LayoutFocusedPosterSection(uiState, onEvent)
+            }
+            SettingsSectionLabel(text = stringResource(R.string.layout_group_card_custom))
+            LayoutCustomPosterSection(
+                uiState = uiState,
+                onEvent = onEvent,
+                onConfigureViaPhone = viewModel::startCustomPosterQrMode,
+                focusRequester = customPosterQrFocusRequester
+            )
+        }
         LayoutSection.CONTINUE_WATCHING -> LayoutContinueWatchingSection(uiState, onEvent)
-        LayoutSection.FOCUSED_POSTER -> LayoutFocusedPosterSection(uiState, onEvent)
-        LayoutSection.POSTER_CARD -> LayoutPosterCardSection(uiState, onEvent)
-        LayoutSection.CARD_DEPTH -> LayoutCardDepthSection(uiState, onEvent)
-        LayoutSection.CUSTOM_POSTERS -> LayoutCustomPosterSection(
-            uiState = uiState,
-            onEvent = onEvent,
-            onConfigureViaPhone = viewModel::startCustomPosterQrMode,
-            focusRequester = customPosterQrFocusRequester
-        )
         LayoutSection.DETAIL_PAGE -> LayoutDetailPageSection(uiState, onEvent)
-        LayoutSection.STREAMS -> LayoutStreamsSection(
+        LayoutSection.EPISODES -> LayoutStreamsSection(
             streamBadgeUiState = streamBadgeUiState,
             onShowFileSizeBadgesChange = viewModel::setShowFileSizeBadges,
             onShowAddonLogoChange = viewModel::setShowAddonLogo,
