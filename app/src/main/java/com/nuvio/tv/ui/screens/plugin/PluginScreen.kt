@@ -1233,7 +1233,7 @@ private fun RepositoryCard(
                         focusedContainerColor = NuvioTheme.colors.FocusBackground,
                         focusedContentColor = NuvioTheme.colors.Primary
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
@@ -1253,7 +1253,7 @@ private fun RepositoryCard(
                         focusedContainerColor = NuvioTheme.colors.FocusBackground,
                         focusedContentColor = NuvioTheme.colors.Error
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -1364,7 +1364,7 @@ private fun ScraperCard(
                             focusedContainerColor = NuvioTheme.colors.FocusBackground,
                             focusedContentColor = NuvioTheme.colors.Primary
                         ),
-                        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                     ) {
                         if (isTesting) {
                             LoadingIndicator(modifier = Modifier.size(NuvioTheme.spacing.lg))

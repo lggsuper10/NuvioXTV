@@ -100,10 +100,10 @@ private fun NuvioButton(
         border = ButtonDefaults.border(
             focusedBorder = Border(
                 border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                shape = RoundedCornerShape(NuvioTheme.radii.md)
+                shape = RoundedCornerShape(10.dp)
             )
         ),
-        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md)),
+        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
         content = { content() }
     )
 }
@@ -395,10 +395,10 @@ private fun ImportContent(
                                 border = ButtonDefaults.border(
                                     focusedBorder = Border(
                                         border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                                        shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                        shape = RoundedCornerShape(10.dp)
                                     )
                                 ),
-                                shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                             ) {
                                 Text(label)
                             }
@@ -639,10 +639,10 @@ private fun CollectionListItem(
                     border = ButtonDefaults.border(
                         focusedBorder = Border(
                             border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                            shape = RoundedCornerShape(NuvioTheme.radii.md)
+                            shape = RoundedCornerShape(10.dp)
                         )
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                 ) {
                     Icon(Icons.Default.KeyboardArrowUp, stringResource(R.string.cd_move_up))
                 }
@@ -659,10 +659,10 @@ private fun CollectionListItem(
                     border = ButtonDefaults.border(
                         focusedBorder = Border(
                             border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                            shape = RoundedCornerShape(NuvioTheme.radii.md)
+                            shape = RoundedCornerShape(10.dp)
                         )
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                 ) {
                     Icon(Icons.Default.KeyboardArrowDown, stringResource(R.string.cd_move_down))
                 }
@@ -679,10 +679,10 @@ private fun CollectionListItem(
                     border = ButtonDefaults.border(
                         focusedBorder = Border(
                             border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                            shape = RoundedCornerShape(NuvioTheme.radii.md)
+                            shape = RoundedCornerShape(10.dp)
                         )
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                 ) {
                     Icon(Icons.Default.Edit, stringResource(R.string.cd_edit))
                 }
@@ -698,10 +698,10 @@ private fun CollectionListItem(
                     border = ButtonDefaults.border(
                         focusedBorder = Border(
                             border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                            shape = RoundedCornerShape(NuvioTheme.radii.md)
+                            shape = RoundedCornerShape(10.dp)
                         )
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                 ) {
                     Icon(Icons.Default.Delete, stringResource(R.string.cd_delete))
                 }

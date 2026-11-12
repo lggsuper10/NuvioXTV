@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -319,6 +320,7 @@ private fun RatingOrderToggleRow(
         )
         Button(
             onClick = { onMoveUp?.invoke() },
+            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
             enabled = onMoveUp != null,
             modifier = Modifier
                 .width(40.dp)
@@ -336,6 +338,7 @@ private fun RatingOrderToggleRow(
         }
         Button(
             onClick = { onMoveDown?.invoke() },
+            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
             enabled = onMoveDown != null,
             modifier = Modifier
                 .width(40.dp)

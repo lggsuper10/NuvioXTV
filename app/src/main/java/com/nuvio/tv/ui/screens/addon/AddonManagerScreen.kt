@@ -467,7 +467,7 @@ fun AddonManagerScreen(
                                         focusedContainerColor = NuvioTheme.colors.FocusBackground,
                                         focusedContentColor = NuvioTheme.colors.Primary
                                     ),
-                                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                                 ) {
                                     Text(text = if (uiState.isInstalling) stringResource(R.string.addon_installing) else stringResource(R.string.addon_install_btn))
                                 }
@@ -1525,7 +1525,7 @@ private fun AddonCardContent(
                                 focusedContainerColor = NuvioTheme.colors.FocusBackground,
                                 focusedContentColor = NuvioTheme.colors.Primary
                             ),
-                            shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                         ) {
                             Icon(imageVector = Icons.Default.ArrowUpward, contentDescription = stringResource(R.string.cd_move_up))
                         }
@@ -1539,7 +1539,7 @@ private fun AddonCardContent(
                                 focusedContainerColor = NuvioTheme.colors.FocusBackground,
                                 focusedContentColor = NuvioTheme.colors.Primary
                             ),
-                            shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                         ) {
                             Icon(imageVector = Icons.Default.ArrowDownward, contentDescription = stringResource(R.string.cd_move_down))
                         }
@@ -1553,7 +1553,7 @@ private fun AddonCardContent(
                             focusedContainerColor = NuvioTheme.colors.FocusBackground,
                             focusedContentColor = NuvioTheme.colors.Error
                         ),
-                        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                     ) {
                         Text(text = stringResource(R.string.addon_remove))
                     }

@@ -384,7 +384,7 @@ private fun MembershipRefreshButton(
             contentColor = MembershipSecondaryText,
             focusedContentColor = NuvioTheme.colors.Primary
         ),
-        shape = ButtonDefaults.shape(RoundedCornerShape(50))
+        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
     ) {
         Text(
             text = stringResource(
@@ -419,7 +419,7 @@ private fun MembershipPrimaryButton(
             contentColor = MembershipCardColor,
             focusedContentColor = NuvioTheme.colors.OnPrimary
         ),
-        shape = ButtonDefaults.shape(RoundedCornerShape(50))
+        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
     ) {
         Text(
             text = label,
@@ -492,7 +492,7 @@ private fun MembershipPanelBack(
                 contentColor = NuvioTheme.colors.TextPrimary,
                 focusedContentColor = NuvioTheme.colors.Primary
             ),
-            shape = ButtonDefaults.shape(RoundedCornerShape(50))
+            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
         ) {
             Text(
                 text = stringResource(R.string.supporters_contributors_back_button),

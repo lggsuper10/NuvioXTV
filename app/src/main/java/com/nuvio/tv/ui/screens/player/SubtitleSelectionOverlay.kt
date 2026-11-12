@@ -1524,7 +1524,7 @@ private fun StepperButton(
             contentColor = Color.White,
             focusedContentColor = Color.White
         ),
-        shape = IconButtonDefaults.shape(shape = RoundedCornerShape(NuvioTheme.radii.md)),
+        shape = IconButtonDefaults.shape(shape = RoundedCornerShape(10.dp)),
         scale = IconButtonDefaults.scale(focusedScale = 1f, pressedScale = 1f)
     ) {
         Icon(imageVector = icon, contentDescription = contentDescription)

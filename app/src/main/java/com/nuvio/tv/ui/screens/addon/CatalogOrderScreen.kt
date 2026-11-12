@@ -228,10 +228,10 @@ private fun CatalogOrderCard(
                     border = ButtonDefaults.border(
                         focusedBorder = Border(
                             border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                            shape = RoundedCornerShape(NuvioTheme.radii.md)
+                            shape = RoundedCornerShape(10.dp)
                         )
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowUpward,
@@ -251,10 +251,10 @@ private fun CatalogOrderCard(
                     border = ButtonDefaults.border(
                         focusedBorder = Border(
                             border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                            shape = RoundedCornerShape(NuvioTheme.radii.md)
+                            shape = RoundedCornerShape(10.dp)
                         )
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowDownward,
@@ -273,10 +273,10 @@ private fun CatalogOrderCard(
                     border = ButtonDefaults.border(
                         focusedBorder = Border(
                             border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                            shape = RoundedCornerShape(NuvioTheme.radii.md)
+                            shape = RoundedCornerShape(10.dp)
                         )
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                 ) {
                     Text(text = if (item.isDisabled) stringResource(R.string.catalog_order_enable) else stringResource(R.string.catalog_order_disable))
                 }

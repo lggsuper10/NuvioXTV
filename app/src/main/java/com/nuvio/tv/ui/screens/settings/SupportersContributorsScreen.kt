@@ -612,7 +612,7 @@ private fun TabErrorState(
                     contentColor = NuvioTheme.colors.OnSecondary,
                     focusedContentColor = NuvioTheme.colors.OnSecondaryVariant
                 ),
-                shape = ButtonDefaults.shape(RoundedCornerShape(50))
+                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
             ) {
                 Text(text = stringResource(R.string.action_retry))
             }

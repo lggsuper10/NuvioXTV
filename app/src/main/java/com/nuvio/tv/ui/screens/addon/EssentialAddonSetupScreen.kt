@@ -150,7 +150,7 @@ fun EssentialAddonSetupScreen(
                                 contentColor = NuvioTheme.colors.OnSecondary,
                                 focusedContainerColor = NuvioTheme.colors.SecondaryVariant
                             ),
-                            shape = ButtonDefaults.shape(RoundedCornerShape(50))
+                            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                         ) {
                             Text(
                                 text = if (uiState.isInstalling) {
@@ -203,7 +203,7 @@ fun EssentialAddonSetupScreen(
                                 focusedContainerColor = NuvioTheme.colors.FocusBackground,
                                 focusedContentColor = NuvioTheme.colors.Primary
                             ),
-                            shape = ButtonDefaults.shape(RoundedCornerShape(50))
+                            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                         ) {
                             Icon(imageVector = Icons.Default.QrCode2, contentDescription = null)
                             Text(text = stringResource(R.string.essential_addon_show_qr))
@@ -220,7 +220,7 @@ fun EssentialAddonSetupScreen(
                     focusedContainerColor = NuvioTheme.colors.FocusBackground,
                     focusedContentColor = NuvioTheme.colors.Primary
                 ),
-                shape = ButtonDefaults.shape(RoundedCornerShape(50))
+                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
             ) {
                 Text(
                     text = stringResource(R.string.essential_addon_continue_for_now),

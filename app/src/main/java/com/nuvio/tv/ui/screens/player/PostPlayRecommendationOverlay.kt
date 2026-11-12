@@ -753,7 +753,7 @@ private fun PostPlayRecommendationButton(
     focusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(NuvioTheme.spacing.xxl)
+    val shape = RoundedCornerShape(10.dp)
     var longPressTriggered by remember { mutableStateOf(false) }
     val longPressKeyTracker = rememberLongPressKeyTracker()
     Button(

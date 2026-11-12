@@ -192,6 +192,7 @@ internal fun LocalMediaSettingsContent(
                     )
                     Button(
                         onClick = { showAddSourceDialog = true },
+                        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
                         colors = ButtonDefaults.colors(
                             containerColor = NuvioTheme.colors.BackgroundCard,
                             contentColor = NuvioTheme.colors.TextPrimary
@@ -729,7 +730,10 @@ fun LocalMediaScreen(onBack: () -> Unit, openSmbOnStart: Boolean = false) {
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Button(onClick = onBack) {
+            Button(
+                onClick = onBack,
+                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = null,

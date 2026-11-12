@@ -473,7 +473,7 @@ fun SettingsScreen(
                                         height = with(density) { pillHeight.toDp() }
                                     )
                                     .graphicsLayer { alpha = pillAlpha }
-                                    .clip(RoundedCornerShape(SettingsPillRadius))
+                                    .clip(RoundedCornerShape(SettingsButtonRadius))
                                     .background(NuvioTheme.colors.Secondary)
                             )
                         }

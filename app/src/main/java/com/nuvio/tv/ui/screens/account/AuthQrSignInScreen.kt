@@ -484,7 +484,7 @@ private fun AuthEmailLoginForm(
                 disabledContainerColor = Color.White.copy(alpha = 0.12f),
                 disabledContentColor = AuthTextPrimary.copy(alpha = 0.58f)
             ),
-            shape = ButtonDefaults.shape(RoundedCornerShape(16.dp))
+            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
         ) {
             Box(
                 modifier = Modifier

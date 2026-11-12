@@ -215,7 +215,7 @@ private fun AccountActionCard(
             contentColor = NuvioTheme.colors.TextPrimary,
             focusedContentColor = NuvioTheme.colors.TextPrimary
         ),
-        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
     ) {
         Row(
             modifier = Modifier
@@ -330,7 +330,7 @@ private fun LinkedDevicesSection(
                             contentColor = Color(0xFFF44336),
                             focusedContentColor = Color(0xFFF44336)
                         ),
-                        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.sm))
+                        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                     ) {
                         Icon(
                             imageVector = Icons.Default.LinkOff,
@@ -357,7 +357,7 @@ private fun SignOutButton(onClick: () -> Unit) {
             contentColor = Color(0xFFF44336),
             focusedContentColor = Color(0xFFF44336)
         ),
-        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
     ) {
         Row(
             modifier = Modifier.padding(horizontal = NuvioTheme.spacing.lg, vertical = NuvioTheme.spacing.sm),

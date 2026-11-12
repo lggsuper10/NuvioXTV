@@ -111,7 +111,8 @@ fun HomeScreen(
     onNavigateToCatalogSeeAll: (String, String, String) -> Unit = { _, _, _ -> },
     onNavigateToFolderDetail: (String, String) -> Unit = { _, _ -> },
     onNavigateToLocalMedia: () -> Unit = {},
-    onNavigateToSmb: () -> Unit = {}
+    onNavigateToSmb: () -> Unit = {},
+    onNavigateToAddonManager: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -300,16 +301,24 @@ fun HomeScreen(
                 if (!homeStableGateReleased) {
                     Unit
                 } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.home_no_addons),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = NuvioTheme.colors.TextSecondary
+                    HomeEmptyActionState(
+                        title = stringResource(R.string.web_no_addons),
+                        message = stringResource(R.string.home_no_addons),
+                        actions = listOf(
+                            HomeEmptyAction(
+                                label = stringResource(R.string.addon_install_title),
+                                onClick = onNavigateToAddonManager
+                            ),
+                            HomeEmptyAction(
+                                label = stringResource(R.string.home_empty_local_action),
+                                onClick = onNavigateToLocalMedia
+                            ),
+                            HomeEmptyAction(
+                                label = stringResource(R.string.home_empty_smb_action),
+                                onClick = onNavigateToSmb
+                            )
                         )
-                    }
+                    )
                 }
             }
 
@@ -317,16 +326,16 @@ fun HomeScreen(
                 if (!homeStableGateReleased) {
                     Unit
                 } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.home_no_catalog_addons),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = NuvioTheme.colors.TextSecondary
+                    HomeEmptyActionState(
+                        title = stringResource(R.string.web_no_addons),
+                        message = stringResource(R.string.home_no_catalog_addons),
+                        actions = listOf(
+                            HomeEmptyAction(
+                                label = stringResource(R.string.web_manage_addons_title),
+                                onClick = onNavigateToAddonManager
+                            )
                         )
-                    }
+                    )
                 }
             }
 
@@ -869,6 +878,91 @@ private fun HomePosterOptionsDialog(
                 contentColor = NuvioTheme.colors.Error,
                 modifier = Modifier.fillMaxWidth()
             )
+        }
+    }
+}
+
+private data class HomeEmptyAction(
+    val label: String,
+    val onClick: () -> Unit
+)
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun HomeEmptyActionState(
+    title: String,
+    message: String,
+    actions: List<HomeEmptyAction>
+) {
+    val actionFocusRequester = remember { FocusRequester() }
+    val actionShape = RoundedCornerShape(10.dp)
+
+    LaunchedEffect(Unit) {
+        runCatching { actionFocusRequester.requestFocus() }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = 560.dp)
+                .padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            Image(
+                painter = painterResource(R.drawable.app_logo_mark),
+                contentDescription = null,
+                modifier = Modifier.size(104.dp)
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                color = NuvioTheme.colors.TextPrimary,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = NuvioTheme.colors.TextSecondary,
+                textAlign = TextAlign.Center
+            )
+            actions.forEachIndexed { index, action ->
+                Button(
+                    onClick = action.onClick,
+                    modifier = Modifier
+                        .widthIn(min = 260.dp, max = 300.dp)
+                        .height(52.dp)
+                        .then(
+                            if (index == 0) {
+                                Modifier.focusRequester(actionFocusRequester)
+                            } else {
+                                Modifier
+                            }
+                        ),
+                    shape = ButtonDefaults.shape(actionShape),
+                    colors = ButtonDefaults.colors(
+                        containerColor = NuvioTheme.colors.BackgroundCard,
+                        contentColor = NuvioTheme.colors.TextPrimary,
+                        focusedContainerColor = NuvioTheme.colors.Secondary,
+                        focusedContentColor = NuvioTheme.colors.OnSecondary
+                    )
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = action.label,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
         }
     }
 }

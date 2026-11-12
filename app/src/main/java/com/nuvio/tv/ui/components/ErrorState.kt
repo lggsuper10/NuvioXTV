@@ -59,7 +59,7 @@ fun ErrorState(
                 focusedContainerColor = NuvioTheme.colors.FocusBackground,
                 focusedContentColor = NuvioTheme.colors.Primary
             ),
-            shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
         ) {
             Text(stringResource(R.string.action_retry))
         }

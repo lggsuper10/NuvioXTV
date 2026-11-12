@@ -306,6 +306,9 @@ private fun PlaybackNavHost(
                 },
                 onNavigateToSmb = {
                     navController.navigate(Screen.LocalMediaSmb.route)
+                },
+                onNavigateToAddonManager = {
+                    navController.navigate(Screen.AddonManager.route)
                 }
             )
         }

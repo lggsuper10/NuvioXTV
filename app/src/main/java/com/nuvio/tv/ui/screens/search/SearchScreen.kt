@@ -1032,7 +1032,7 @@ private fun RecentSearchesSection(
                     focusedContainerColor = NuvioTheme.colors.FocusBackground,
                     focusedContentColor = NuvioTheme.colors.Primary
                 ),
-                shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
             ) {
                 Text(text = stringResource(R.string.search_recent_clear))
             }
@@ -1093,7 +1093,7 @@ private fun RecentSearchesSection(
                             focusedContentColor = NuvioTheme.colors.Primary
                         ),
                         scale = ButtonDefaults.scale(focusedScale = 1f),
-                        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                     ) {
                         Text(
                             text = recentQuery,
@@ -1153,9 +1153,7 @@ private fun RecentSearchesSection(
                             focusedContentColor = NuvioTheme.colors.TextPrimary
                         ),
                         scale = TvIconButtonDefaults.scale(focusedScale = 1f),
-                        shape = TvIconButtonDefaults.shape(
-                            shape = RoundedCornerShape(NuvioTheme.radii.md)
-                        )
+                        shape = TvIconButtonDefaults.shape(shape = RoundedCornerShape(10.dp))
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,

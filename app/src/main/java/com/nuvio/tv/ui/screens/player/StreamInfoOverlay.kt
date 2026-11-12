@@ -359,7 +359,7 @@ private fun StreamInfoHudButton(
             focusedContainerColor = if (enabled) NuvioTheme.colors.Secondary else Color.White,
             focusedContentColor = if (enabled) NuvioTheme.colors.OnSecondary else Color.Black
         ),
-        shape = ButtonDefaults.shape(shape = RoundedCornerShape(NuvioTheme.radii.sm)),
+        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
         scale = ButtonDefaults.scale(focusedScale = 1.05f),
         border = ButtonDefaults.border(
             border = Border(
@@ -367,11 +367,11 @@ private fun StreamInfoHudButton(
                     1.dp,
                     if (enabled) NuvioTheme.colors.Secondary.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.12f)
                 ),
-                shape = RoundedCornerShape(NuvioTheme.radii.sm)
+                shape = RoundedCornerShape(10.dp)
             ),
             focusedBorder = Border(
                 border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                shape = RoundedCornerShape(NuvioTheme.radii.sm)
+                shape = RoundedCornerShape(10.dp)
             )
         )
     ) {

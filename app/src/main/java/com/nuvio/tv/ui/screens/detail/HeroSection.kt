@@ -474,9 +474,7 @@ internal fun PlayButton(
             disabledContainerColor = NuvioTheme.colors.BackgroundCard.copy(alpha = 0.55f),
             disabledContentColor = NuvioTheme.colors.TextTertiary
         ),
-        shape = ButtonDefaults.shape(
-            shape = RoundedCornerShape(10.dp)
-        ),
+        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
         border = ButtonDefaults.border(
             focusedBorder = Border(
                 border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),

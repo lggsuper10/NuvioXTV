@@ -152,7 +152,7 @@ internal fun AddSmbServerCard(
             .fillMaxWidth()
             .heightIn(min = 124.dp)
             .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier),
-        shape = ButtonDefaults.shape(RoundedCornerShape(12.dp)),
+        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
         scale = ButtonDefaults.scale(focusedScale = 1.02f),
         colors = ButtonDefaults.colors(
             containerColor = NuvioTheme.colors.BackgroundCard.copy(alpha = 0.55f),
@@ -211,7 +211,10 @@ internal fun SmbServerDetailContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Button(onClick = onBack) {
+            Button(
+                onClick = onBack,
+                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = null,

@@ -414,6 +414,7 @@ fun LibraryScreen(
                         if (viewMode == LibraryViewMode.Cloud) {
                             Button(
                                 onClick = viewModel::refreshCloudLibrary,
+                                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
                                 enabled = !uiState.cloudLibrary.isRefreshing,
                                 colors = ButtonDefaults.colors(
                                     containerColor = NuvioTheme.colors.BackgroundCard,
@@ -433,6 +434,7 @@ fun LibraryScreen(
                         }
                         Button(
                             onClick = onNavigateToLocalMedia,
+                            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
                             colors = ButtonDefaults.colors(
                                 containerColor = NuvioTheme.colors.BackgroundCard,
                                 contentColor = NuvioTheme.colors.TextPrimary,
@@ -950,6 +952,7 @@ private fun LocalLibraryFilterRow(
             modifier = Modifier.weight(1f),
             upFocusRequester = upFocusRequester,
             title = stringResource(R.string.local_library_source_filter),
+            showTitle = false,
             value = selectedSource?.let { localSourceLabel(it) } ?: allFolders,
             selectedValue = state.selectedSourceId?.toString() ?: ALL_FOLDERS_VALUE,
             expanded = expandedPicker == "local_source",
@@ -965,6 +968,7 @@ private fun LocalLibraryFilterRow(
             modifier = Modifier.weight(1f),
             upFocusRequester = upFocusRequester,
             title = stringResource(R.string.local_library_sort_recent),
+            showTitle = false,
             value = when (state.sort) {
                 LocalLibrarySort.RECENT -> stringResource(R.string.local_library_sort_recent)
                 LocalLibrarySort.TITLE -> stringResource(R.string.local_library_sort_title)
@@ -1002,6 +1006,7 @@ private fun LocalFilterButton(
 ) {
     Button(
         onClick = onClick,
+        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
         colors = ButtonDefaults.colors(
             containerColor = if (selected) {
                 NuvioTheme.colors.Secondary.copy(alpha = 0.18f)
@@ -1040,6 +1045,7 @@ private fun LocalLibraryEmptyState(
         )
         Button(
             onClick = onAddFolder,
+            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
             colors = ButtonDefaults.colors(
                 containerColor = NuvioTheme.colors.BackgroundCard,
                 contentColor = NuvioTheme.colors.TextPrimary,
@@ -1149,6 +1155,7 @@ private fun LibraryViewModeRow(
                 val selected = mode == selectedMode
                 Button(
                     onClick = { onSelected(mode) },
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
                     modifier = Modifier
                         .then(if (selected) Modifier.focusRequester(primaryFocusRequester) else Modifier)
                         .onFocusChanged { focusState ->
@@ -1371,6 +1378,7 @@ private fun CloudLibrarySearchRow(
                     onQueryChange("")
                     editing = false
                 },
+                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
                 colors = ButtonDefaults.colors(
                     containerColor = NuvioTheme.colors.BackgroundCard,
                     contentColor = NuvioTheme.colors.TextPrimary,
@@ -1743,6 +1751,7 @@ private fun LibraryDropdownPicker(
     upFocusRequester: FocusRequester? = null,
     title: String,
     value: String,
+    showTitle: Boolean = true,
     selectedValue: String?,
     expanded: Boolean,
     options: List<LibraryOption>,
@@ -1794,7 +1803,7 @@ private fun LibraryDropdownPicker(
                 )
                 .onSizeChanged { anchorSize = it }
                 .onFocusChanged { isFocused = it.isFocused },
-            shape = CardDefaults.shape(shape = RoundedCornerShape(14.dp)),
+            shape = CardDefaults.shape(shape = RoundedCornerShape(10.dp)),
             colors = CardDefaults.colors(
                 containerColor = NuvioTheme.colors.BackgroundCard,
                 focusedContainerColor = NuvioTheme.colors.FocusBackground
@@ -1802,11 +1811,11 @@ private fun LibraryDropdownPicker(
             border = CardDefaults.border(
                 border = androidx.tv.material3.Border(
                     border = BorderStroke(NuvioTheme.spacing.hairline, NuvioTheme.colors.Border),
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(10.dp)
                 ),
                 focusedBorder = androidx.tv.material3.Border(
                     border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(10.dp)
                 )
             ),
             scale = CardDefaults.scale(
@@ -1820,11 +1829,13 @@ private fun LibraryDropdownPicker(
                     .padding(horizontal = 14.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.xxs)
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = NuvioTheme.colors.TextTertiary
-                )
+                if (showTitle) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = NuvioTheme.colors.TextTertiary
+                    )
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
@@ -1855,7 +1866,7 @@ private fun LibraryDropdownPicker(
             modifier = Modifier
                 .width(with(LocalDensity.current) { anchorSize.width.toDp() })
                 .heightIn(max = 320.dp),
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(10.dp),
             containerColor = NuvioTheme.colors.BackgroundCard,
             tonalElevation = NuvioTheme.spacing.none,
             shadowElevation = NuvioTheme.spacing.sm,
@@ -1945,6 +1956,7 @@ private fun LibraryActionsRow(
         if (showManageLists) {
             Button(
                 onClick = onManageLists,
+                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
                 enabled = !pending && !isSyncing,
                 colors = ButtonDefaults.colors(
                     containerColor = NuvioTheme.colors.BackgroundCard,
@@ -1958,6 +1970,7 @@ private fun LibraryActionsRow(
         }
         Button(
             onClick = onRefresh,
+            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
             enabled = !pending && !isSyncing,
             colors = ButtonDefaults.colors(
                 containerColor = NuvioTheme.colors.BackgroundCard,

@@ -131,7 +131,7 @@ fun SyncCodeGenerateScreen(
                         contentColor = NuvioTheme.colors.OnSecondary,
                         focusedContentColor = NuvioTheme.colors.OnSecondaryVariant
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(50)),
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.sync_generate_done), modifier = Modifier.padding(vertical = NuvioTheme.spacing.xs))
@@ -178,7 +178,7 @@ fun SyncCodeGenerateScreen(
                         contentColor = NuvioTheme.colors.OnSecondary,
                         focusedContentColor = NuvioTheme.colors.OnSecondaryVariant
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(50)),
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(

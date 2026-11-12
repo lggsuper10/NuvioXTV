@@ -167,7 +167,7 @@ internal fun SettingsResetButton(
     onFocused: () -> Unit = {}
 ) {
     val flat = isFlatSettingsStyle()
-    val shape = if (flat) settingsRowShape() else RoundedCornerShape(SettingsPillRadius)
+    val shape = if (flat) settingsRowShape() else RoundedCornerShape(SettingsButtonRadius)
     Button(
         onClick = onClick,
         modifier = modifier.onFocusChanged { if (it.isFocused) onFocused() },

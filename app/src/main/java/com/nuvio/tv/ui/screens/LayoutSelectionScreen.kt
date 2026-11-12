@@ -138,9 +138,7 @@ fun LayoutSelectionScreen(
                     .width(200.dp)
                     .height(NuvioTheme.spacing.xxxl)
                     .focusRequester(continueFocusRequester),
-                shape = ButtonDefaults.shape(
-                    shape = RoundedCornerShape(NuvioTheme.spacing.xl)
-                ),
+                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
                 colors = ButtonDefaults.colors(
                     containerColor = NuvioTheme.colors.Primary,
                     focusedContainerColor = NuvioTheme.colors.FocusBackground

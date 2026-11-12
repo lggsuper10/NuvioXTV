@@ -295,14 +295,14 @@ fun FolderEditorContent(
                         border = ButtonDefaults.border(
                             border = if (coverMode == "none") Border(
                                 border = BorderStroke(NuvioTheme.spacing.xxs, NuvioTheme.colors.Secondary),
-                                shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                shape = RoundedCornerShape(10.dp)
                             ) else Border.None,
                             focusedBorder = Border(
                                 border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                                shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                shape = RoundedCornerShape(10.dp)
                             )
                         ),
-                        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                     ) { Text(stringResource(R.string.collections_editor_cover_none)) }
 
                     Button(
@@ -320,14 +320,14 @@ fun FolderEditorContent(
                         border = ButtonDefaults.border(
                             border = if (coverMode == "emoji") Border(
                                 border = BorderStroke(NuvioTheme.spacing.xxs, NuvioTheme.colors.Secondary),
-                                shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                shape = RoundedCornerShape(10.dp)
                             ) else Border.None,
                             focusedBorder = Border(
                                 border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                                shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                shape = RoundedCornerShape(10.dp)
                             )
                         ),
-                        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                     ) {
                         if (hasEmoji) {
                             Text("${folder.coverEmoji}  ${stringResource(R.string.collections_editor_cover_emoji)}")
@@ -351,14 +351,14 @@ fun FolderEditorContent(
                         border = ButtonDefaults.border(
                             border = if (coverMode == "image") Border(
                                 border = BorderStroke(NuvioTheme.spacing.xxs, NuvioTheme.colors.Secondary),
-                                shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                shape = RoundedCornerShape(10.dp)
                             ) else Border.None,
                             focusedBorder = Border(
                                 border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                                shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                shape = RoundedCornerShape(10.dp)
                             )
                         ),
-                        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                     ) { Text(stringResource(R.string.collections_editor_cover_image_url)) }
                 }
 
@@ -559,14 +559,14 @@ fun FolderEditorContent(
                             border = ButtonDefaults.border(
                                 border = if (isSelected) Border(
                                     border = BorderStroke(NuvioTheme.spacing.xxs, NuvioTheme.colors.Secondary),
-                                    shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                    shape = RoundedCornerShape(10.dp)
                                 ) else Border.None,
                                 focusedBorder = Border(
                                     border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                                    shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                    shape = RoundedCornerShape(10.dp)
                                 )
                             ),
-                            shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                         ) {
                             Text(label)
                         }
@@ -753,10 +753,10 @@ fun FolderEditorContent(
                                         border = ButtonDefaults.border(
                                             focusedBorder = Border(
                                                 border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                                                shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                                shape = RoundedCornerShape(10.dp)
                                             )
                                         ),
-                                        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                                        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                                     ) {
                                         Text(stringResource(R.string.collections_editor_choose_genre))
                                     }
@@ -776,10 +776,10 @@ fun FolderEditorContent(
                                     border = ButtonDefaults.border(
                                         focusedBorder = Border(
                                             border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                                            shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                            shape = RoundedCornerShape(10.dp)
                                         )
                                     ),
-                                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                                 ) {
                                     Icon(Icons.Default.Edit, stringResource(R.string.cd_edit))
                                 }
@@ -796,10 +796,10 @@ fun FolderEditorContent(
                                     border = ButtonDefaults.border(
                                         focusedBorder = Border(
                                             border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                                            shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                            shape = RoundedCornerShape(10.dp)
                                         )
                                     ),
-                                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                                 ) {
                                     Icon(Icons.Default.Edit, stringResource(R.string.cd_edit))
                                 }
@@ -815,10 +815,10 @@ fun FolderEditorContent(
                                 border = ButtonDefaults.border(
                                     focusedBorder = Border(
                                         border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                                        shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                        shape = RoundedCornerShape(10.dp)
                                     )
                                 ),
-                                shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                             ) {
                                 Icon(Icons.Default.KeyboardArrowUp, stringResource(R.string.cd_move_up), tint = if (index > 0) NuvioTheme.colors.TextSecondary else NuvioTheme.colors.TextTertiary)
                             }
@@ -833,10 +833,10 @@ fun FolderEditorContent(
                                 border = ButtonDefaults.border(
                                     focusedBorder = Border(
                                         border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                                        shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                        shape = RoundedCornerShape(10.dp)
                                     )
                                 ),
-                                shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                             ) {
                                 Icon(Icons.Default.KeyboardArrowDown, stringResource(R.string.cd_move_down), tint = if (index < folder.sources.size - 1) NuvioTheme.colors.TextSecondary else NuvioTheme.colors.TextTertiary)
                             }
@@ -855,10 +855,10 @@ fun FolderEditorContent(
                                 border = ButtonDefaults.border(
                                     focusedBorder = Border(
                                         border = NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs),
-                                        shape = RoundedCornerShape(NuvioTheme.radii.md)
+                                        shape = RoundedCornerShape(10.dp)
                                     )
                                 ),
-                                shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md))
+                                shape = ButtonDefaults.shape(RoundedCornerShape(10.dp))
                             ) {
                                 Icon(Icons.Default.Close, stringResource(R.string.cd_remove))
                             }

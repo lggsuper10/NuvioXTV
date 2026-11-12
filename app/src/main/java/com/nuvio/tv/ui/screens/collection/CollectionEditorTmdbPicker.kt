@@ -172,7 +172,7 @@ fun TmdbSourcePickerContent(
                         focusedContainerColor = NuvioTheme.colors.FocusBackground,
                         focusedContentColor = NuvioTheme.colors.Primary
                     ),
-                    shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md)),
+                    shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
                     scale = ButtonDefaults.scale(focusedScale = 1f)
                 ) {
                     Text(tmdbModeLabel(mode))
@@ -757,10 +757,10 @@ fun TmdbActionButton(
                 } else {
                     NuvioTheme.focusRing.border(NuvioTheme.spacing.xxs)
                 },
-                shape = RoundedCornerShape(NuvioTheme.radii.md)
+                shape = RoundedCornerShape(10.dp)
             )
         ),
-        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md)),
+        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
         scale = ButtonDefaults.scale(focusedScale = 1f)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -952,7 +952,7 @@ fun TmdbChoiceButton(
             focusedContainerColor = NuvioTheme.colors.FocusBackground,
             focusedContentColor = NuvioTheme.colors.Primary
         ),
-        shape = ButtonDefaults.shape(RoundedCornerShape(NuvioTheme.radii.md)),
+        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
         scale = ButtonDefaults.scale(focusedScale = 1f)
     ) {
         Text(label)

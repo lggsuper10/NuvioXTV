@@ -54,7 +54,6 @@ import com.nuvio.tv.ui.components.BrandWordmark
 import com.nuvio.tv.ui.components.ProfileAvatarCircle
 import com.nuvio.tv.ui.theme.NuvioComponents
 import com.nuvio.tv.ui.theme.NuvioMotion
-import com.nuvio.tv.ui.theme.NuvioRadii
 import com.nuvio.tv.ui.theme.NuvioStrokes
 import com.nuvio.tv.ui.theme.NuvioTheme
 import com.nuvio.tv.ui.theme.brandWordmarkResourceOnLight
@@ -251,12 +250,8 @@ private fun SidebarNavigationItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val colors = NuvioTheme.colors
-    val shape = RoundedCornerShape(NuvioRadii.tokens.full)
-    val backgroundColorTarget = when {
-        isFocused -> colors.Secondary
-        selected -> colors.Secondary.copy(alpha = 0.18f)
-        else -> Color.Transparent
-    }
+    val shape = RoundedCornerShape(10.dp)
+    val backgroundColorTarget = if (isFocused) colors.Secondary else Color.Transparent
     val animatedBackgroundColor by animateColorAsState(
         targetValue = backgroundColorTarget,
         animationSpec = tween(durationMillis = NuvioMotion.tokens.durations.fast),
@@ -382,7 +377,7 @@ private fun SidebarProfileItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val colors = NuvioTheme.colors
-    val shape = RoundedCornerShape(NuvioRadii.tokens.full)
+    val shape = RoundedCornerShape(10.dp)
     val backgroundColor = if (isFocused) colors.Secondary else Color.Transparent
     Card(
         onClick = onClick,
