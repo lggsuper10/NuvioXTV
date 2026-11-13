@@ -491,7 +491,6 @@ fun SettingsScreen(
                             state = railListState,
                             modifier = Modifier
                                 .focusRequester(railContainerFocusRequester)
-                                .focusRequester(contentFocusRequester)
                                 // Lets the rail resolve its own focus enter to the item that was on it when
                                 // it last lost focus. Without this the enter is resolved by stepping on from
                                 // whatever holds focus, which lands an item further along and drags the rail
@@ -543,6 +542,11 @@ fun SettingsScreen(
                                         SettingsTopBarDivider()
                                     }
                                     SettingsTopBarTab(
+                                        modifier = if (section.category == selectedCategory) {
+                                            Modifier.focusRequester(contentFocusRequester)
+                                        } else {
+                                            Modifier
+                                        },
                                         title = section.title,
                                         icon = section.icon,
                                         rawIconRes = section.rawIconRes,
@@ -646,7 +650,6 @@ fun SettingsScreen(
                         state = railListState,
                         modifier = Modifier
                             .focusRequester(railContainerFocusRequester)
-                            .focusRequester(contentFocusRequester)
                             // Lets the rail resolve its own focus enter to the item that was on it when
                             // it last lost focus. Without this the enter is resolved by stepping on from
                             // whatever holds focus, which lands an item further along and drags the rail
@@ -707,6 +710,11 @@ fun SettingsScreen(
                                     SettingsRailDivider()
                                 }
                                 SettingsRailButton(
+                                    modifier = if (section.category == selectedCategory) {
+                                        Modifier.focusRequester(contentFocusRequester)
+                                    } else {
+                                        Modifier
+                                    },
                                     onFocused = {
                                         val restoringTo = railRestoringCategory
                                         if (section.category == restoringTo) {

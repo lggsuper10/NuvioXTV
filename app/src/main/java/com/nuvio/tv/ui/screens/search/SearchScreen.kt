@@ -159,6 +159,10 @@ fun SearchScreen(
     // When the user reaches Search by moving focus across the top navigation tabs, the bar
     // still owns focus; grabbing it for the text field would trap D-pad input in the keyboard.
     val topNavOwnsFocus = com.nuvio.tv.LocalTopNavHasFocus.current
+    // Entry point for the Down press out of the top bar. The bar floats over the screens, so
+    // searching downwards from it is unreliable; every destination names the node that should
+    // take focus instead.
+    val contentFocusRequester = com.nuvio.tv.LocalContentFocusRequester.current
     var isSearchFieldFocused by remember { mutableStateOf(false) }
     // Track the whole input row, including voice and Discover.
     var inputRowHasFocus by remember { mutableStateOf(false) }
@@ -640,6 +644,7 @@ fun SearchScreen(
                     canMoveToResults = canMoveToResults,
                     voiceFocusRequester = if (isVoiceSearchAvailable) voiceFocusRequester else null,
                     searchFocusRequester = searchFocusRequester,
+                    entryFocusRequester = contentFocusRequester,
                     onSearchFieldFocusChanged = { focused -> isSearchFieldFocused = focused },
                     onQueryChanged = handleQueryChanged,
                     onSubmit = {
@@ -1185,6 +1190,7 @@ private fun SearchInputField(
     canMoveToResults: Boolean,
     voiceFocusRequester: FocusRequester?,
     searchFocusRequester: FocusRequester,
+    entryFocusRequester: FocusRequester,
     onSearchFieldFocusChanged: (Boolean) -> Unit,
     onQueryChanged: (String) -> Unit,
     onSubmit: () -> Unit,
@@ -1340,6 +1346,7 @@ private fun SearchInputField(
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(searchFocusRequester)
+                .focusRequester(entryFocusRequester)
                 .focusProperties {
                     canFocus = isScreenActive
                 }

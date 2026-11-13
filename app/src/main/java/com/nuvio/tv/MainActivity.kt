@@ -1918,6 +1918,9 @@ private fun ModernSidebarScaffold(
     val isRtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val contentFocusRequester = remember { FocusRequester() }
     val drawerItemFocusRequesters = rememberDrawerItemFocusRequesters(drawerItems)
+    // The bar tab matching the destination on screen. Stepping out of the content with Up or
+    // Back must land here, not on whichever tab the focus search happens to find.
+    val currentTabFocusRequester = selectedDrawerRoute?.let { route -> drawerItemFocusRequesters[route] }
     val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
 
     var isSidebarExpanded by remember { mutableStateOf(false) }
@@ -1929,6 +1932,11 @@ private fun ModernSidebarScaffold(
     // Bumped by Down while the top bar owns focus. The effect keyed on it hands focus to the
     // current destination; a counter rather than a flag so repeated presses each run.
     var barDownRequestId by remember { mutableIntStateOf(0) }
+    var handledBarDownRequestId by remember { mutableIntStateOf(0) }
+    // Set for the single frame in which Up leaves the content for the bar. The bar treats a
+    // destination gaining focus as a tab switch, so without this the geometric nearest tab would
+    // win and the screen would change under the user.
+    var upFromContentPending by remember { mutableStateOf(false) }
     var isFloatingPillIconOnly by remember { mutableStateOf(false) }
     var pillExpandRequestCount by remember { mutableIntStateOf(0) }
     val keepFloatingPillExpanded = false
@@ -1979,13 +1987,33 @@ private fun ModernSidebarScaffold(
         pendingSidebarFocusRequest = true
     }
 
+    // With the top bar, Back steps out of a destination's content to that destination's tab
+    // first, then leaves the destination. Skipping the bar made one press jump all the way home.
+    BackHandler(
+        enabled = useTopNav &&
+            currentRoute in rootRoutes &&
+            !topNavHasFocus &&
+            !isSidebarExpanded &&
+            !sidebarCollapsePending &&
+            currentTabFocusRequester != null
+    ) {
+        if (longPressBackHeld.value) return@BackHandler
+        runCatching { currentTabFocusRequester?.requestFocus() }
+    }
+
     BackHandler(
         enabled = currentRoute in rootRoutes && (
-            useTopNav || (isSidebarExpanded && !sidebarCollapsePending)
+            (useTopNav && topNavHasFocus) || (isSidebarExpanded && !sidebarCollapsePending)
             )
     ) {
         if (longPressBackHeld.value) return@BackHandler
-        onExitApp()
+        if (useTopNav && currentRoute != Screen.Home.route) {
+            // Back from the bar leaves the destination for Home; only Home itself exits.
+            onNavigate(Screen.Home.route)
+            navigateToDrawerRoute(navController, currentRoute, Screen.Home.route)
+        } else {
+            onExitApp()
+        }
     }
 
     LaunchedEffect(sidebarCollapsePending, isSidebarExpanded, showSidebar) {
@@ -2092,6 +2120,14 @@ private fun ModernSidebarScaffold(
         focusManager.moveFocus(FocusDirection.Down)
     }
 
+    // The redirect only matters for the focus pass started by that Up press. If the bar never
+    // took focus, the flag must not stay armed for a later focus change.
+    LaunchedEffect(upFromContentPending) {
+        if (!upFromContentPending) return@LaunchedEffect
+        withFrameNanos { }
+        upFromContentPending = false
+    }
+
     LaunchedEffect(isSidebarExpanded, pendingSidebarFocusRequest, showSidebar, selectedDrawerRoute) {
         if (!showSidebar || !pendingSidebarFocusRequest || !isSidebarExpanded) {
             return@LaunchedEffect
@@ -2175,6 +2211,33 @@ private fun ModernSidebarScaffold(
                     }
                 }
                 .onKeyEvent { keyEvent ->
+                    // An Up press the content did not use is about to leave for the bar. It has
+                    // to be moved by hand: the bar floats over the content, so on full-bleed
+                    // destinations (Home's hero) the focus search cannot see anything above the
+                    // focused node and would drop the press. The search still runs first so
+                    // screens that keep focus inside themselves (rows -> hero) behave as before.
+                    if (
+                        useTopNav &&
+                        showSidebar &&
+                        currentRoute in rootRoutes &&
+                        !topNavHasFocus &&
+                        !isSidebarExpanded &&
+                        keyEvent.type == KeyEventType.KeyDown &&
+                        keyEvent.key == Key.DirectionUp
+                    ) {
+                        // Armed before the move: if focus does reach a bar item, its focus
+                        // callback must land on this destination's tab rather than the tab the
+                        // search happened to pick.
+                        upFromContentPending = true
+                        val moved = focusManager.moveFocus(FocusDirection.Up)
+                        if (moved) {
+                            if (!topNavHasFocus) upFromContentPending = false
+                            return@onKeyEvent true
+                        }
+                        upFromContentPending = false
+                        runCatching { currentTabFocusRequester?.requestFocus() }
+                        return@onKeyEvent true
+                    }
                     if (!useTopNav && showSidebar && !isSidebarExpanded && keyEvent.type == KeyEventType.KeyDown) {
                         if (!keepFloatingPillExpanded) {
                             when (keyEvent.key) {
@@ -2367,18 +2430,25 @@ private fun ModernSidebarScaffold(
             onBarFocusChanged = { topNavHasFocus = it },
             onDrawerItemFocused = { index ->
                 focusedDrawerIndex = index
-                // The top bar behaves like a tab strip: moving focus onto a destination is the
-                // activation, no extra OK press needed.
-                val focusedRoute = drawerItems.getOrNull(index)?.route
-                if (focusedRoute != null && focusedRoute != selectedDrawerRoute) {
-                    keyboardController?.hide()
-                    onNavigate(focusedRoute)
-                    navigateToDrawerRoute(
-                        navController = navController,
-                        currentRoute = currentRoute,
-                        targetRoute = focusedRoute
-                    )
-                    pendingContentFocusTransfer = false
+                if (upFromContentPending) {
+                    // Focus arrived from the content below, not from moving along the bar: stay
+                    // on the destination and land on its own tab.
+                    upFromContentPending = false
+                    runCatching { currentTabFocusRequester?.requestFocus() }
+                } else {
+                    // The top bar behaves like a tab strip: moving focus onto a destination is the
+                    // activation, no extra OK press needed.
+                    val focusedRoute = drawerItems.getOrNull(index)?.route
+                    if (focusedRoute != null && focusedRoute != selectedDrawerRoute) {
+                        keyboardController?.hide()
+                        onNavigate(focusedRoute)
+                        navigateToDrawerRoute(
+                            navController = navController,
+                            currentRoute = currentRoute,
+                            targetRoute = focusedRoute
+                        )
+                        pendingContentFocusTransfer = false
+                    }
                 }
             },
             onDrawerItemClick = { targetRoute ->

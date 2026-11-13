@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,6 +74,7 @@ import com.nuvio.tv.ui.components.NuvioDialogButton
 import com.nuvio.tv.ui.screens.detail.CastSection
 import com.nuvio.tv.ui.screens.detail.HeroContentSection
 import com.nuvio.tv.ui.theme.NuvioTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun LocalDetailScreen(
@@ -82,11 +84,16 @@ fun LocalDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val playFocusRequester = remember { FocusRequester() }
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
     var showPosterSearchDialog by remember { mutableStateOf(false) }
     // The global smooth bring-into-view spec scrolls a newly focused element to 42% of the
     // viewport. Inside the hero that would drag the action row from the bottom of the screen
     // up into the middle whenever focus moves between 播放 / 刷新海报 / 搜索海报, so the hero
     // item absorbs those requests instead (same protection the remote detail screen uses).
+    // Absorbing them also keeps the list from scrolling back by itself, so focus returning to
+    // the hero rewinds the page explicitly (see the hero Box below); otherwise everything
+    // above the buttons — title, description — would stay scrolled out of reach.
     val heroNoScrollResponder = remember {
         object : BringIntoViewResponder {
             override fun calculateRectForParent(localRect: Rect): Rect = Rect.Zero
@@ -193,7 +200,7 @@ fun LocalDetailScreen(
                     onPlay(viewModel.playerRoute(primaryItem))
                 }
 
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
                     item(key = "local_hero", contentType = "hero") {
                         Box(modifier = Modifier.bringIntoViewResponder(heroNoScrollResponder)) {
                             HeroContentSection(
@@ -211,6 +218,18 @@ fun LocalDetailScreen(
                                 hideMetaInfoImdb = false,
                                 showFullReleaseDate = true,
                                 playButtonFocusRequester = playFocusRequester,
+                                onHeroActionFocused = {
+                                    // Reached from below. The hero swallows bring-into-view
+                                    // requests, so the page has to rewind itself; otherwise the
+                                    // title and description stay scrolled off the top.
+                                    if (listState.firstVisibleItemIndex > 0 ||
+                                        listState.firstVisibleItemScrollOffset > 0
+                                    ) {
+                                        coroutineScope.launch {
+                                            listState.animateScrollToItem(0)
+                                        }
+                                    }
+                                },
                                 titleAccessory = {
                                     val sourceName = uiState.sourceName
                                     if (!sourceName.isNullOrBlank()) {

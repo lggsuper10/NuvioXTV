@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -59,6 +60,8 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
@@ -183,6 +186,23 @@ fun LibraryScreen(
     val primaryFocusRequester = remember { FocusRequester() }
     val selectorFocusRequester = remember { FocusRequester() }
     val gridState = rememberLazyGridState()
+    // Empty states are the last thing in a grid whose upper rows (mode tabs, filters) already
+    // take space, so a fixed height is either stranded high or pushed below the fold. Measuring
+    // the grid's bottom and the empty item's top lets the state fill exactly the room that is
+    // left under those rows and centre itself in it on any screen.
+    val density = LocalDensity.current
+    var libraryGridBottomPx by remember { mutableFloatStateOf(0f) }
+    var libraryEmptyTopPx by remember { mutableFloatStateOf(0f) }
+    val emptyStateHeight = if (libraryGridBottomPx > 0f && libraryEmptyTopPx > 0f) {
+        val availablePx = libraryGridBottomPx - libraryEmptyTopPx -
+            with(density) { NuvioTheme.spacing.xxl.toPx() }
+        with(density) { availablePx.coerceAtLeast(220.dp.toPx()).toDp() }
+    } else {
+        400.dp
+    }
+    val emptyStateSlotModifier = Modifier.onGloballyPositioned {
+        libraryEmptyTopPx = it.boundsInRoot().top
+    }
     var pendingPrimaryFocus by remember { mutableStateOf(true) }
     var serverFocusTarget by remember {
         mutableStateOf(serversViewModel.focusedShelfKey?.let { key -> serversViewModel.focusedIndexes[key]?.let { key to it } })
@@ -345,6 +365,7 @@ fun LibraryScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(NuvioTheme.colors.Background)
+            .onGloballyPositioned { libraryGridBottomPx = it.boundsInRoot().bottom }
             .focusRestorer {
                 val lastKey = lastFocusedPosterKey
                 (if (lastKey != null && lastKey in posterFocusRequesters) {
@@ -649,7 +670,9 @@ fun LibraryScreen(
                     EmptyScreenState(
                         title = title,
                         subtitle = subtitle,
-                        icon = Icons.Default.BookmarkBorder
+                        icon = Icons.Default.BookmarkBorder,
+                        modifier = emptyStateSlotModifier,
+                        height = emptyStateHeight
                     )
                 }
             }
@@ -744,7 +767,8 @@ fun LibraryScreen(
                         title = stringResource(R.string.cloud_library_disabled_title),
                         subtitle = stringResource(R.string.cloud_library_disabled_message),
                         icon = Icons.Default.BookmarkBorder,
-                        height = 260.dp
+                        modifier = emptyStateSlotModifier,
+                        height = emptyStateHeight
                     )
                 }
             } else if (!uiState.cloudLibrary.hasConnectedProvider) {
@@ -753,7 +777,8 @@ fun LibraryScreen(
                         title = stringResource(R.string.cloud_library_connect_title),
                         subtitle = stringResource(R.string.cloud_library_connect_message),
                         icon = Icons.Default.BookmarkBorder,
-                        height = 260.dp
+                        modifier = emptyStateSlotModifier,
+                        height = emptyStateHeight
                     )
                 }
             } else if (uiState.visibleCloudItems.isEmpty()) {
@@ -762,7 +787,8 @@ fun LibraryScreen(
                         title = stringResource(R.string.cloud_library_empty_title),
                         subtitle = stringResource(R.string.cloud_library_empty_message),
                         icon = Icons.Default.BookmarkBorder,
-                        height = 260.dp
+                        modifier = emptyStateSlotModifier,
+                        height = emptyStateHeight
                     )
                 }
             }
