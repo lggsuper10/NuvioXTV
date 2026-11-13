@@ -1,5 +1,6 @@
 package com.nuvio.tv.ui.screens.search
 
+import com.nuvio.tv.LocalTopNavInset
 import com.nuvio.tv.ui.theme.NuvioTheme
 import com.nuvio.tv.ui.screens.home.HeroBackdropState
 
@@ -155,6 +156,9 @@ fun SearchScreen(
     val discoverFirstItemFocusRequester = remember { FocusRequester() }
     val recentClearHistoryFocusRequester = remember { FocusRequester() }
     val discoverButtonFocusRequester = remember { FocusRequester() }
+    // When the user reaches Search by moving focus across the top navigation tabs, the bar
+    // still owns focus; grabbing it for the text field would trap D-pad input in the keyboard.
+    val topNavOwnsFocus = com.nuvio.tv.LocalTopNavHasFocus.current
     var isSearchFieldFocused by remember { mutableStateOf(false) }
     // Track the whole input row, including voice and Discover.
     var inputRowHasFocus by remember { mutableStateOf(false) }
@@ -494,6 +498,7 @@ fun SearchScreen(
     LaunchedEffect(Unit) {
         if (viewModel.hasSavedSearchFocus) return@LaunchedEffect
         if (pendingDiscoverRestoreOnResume || restoreDiscoverFocus) return@LaunchedEffect
+        if (topNavOwnsFocus) return@LaunchedEffect
         repeat(2) { withFrameNanos { } }
         runCatching { initialFocusRequester.requestFocus() }
     }
@@ -521,6 +526,7 @@ fun SearchScreen(
     var isScreenActive by remember { mutableStateOf(true) }
     val latestPendingDiscoverRestore by rememberUpdatedState(pendingDiscoverRestoreOnResume)
     val latestInitialFocusRequester by rememberUpdatedState(initialFocusRequester)
+    val latestTopNavOwnsFocus by rememberUpdatedState(topNavOwnsFocus)
     val latestShouldKeepSearchFocus by rememberUpdatedState(
         focusResults || uiState.isSearching || isVoiceListening
     )
@@ -535,10 +541,11 @@ fun SearchScreen(
                     // Returning from details — don't steal focus, CatalogRowSection
                     // already restored it or will restore it via focusedItemIndex.
                     didRestoreSearchFocus.value = false
-                } else if (!latestShouldKeepSearchFocus) {
+                } else if (!latestShouldKeepSearchFocus && !latestTopNavOwnsFocus) {
                     // Keep resume and entry consistent; ON_RESUME also fires on entry.
                     coroutineScope.launch {
                         repeat(2) { withFrameNanos { } }
+                        if (latestTopNavOwnsFocus) return@launch
                         runCatching { latestInitialFocusRequester.requestFocus() }
                     }
                 }
@@ -621,7 +628,7 @@ fun SearchScreen(
                 .dpadRepeatThrottle(),
             state = listState,
             contentPadding = PaddingValues(
-                top = if (isDiscoverMode) 10.dp else NuvioTheme.spacing.lg,
+                top = maxOf(LocalTopNavInset.current, if (isDiscoverMode) 10.dp else NuvioTheme.spacing.lg),
                 bottom = NuvioTheme.spacing.lg
             ),
             verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.lg)

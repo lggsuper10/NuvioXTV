@@ -1,5 +1,6 @@
 package com.nuvio.tv.ui.screens.search
 
+import com.nuvio.tv.LocalTopNavInset
 import com.nuvio.tv.ui.theme.NuvioTheme
 import com.nuvio.tv.ui.screens.home.HeroBackdropState
 
@@ -129,7 +130,7 @@ fun DiscoverScreen(
                 onItemLongPress = { item, addonBaseUrl ->
                     viewModel.posterOptions.show(item, addonBaseUrl)
                 },
-                modifier = Modifier.padding(top = NuvioTheme.spacing.lg)
+                modifier = Modifier.padding(top = maxOf(NuvioTheme.spacing.lg, LocalTopNavInset.current))
             )
         }
 

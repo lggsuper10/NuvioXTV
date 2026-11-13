@@ -77,10 +77,31 @@ object LocalStorageAccess {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    fun runtimePermission(): String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        Manifest.permission.READ_MEDIA_VIDEO
+    /**
+     * Files behind a file:// local source can only be deleted with WRITE_EXTERNAL_STORAGE on
+     * Android 10 and below. Android 11+ uses all-files access instead of the legacy permission.
+     */
+    fun canWriteLocalFiles(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return Environment.isExternalStorageManager()
+        }
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    /**
+     * Runtime permissions the built-in file browser needs on this device. Android 11+ gates the
+     * browser behind all-files access instead, so there is nothing to request at runtime there.
+     */
+    fun runtimePermissions(): Array<String> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        emptyArray()
     } else {
-        Manifest.permission.READ_EXTERNAL_STORAGE
+        arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
     }
 
     fun allFilesAccessIntent(context: Context): Intent? {

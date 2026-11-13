@@ -263,6 +263,49 @@ fun HeroContentSection(
                 exit = fadeOut(tween(NuvioMotion.tokens.durations.overlay))
             ) {
                 Column {
+                    // Director/Writer line above description
+                    if (!creditLine.isNullOrBlank()) {
+                        Text(
+                            text = creditLine,
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                textDirection = creditLine.contentTextDirection()
+                            ),
+                            color = NuvioTheme.extendedColors.textSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth(0.6f)
+                        )
+                        Spacer(modifier = Modifier.height(NuvioTheme.spacing.md))
+                    }
+
+                    if (mdbListRatings?.isEmpty() == false) {
+                        MDBListRatingsRow(ratings = mdbListRatings, order = mdbListRatingOrder)
+                        Spacer(modifier = Modifier.height(14.dp))
+                    }
+
+                    meta.description?.let { description ->
+                        SynopsisDescription(
+                            description = description,
+                            onShowFullDescription = onShowFullDescription,
+                            onFocused = onHeroActionFocused,
+                            onTruncationChanged = onTruncationChanged,
+                            modifier = Modifier
+                                .fillMaxWidth(0.6f)
+                                .padding(bottom = NuvioTheme.spacing.md)
+                        )
+                    }
+
+                    MetaInfoRow(
+                        meta = meta,
+                        hideImdbRating = hideMetaInfoImdb,
+                        showFullReleaseDate = showFullReleaseDate,
+                        tmdbRating = tmdbRating
+                    )
+
+                    Spacer(modifier = Modifier.height(NuvioTheme.spacing.lg))
+
+                    // Primary actions sit below the synopsis and just above the
+                    // next section so they stay close to the bottom of the screen.
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md),
                         verticalAlignment = Alignment.CenterVertically
@@ -338,48 +381,6 @@ fun HeroContentSection(
 
                         extraActions?.invoke()
                     }
-
-                    Spacer(modifier = Modifier.height(NuvioTheme.spacing.lg))
-
-                    // Director/Writer line above description
-                    if (!creditLine.isNullOrBlank()) {
-                        Text(
-                            text = creditLine,
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                textDirection = creditLine.contentTextDirection()
-                            ),
-                            color = NuvioTheme.extendedColors.textSecondary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth(0.6f)
-                        )
-                        Spacer(modifier = Modifier.height(NuvioTheme.spacing.md))
-                    }
-
-                    if (mdbListRatings?.isEmpty() == false) {
-                        MDBListRatingsRow(ratings = mdbListRatings, order = mdbListRatingOrder)
-                        Spacer(modifier = Modifier.height(14.dp))
-                    }
-
-                    meta.description?.let { description ->
-                        SynopsisDescription(
-                            description = description,
-                            onShowFullDescription = onShowFullDescription,
-                            upFocusRequester = playButtonFocusRequester,
-                            onFocused = onHeroActionFocused,
-                            onTruncationChanged = onTruncationChanged,
-                            modifier = Modifier
-                                .fillMaxWidth(0.6f)
-                                .padding(bottom = NuvioTheme.spacing.md)
-                        )
-                    }
-
-                    MetaInfoRow(
-                        meta = meta,
-                        hideImdbRating = hideMetaInfoImdb,
-                        showFullReleaseDate = showFullReleaseDate,
-                        tmdbRating = tmdbRating
-                    )
                 }
             }
         }

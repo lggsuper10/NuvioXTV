@@ -67,6 +67,42 @@ private val SidebarLeadingVisualSize = NuvioComponents.tokens.sidebar.leadingVis
 private val SidebarContentGap = NuvioComponents.tokens.sidebar.contentGap
 private val SidebarProfileContentGap = NuvioComponents.tokens.sidebar.contentGap + NuvioTheme.spacing.xs
 
+/** Shared navigation surface fill so the side panel and the top bar never drift apart. */
+@Composable
+internal fun rememberNavPanelBackgroundBrush(blurEnabled: Boolean): Brush {
+    val colors = NuvioTheme.colors
+    val bgElevated = colors.BackgroundElevated
+    val bgCard = colors.BackgroundCard
+    val isLight = colors.isLight
+    return remember(blurEnabled, isLight, bgElevated, bgCard) {
+        val alpha = when {
+            blurEnabled && isLight -> 0.92f
+            blurEnabled -> 0.65f
+            isLight -> 0.99f
+            else -> 0.97f
+        }
+        Brush.verticalGradient(listOf(
+            bgElevated.copy(alpha = alpha),
+            bgCard.copy(alpha = alpha)
+        ))
+    }
+}
+
+@Composable
+internal fun rememberNavPanelBorderColor(blurEnabled: Boolean): Color {
+    val colors = NuvioTheme.colors
+    val borderBase = colors.Border
+    val isLight = colors.isLight
+    val isAmoledBlack = colors.BackgroundElevated == Color.Black
+    return remember(isAmoledBlack, isLight, blurEnabled, borderBase) {
+        when {
+            isLight -> borderBase.copy(alpha = 0.82f)
+            !blurEnabled && isAmoledBlack -> borderBase.copy(alpha = 0.9f)
+            else -> borderBase.copy(alpha = 0.45f)
+        }
+    }
+}
+
 @Composable
 internal fun ModernSidebarBlurPanel(
     drawerItems: List<DrawerItem>,
@@ -104,31 +140,9 @@ internal fun ModernSidebarBlurPanel(
     } else {
         Modifier
     }
-    val colors = NuvioTheme.colors
-    val bgElevated = colors.BackgroundElevated
-    val bgCard = colors.BackgroundCard
-    val borderBase = colors.Border
-    val isLight = colors.isLight
-    val isAmoledBlack = bgElevated == Color.Black
-    val panelBackgroundBrush = remember(blurEnabled, isLight, bgElevated, bgCard) {
-        val alpha = when {
-            blurEnabled && isLight -> 0.92f
-            blurEnabled -> 0.65f
-            isLight -> 0.99f
-            else -> 0.97f
-        }
-        Brush.verticalGradient(listOf(
-            bgElevated.copy(alpha = alpha),
-            bgCard.copy(alpha = alpha)
-        ))
-    }
-    val panelBorderColor = remember(isAmoledBlack, isLight, blurEnabled, borderBase) {
-        when {
-            isLight -> borderBase.copy(alpha = 0.82f)
-            !blurEnabled && isAmoledBlack -> borderBase.copy(alpha = 0.9f)
-            else -> borderBase.copy(alpha = 0.45f)
-        }
-    }
+    val panelBackgroundBrush = rememberNavPanelBackgroundBrush(blurEnabled)
+    val panelBorderColor = rememberNavPanelBorderColor(blurEnabled)
+    val isLight = NuvioTheme.colors.isLight
 
     Column(
         modifier = Modifier
@@ -236,7 +250,7 @@ internal fun ModernSidebarBlurPanel(
 }
 
 @Composable
-private fun SidebarNavigationItem(
+internal fun SidebarNavigationItem(
     label: String,
     iconRes: Int?,
     icon: ImageVector?,
@@ -246,6 +260,7 @@ private fun SidebarNavigationItem(
     iconScale: Float,
     onFocusChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    fillWidth: Boolean = true,
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -322,7 +337,7 @@ private fun SidebarNavigationItem(
                     role = Role.Tab
                     this.selected = selected
                 }
-                .fillMaxWidth()
+                .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
                 .padding(horizontal = NuvioTheme.spacing.lg - NuvioTheme.spacing.xxs, vertical = NuvioTheme.spacing.sm + NuvioTheme.spacing.xxs),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -357,7 +372,7 @@ private fun SidebarNavigationItem(
             text = label,
             color = contentColor,
             modifier = Modifier
-                .weight(1f)
+                .then(if (fillWidth) Modifier.weight(1f) else Modifier)
                 .graphicsLayer { alpha = labelAlpha }
         )
         }

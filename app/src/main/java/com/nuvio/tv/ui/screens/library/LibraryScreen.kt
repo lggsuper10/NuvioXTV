@@ -89,6 +89,9 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import com.nuvio.tv.LocalContentFocusRequester
+import com.nuvio.tv.LocalTopNavInset
+import com.nuvio.tv.LocalTopNavHasFocus
 import com.nuvio.tv.core.cloud.CloudLibraryFile
 import com.nuvio.tv.core.cloud.CloudLibraryItem
 import com.nuvio.tv.core.cloud.CloudLibraryItemType
@@ -160,6 +163,10 @@ fun LibraryScreen(
     val servers by serversViewModel.servers.collectAsState()
     val serverShelves by serversViewModel.shelves.collectAsState()
     val localLibrary by localLibraryViewModel.uiState.collectAsState()
+    // While the floating top bar owns focus, the user is still moving across the tab strip.
+    // Grabbing focus for the grid here would strand them in the library content with no way
+    // to keep moving left/right across destinations.
+    val topNavOwnsFocus = LocalTopNavHasFocus.current
     val hasServers = servers.enabledConnections.isNotEmpty()
     val viewModes = LibraryViewMode.entries.filter { it != LibraryViewMode.Servers || hasServers }
     val viewMode = selectedViewMode.takeIf { it in viewModes } ?: LibraryViewMode.Saved
@@ -245,6 +252,12 @@ fun LibraryScreen(
             pendingPrimaryFocus = false
         }
         if (!uiState.isLoading && pendingPrimaryFocus) {
+            if (topNavOwnsFocus) {
+                // The top bar keeps focus while the user moves across tabs; entering the
+                // content is a deliberate Down/OK press handled by focus search.
+                pendingPrimaryFocus = false
+                return@LaunchedEffect
+            }
             val restoreKey = lastFocusedPosterKey
             val restoreIndex = restoreKey?.let { visibleItemIndexByKey[it] }
             val restoreRequester = restoreKey?.let { posterFocusRequesters[it] }
@@ -290,7 +303,7 @@ fun LibraryScreen(
         val loadingFocusRequester = remember { FocusRequester() }
         val loadingLabel = stringResource(R.string.library_syncing_library)
         LaunchedEffect(uiState.isLoading) {
-            loadingFocusRequester.requestFocus()
+            if (!topNavOwnsFocus) loadingFocusRequester.requestFocus()
         }
 
         Box(
@@ -351,47 +364,49 @@ fun LibraryScreen(
                 }
                 false
             },
-        contentPadding = PaddingValues(start = NuvioTheme.spacing.xxxl, end = NuvioTheme.spacing.xxxl, top = NuvioTheme.spacing.xl, bottom = NuvioTheme.spacing.xxl),
+        contentPadding = PaddingValues(start = NuvioTheme.spacing.xxxl, end = NuvioTheme.spacing.xxxl, top = maxOf(NuvioTheme.spacing.xl, LocalTopNavInset.current), bottom = NuvioTheme.spacing.xxl),
         horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md),
         verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.lg)
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.library_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = if (showBuiltInHeader) NuvioTheme.colors.TextPrimary else Color.Transparent,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.5.sp
-                )
-                Text(
-                    text = when {
-                        viewMode == LibraryViewMode.Local -> if (localLibrary.sources.isEmpty()) {
-                            ""
-                        } else {
-                            stringResource(
-                                R.string.library_media_source_summary,
-                                localLibrary.sources.size,
-                                localLibrary.sources.sumOf { it.itemCount }
-                            )
-                        }
-                        viewMode == LibraryViewMode.Cloud -> stringResource(R.string.library_source_cloud).uppercase()
-                        viewMode == LibraryViewMode.Servers -> stringResource(R.string.library_source_servers).uppercase()
-                        uiState.sourceMode == LibrarySourceMode.TRAKT -> "TRAKT"
-                        uiState.sourceMode == LibrarySourceMode.SIMKL -> "SIMKL"
-                        uiState.sourceMode == LibrarySourceMode.MDBLIST -> "MDBLIST"
-                        uiState.isNuvioAccount -> "NUVIO"
-                        else -> stringResource(R.string.library_source_local)
-                    },
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (showBuiltInHeader) NuvioTheme.colors.TextTertiary else Color.Transparent,
-                    fontWeight = FontWeight.Medium,
-                    letterSpacing = 2.sp
-                )
+        if (showBuiltInHeader) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.library_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = NuvioTheme.colors.TextPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.5.sp
+                    )
+                    Text(
+                        text = when {
+                            viewMode == LibraryViewMode.Local -> if (localLibrary.sources.isEmpty()) {
+                                ""
+                            } else {
+                                stringResource(
+                                    R.string.library_media_source_summary,
+                                    localLibrary.sources.size,
+                                    localLibrary.sources.sumOf { it.itemCount }
+                                )
+                            }
+                            viewMode == LibraryViewMode.Cloud -> stringResource(R.string.library_source_cloud).uppercase()
+                            viewMode == LibraryViewMode.Servers -> stringResource(R.string.library_source_servers).uppercase()
+                            uiState.sourceMode == LibrarySourceMode.TRAKT -> "TRAKT"
+                            uiState.sourceMode == LibrarySourceMode.SIMKL -> "SIMKL"
+                            uiState.sourceMode == LibrarySourceMode.MDBLIST -> "MDBLIST"
+                            uiState.isNuvioAccount -> "NUVIO"
+                            else -> stringResource(R.string.library_source_local)
+                        },
+                        style = MaterialTheme.typography.labelLarge,
+                        color = NuvioTheme.colors.TextTertiary,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 2.sp
+                    )
+                }
             }
         }
 
@@ -1145,6 +1160,9 @@ private fun LibraryViewModeRow(
     /** Optional action pinned to the right of the tabs (used for the cloud refresh button). */
     trailing: (@Composable () -> Unit)? = null
 ) {
+    // The top navigation bar asks this requester when the user presses Down out of the bar.
+    // Binding it to the selected mode tab makes the library's first content row the entry point.
+    val contentFocusRequester = LocalContentFocusRequester.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -1157,7 +1175,15 @@ private fun LibraryViewModeRow(
                     onClick = { onSelected(mode) },
                     shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
                     modifier = Modifier
-                        .then(if (selected) Modifier.focusRequester(primaryFocusRequester) else Modifier)
+                        .then(
+                            if (selected) {
+                                Modifier
+                                    .focusRequester(primaryFocusRequester)
+                                    .focusRequester(contentFocusRequester)
+                            } else {
+                                Modifier
+                            }
+                        )
                         .onFocusChanged { focusState ->
                             if (focusState.isFocused && mode != selectedMode) {
                                 onSelected(mode)

@@ -1271,6 +1271,13 @@
     <string name="layout_modern_sidebar_sub">Enable floating sidebar navigation.</string>
     <string name="layout_modern_sidebar_blur">Modern Sidebar Blur</string>
     <string name="layout_modern_sidebar_blur_sub">Toggle blur effect for modern sidebar surfaces.</string>
+    <string name="layout_nav_bar_position">Navigation Bar Position</string>
+    <string name="layout_nav_bar_position_sub">Show navigation on the side panel or in a top bar.</string>
+    <string name="layout_nav_bar_position_dialog_title">Navigation Bar Position</string>
+    <string name="layout_nav_bar_position_side">Side</string>
+    <string name="layout_nav_bar_position_side_desc">Navigation floats in the side panel.</string>
+    <string name="layout_nav_bar_position_top">Top</string>
+    <string name="layout_nav_bar_position_top_desc">Navigation floats in a bar across the top.</string>
     <string name="layout_fullscreen_hero_backdrop">Fullscreen Hero Backdrop</string>
     <string name="layout_fullscreen_hero_backdrop_sub">Expand the hero backdrop to fill the entire screen.</string>
     <string name="layout_classic_focus_gradient">Focused Item Gradient</string>

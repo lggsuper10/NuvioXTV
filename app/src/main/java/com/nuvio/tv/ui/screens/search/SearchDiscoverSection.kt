@@ -136,11 +136,13 @@ internal fun DiscoverSection(
             .padding(horizontal = NuvioTheme.spacing.xxxl),
         verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)
     ) {
-        Text(
-            text = stringResource(R.string.discover_title),
-            style = MaterialTheme.typography.headlineMedium,
-            color = if (showBuiltInHeader) NuvioTheme.colors.TextPrimary else Color.Transparent
-        )
+        if (showBuiltInHeader) {
+            Text(
+                text = stringResource(R.string.discover_title),
+                style = MaterialTheme.typography.headlineMedium,
+                color = NuvioTheme.colors.TextPrimary
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),

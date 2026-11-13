@@ -207,6 +207,7 @@ import com.nuvio.tv.ui.util.LocalFastHorizontalNavigationEnabled
 import com.nuvio.tv.ui.util.LocalRecompositionHighlighterEnabled
 import com.nuvio.tv.ui.util.rememberDrawerItemFocusRequesters
 import com.nuvio.tv.ui.util.rememberRawSvgPainter
+import com.nuvio.tv.domain.model.NavBarPosition
 import com.nuvio.tv.updater.UpdateViewModel
 import com.nuvio.tv.updater.ui.UpdateBannerHost
 import dagger.hilt.android.AndroidEntryPoint
@@ -224,6 +225,18 @@ import kotlinx.coroutines.launch
 
 val LocalSidebarExpanded = compositionLocalOf { false }
 val LocalContentFocusRequester = compositionLocalOf { FocusRequester.Default }
+
+/**
+ * Vertical space occupied by the floating top navigation bar. Root screens read this to keep
+ * their own headers out from underneath the bar. Zero when navigation is on the side.
+ */
+val LocalTopNavInset = androidx.compose.runtime.staticCompositionLocalOf { 0.dp }
+
+/**
+ * True while the top navigation bar itself holds D-pad focus. Screens use this to avoid
+ * stealing focus (for example into a text field) while the user is still moving across tabs.
+ */
+val LocalTopNavHasFocus = androidx.compose.runtime.compositionLocalOf { false }
 
 data class SplashBackground(
     val profileColorHex: String? = null,
@@ -260,6 +273,7 @@ private data class MainUiPrefs(
     val sidebarCollapsed: Boolean = false,
     val modernSidebarEnabled: Boolean = false,
     val modernSidebarBlurPref: Boolean = false,
+    val navBarPosition: com.nuvio.tv.domain.model.NavBarPosition = com.nuvio.tv.domain.model.NavBarPosition.SIDE,
     val discoverLocation: DiscoverLocation? = null,
     val smoothBringIntoViewEnabled: Boolean = true,
     val fastHorizontalNavigationEnabled: Boolean = false,
@@ -540,18 +554,28 @@ open class MainActivity : ComponentActivity() {
                         experienceModeLoaded = true,
                     )
                 }
+                // combine() has a typed overload only up to five flows, so the navigation
+                // preferences are grouped first and then folded into the layout state.
+                val navigationPrefsFlow = combine(
+                    layoutPreferenceDataStore.modernSidebarBlurEnabled,
+                    layoutPreferenceDataStore.discoverLocation,
+                    layoutPreferenceDataStore.navBarPosition,
+                ) { modernSidebarBlurPref, discoverLocation, navBarPosition ->
+                    Triple(modernSidebarBlurPref, discoverLocation, navBarPosition)
+                }
                 val layoutAndFeaturesFlow = combine(
                     layoutPreferenceDataStore.hasChosenLayout,
                     layoutPreferenceDataStore.sidebarCollapsedByDefault,
                     layoutPreferenceDataStore.modernSidebarEnabled,
-                    layoutPreferenceDataStore.modernSidebarBlurEnabled,
-                    layoutPreferenceDataStore.discoverLocation,
-                ) { hasChosenLayout, sidebarCollapsed, modernSidebarEnabled, modernSidebarBlurPref, discoverLocation ->
+                    navigationPrefsFlow,
+                ) { hasChosenLayout, sidebarCollapsed, modernSidebarEnabled, navigationPrefs ->
+                    val (modernSidebarBlurPref, discoverLocation, navBarPosition) = navigationPrefs
                     MainUiPrefs(
                         hasChosenLayout = hasChosenLayout,
                         sidebarCollapsed = sidebarCollapsed,
                         modernSidebarEnabled = modernSidebarEnabled,
                         modernSidebarBlurPref = modernSidebarBlurPref,
+                        navBarPosition = navBarPosition,
                         discoverLocation = discoverLocation,
                     )
                 }
@@ -594,6 +618,7 @@ open class MainActivity : ComponentActivity() {
                         sidebarCollapsed = layoutPrefs.sidebarCollapsed,
                         modernSidebarEnabled = layoutPrefs.modernSidebarEnabled,
                         modernSidebarBlurPref = layoutPrefs.modernSidebarBlurPref,
+                        navBarPosition = layoutPrefs.navBarPosition,
                         discoverLocation = layoutPrefs.discoverLocation,
                         addonSetupSkipped = extraPrefs.addonSetupSkipped,
                         smoothBringIntoViewEnabled = extraPrefs.smoothBringIntoViewEnabled,
@@ -870,9 +895,14 @@ open class MainActivity : ComponentActivity() {
                     } else {
                     val sidebarCollapsed = mainUiPrefs.sidebarCollapsed
                     val modernSidebarEnabled = mainUiPrefs.modernSidebarEnabled
+                    val navBarPosition = mainUiPrefs.navBarPosition
+                    val useVerticalNavigation = navBarPosition == NavBarPosition.TOP
                     val modernSidebarBlurEnabled =
                         mainUiPrefs.modernSidebarBlurPref && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
-                    val hideBuiltInHeadersForFloatingPill = modernSidebarEnabled && !sidebarCollapsed
+                    // The top bar supplies its own chrome, so built-in headers step aside in both
+                    // floating navigation styles.
+                    val hideBuiltInHeadersForFloatingPill =
+                        (modernSidebarEnabled || useVerticalNavigation) && !sidebarCollapsed
 
                     val startDestination = when {
                         needsExperienceSelection -> Screen.ExperienceModeSelection.route
@@ -1168,7 +1198,7 @@ open class MainActivity : ComponentActivity() {
                         }
                         Box(modifier = Modifier.fillMaxSize()) {
                             CompositionLocalProvider(LocalNavViewModelStoreOwner provides navViewModelStoreOwner) {
-                                if (modernSidebarEnabled) {
+                                if (modernSidebarEnabled || useVerticalNavigation) {
                                     ModernSidebarScaffold(
                                         longPressBackHeld = longPressBackHeld,
                                         navController = navController,
@@ -1180,6 +1210,7 @@ open class MainActivity : ComponentActivity() {
                                         selectedDrawerItem = selectedDrawerItem,
                                         sidebarCollapsed = sidebarCollapsed,
                                         modernSidebarBlurEnabled = modernSidebarBlurEnabled,
+                                        navBarPosition = mainUiPrefs.navBarPosition,
                                         hideBuiltInHeaders = hideBuiltInHeadersForFloatingPill,
                                         activeProfileName = activeProfile?.name ?: "",
                                         activeProfileColorHex = activeProfile?.avatarColorHex ?: "#1E88E5",
@@ -1867,6 +1898,7 @@ private fun ModernSidebarScaffold(
     selectedDrawerItem: DrawerItem,
     sidebarCollapsed: Boolean,
     modernSidebarBlurEnabled: Boolean,
+    navBarPosition: NavBarPosition,
     hideBuiltInHeaders: Boolean,
     activeProfileName: String,
     activeProfileColorHex: String,
@@ -1877,6 +1909,7 @@ private fun ModernSidebarScaffold(
     onExitApp: () -> Unit
 ) {
     val showSidebar = currentRoute in rootRoutes
+    val useTopNav = navBarPosition == NavBarPosition.TOP
     val sidebarTokens = NuvioComponents.tokens.sidebar
     val collapsedSidebarWidth = if (sidebarCollapsed) NuvioTheme.spacing.none else sidebarTokens.collapsedWidth
     val openSidebarWidth = sidebarTokens.expandedWidth
@@ -1892,6 +1925,10 @@ private fun ModernSidebarScaffold(
     var pendingContentFocusTransfer by remember { mutableStateOf(false) }
     var pendingSidebarFocusRequest by remember { mutableStateOf(false) }
     var focusedDrawerIndex by remember { mutableStateOf(-1) }
+    var topNavHasFocus by remember { mutableStateOf(false) }
+    // Bumped by Down while the top bar owns focus. The effect keyed on it hands focus to the
+    // current destination; a counter rather than a flag so repeated presses each run.
+    var barDownRequestId by remember { mutableIntStateOf(0) }
     var isFloatingPillIconOnly by remember { mutableStateOf(false) }
     var pillExpandRequestCount by remember { mutableIntStateOf(0) }
     val keepFloatingPillExpanded = false
@@ -1931,13 +1968,22 @@ private fun ModernSidebarScaffold(
         }
     }
 
-    BackHandler(enabled = currentRoute in rootRoutes && !isSidebarExpanded && !sidebarCollapsePending) {
+    BackHandler(
+        enabled = !useTopNav &&
+            currentRoute in rootRoutes &&
+            !isSidebarExpanded &&
+            !sidebarCollapsePending
+    ) {
         isSidebarExpanded = true
         sidebarCollapsePending = false
         pendingSidebarFocusRequest = true
     }
 
-    BackHandler(enabled = currentRoute in rootRoutes && isSidebarExpanded && !sidebarCollapsePending) {
+    BackHandler(
+        enabled = currentRoute in rootRoutes && (
+            useTopNav || (isSidebarExpanded && !sidebarCollapsePending)
+            )
+    ) {
         if (longPressBackHeld.value) return@BackHandler
         onExitApp()
     }
@@ -1970,7 +2016,7 @@ private fun ModernSidebarScaffold(
         isFloatingPillIconOnly = true
     }
 
-    val sidebarVisible = showSidebar && (isSidebarExpanded || !sidebarCollapsed)
+    val sidebarVisible = !useTopNav && showSidebar && (isSidebarExpanded || !sidebarCollapsed)
     val sidebarHazeState = remember { HazeState() }
     // Panel is always laid out at full expanded width; open/close is
     // purely a graphicsLayer transform (scale + alpha) so Compose never
@@ -1985,7 +2031,7 @@ private fun ModernSidebarScaffold(
         animationSpec = tween(durationMillis = if (isSidebarExpanded) 280 else 200, easing = animationEasing),
         label = "sidebarSurfaceAlpha"
     )
-    val shouldApplySidebarHaze = showSidebar && modernSidebarBlurEnabled
+    val shouldApplySidebarHaze = showSidebar && modernSidebarBlurEnabled && !useTopNav
     val sidebarTransition = updateTransition(
         targetState = isSidebarExpanded,
         label = "sidebarTransition"
@@ -2023,6 +2069,27 @@ private fun ModernSidebarScaffold(
         repeat(2) { withFrameNanos { } }
         runCatching { contentFocusRequester.requestFocus() }
         pendingContentFocusTransfer = false
+    }
+
+    // Down out of the top bar means "enter the destination I am on". Asking the screen's own
+    // entry requester is what makes that work everywhere: focus search from the floating bar is
+    // unreliable, and entering must stay the user's move — the bar still never grabs focus by
+    // itself when focus merely passes over a destination.
+    LaunchedEffect(barDownRequestId, useTopNav) {
+        if (!useTopNav || barDownRequestId == 0 || barDownRequestId == handledBarDownRequestId) {
+            return@LaunchedEffect
+        }
+        handledBarDownRequestId = barDownRequestId
+        val entered = runCatching { contentFocusRequester.requestFocus() }.isSuccess
+        if (entered) {
+            // A requester can be attached to a node that cannot take focus; give the focus
+            // system the frame it needs before deciding the screen did not take it.
+            withFrameNanos { }
+            if (!topNavHasFocus) return@LaunchedEffect
+        }
+        // No entry point registered for this destination (or it refused focus): keep the old
+        // behaviour of letting focus search find the way down.
+        focusManager.moveFocus(FocusDirection.Down)
     }
 
     LaunchedEffect(isSidebarExpanded, pendingSidebarFocusRequest, showSidebar, selectedDrawerRoute) {
@@ -2075,6 +2142,7 @@ private fun ModernSidebarScaffold(
                     if (keyEvent.key == Key.Back) {
                         if (
                             keyEvent.type == KeyEventType.KeyDown &&
+                            !useTopNav &&
                             showSidebar &&
                             !isSidebarExpanded &&
                             !sidebarCollapsePending &&
@@ -2107,7 +2175,7 @@ private fun ModernSidebarScaffold(
                     }
                 }
                 .onKeyEvent { keyEvent ->
-                    if (showSidebar && !isSidebarExpanded && keyEvent.type == KeyEventType.KeyDown) {
+                    if (!useTopNav && showSidebar && !isSidebarExpanded && keyEvent.type == KeyEventType.KeyDown) {
                         if (!keepFloatingPillExpanded) {
                             when (keyEvent.key) {
                                 Key.DirectionDown -> isFloatingPillIconOnly = true
@@ -2138,7 +2206,9 @@ private fun ModernSidebarScaffold(
         ) {
             CompositionLocalProvider(
                 LocalSidebarExpanded provides isSidebarExpanded,
-                LocalContentFocusRequester provides contentFocusRequester
+                LocalContentFocusRequester provides contentFocusRequester,
+                LocalTopNavInset provides if (useTopNav && showSidebar) TopNavContentInset else NuvioTheme.spacing.none,
+                LocalTopNavHasFocus provides (useTopNav && topNavHasFocus)
             ) {
                 NuvioNavHost(
                     navController = navController,
@@ -2148,7 +2218,7 @@ private fun ModernSidebarScaffold(
             }
         }
 
-        if (showSidebar && (sidebarVisible || sidebarShowExpandedPanel)) {
+        if (!useTopNav && showSidebar && (sidebarVisible || sidebarShowExpandedPanel)) {
             val panelShape = RoundedCornerShape(sidebarTokens.panelRadius)
             val showExpandedPanel = isSidebarExpanded || sidebarShowExpandedPanel
 
@@ -2288,6 +2358,60 @@ private fun ModernSidebarScaffold(
                 )
             }
         }
+
+        TopNavigationBar(
+            drawerItems = drawerItems,
+            selectedDrawerRoute = selectedDrawerRoute,
+            visible = showSidebar && useTopNav,
+            drawerItemFocusRequesters = drawerItemFocusRequesters,
+            onBarFocusChanged = { topNavHasFocus = it },
+            onDrawerItemFocused = { index ->
+                focusedDrawerIndex = index
+                // The top bar behaves like a tab strip: moving focus onto a destination is the
+                // activation, no extra OK press needed.
+                val focusedRoute = drawerItems.getOrNull(index)?.route
+                if (focusedRoute != null && focusedRoute != selectedDrawerRoute) {
+                    keyboardController?.hide()
+                    onNavigate(focusedRoute)
+                    navigateToDrawerRoute(
+                        navController = navController,
+                        currentRoute = currentRoute,
+                        targetRoute = focusedRoute
+                    )
+                    pendingContentFocusTransfer = false
+                }
+            },
+            onDrawerItemClick = { targetRoute ->
+                keyboardController?.hide()
+                onNavigate(targetRoute)
+                navigateToDrawerRoute(
+                    navController = navController,
+                    currentRoute = currentRoute,
+                    targetRoute = targetRoute
+                )
+                pendingSidebarFocusRequest = false
+                isSidebarExpanded = false
+                sidebarCollapsePending = false
+                pendingContentFocusTransfer = currentRoute == targetRoute
+            },
+            activeProfileName = activeProfileName,
+            activeProfileColorHex = activeProfileColorHex,
+            activeProfileAvatarImageUrl = activeProfileAvatarImageUrl,
+            showProfileSelector = showProfileSelector,
+            onSwitchProfile = onSwitchProfile,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .onPreviewKeyEvent { event ->
+                    if (event.type != KeyEventType.KeyDown || event.key != Key.DirectionDown) {
+                        return@onPreviewKeyEvent false
+                    }
+                    // Entering the destination is handled by the effect below, not by the
+                    // geometric focus search: the bar floats over the content, and searching
+                    // from it either finds nothing (Library) or picks another bar item (Settings).
+                    barDownRequestId += 1
+                    true
+                }
+        )
     }
 }
 

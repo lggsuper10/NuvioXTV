@@ -947,10 +947,10 @@
     <string name="contributors_hide_kofi_qr">隐藏 Ko-fi QR 码</string>
     <string name="contributors_profile_unavailable">GitHub 个人资料链接不可用。</string>
 
-    <string name="playback_loading_overlay">加载覆盖层</string>
-    <string name="playback_loading_overlay_sub">在出现第一个视频画面之前显示加载画面。</string>
-    <string name="playback_pause_overlay">暂停覆盖层</string>
-    <string name="playback_pause_overlay_sub">暂停 5 秒后显示详细信息覆盖层。</string>
+    <string name="playback_loading_overlay">加载画面</string>
+    <string name="playback_loading_overlay_sub">在首个视频画面出现前显示加载画面。</string>
+    <string name="playback_pause_overlay">暂停信息</string>
+    <string name="playback_pause_overlay_sub">暂停 5 秒后显示影片信息浮层。</string>
     <string name="playback_show_clock_sub">在控件显示时显示当前时间和结束时间。</string>
     <string name="playback_osd_clock">OSD 时钟</string>
     <string name="playback_skip_intro">跳过片头</string>
@@ -1206,6 +1206,13 @@
     <string name="layout_modern_sidebar_sub">启用浮动式侧边栏导航。</string>
     <string name="layout_modern_sidebar_blur">现代侧边栏模糊</string>
     <string name="layout_modern_sidebar_blur_sub">切换现代侧边栏表面的模糊效果。</string>
+    <string name="layout_nav_bar_position">导航栏位置</string>
+    <string name="layout_nav_bar_position_sub">导航按钮显示在侧边栏或顶部导航栏中。</string>
+    <string name="layout_nav_bar_position_dialog_title">导航栏位置</string>
+    <string name="layout_nav_bar_position_side">侧边</string>
+    <string name="layout_nav_bar_position_side_desc">导航浮动在侧边栏中。</string>
+    <string name="layout_nav_bar_position_top">顶部</string>
+    <string name="layout_nav_bar_position_top_desc">导航浮动在顶部导航栏中。</string>
     <string name="layout_fullscreen_hero_backdrop">全屏焦点区块背景</string>
     <string name="layout_fullscreen_hero_backdrop_sub">将焦点区块背景延伸到整个屏幕。</string>
     <string name="layout_classic_focus_gradient">焦点项目渐变</string>
@@ -3482,5 +3489,98 @@
     <string name="stream_test_error_prefix">错误：%1$s</string>
     <string name="stream_test_video_bitrate">平均视频比特率：%1$s</string>
     <string name="stream_test_error_connection">连接失败。上次播放的流链接可能已过期或无法访问。请重新播放视频并重试。</string>
+
+    <!-- 内容与发现 -->
+    <string name="cd_enable_addon">启用 %1$s</string>
+    <string name="cd_enable_scraper">启用 %1$s</string>
+
+    <!-- 播放设置：分区标题与说明 -->
+    <string name="playback_section_player_title">播放器</string>
+    <string name="playback_section_player_title_desc">默认播放器、内置引擎与错误回退。</string>
+    <string name="playback_section_stream_selection">播放源选择</string>
+    <string name="playback_section_stream_selection_desc">按下播放时如何选择播放源。</string>
+    <string name="playback_section_up_next">接下来播放</string>
+    <string name="playback_section_up_next_desc">下一集自动播放与播放后推荐。</string>
+    <string name="playback_section_skip">跳过片段</string>
+    <string name="playback_section_skip_desc">自动跳过片头、前情回顾和片尾。</string>
+    <string name="playback_section_interface">播放界面</string>
+    <string name="playback_section_interface_desc">播放时显示的浮层、时钟与详情。</string>
+    <string name="playback_section_audio_only_desc">语言、解码与音频输出。</string>
+    <string name="playback_section_video_desc">帧率匹配、杜比视界与 HDR。</string>
+
+    <!-- 播放设置：标签与选项 -->
+    <string name="playback_default_player">默认播放器</string>
+    <string name="playback_external_player_label">外部播放器</string>
+    <string name="playback_network_label">网络</string>
+    <string name="playback_chapters_label">章节</string>
+    <string name="playback_dv_hdr_label">杜比视界与 HDR</string>
+    <string name="playback_mpv_decoding_label">MPV 解码</string>
+    <string name="playback_afr_mode">帧率匹配</string>
+    <string name="playback_true_black_letterbox">纯黑边</string>
+    <string name="playback_true_black_letterbox_sub">不填充画面周围的黑边，让 HDR 保持纯黑。如果黑边上出现亮线，请关闭此项。</string>
+    <string name="playback_exo_chapters_title">显示章节 (ExoPlayer)</string>
+    <string name="playback_exo_chapters_sub">读取 MKV 文件的章节，在进度条上标记并支持章节跳转。开始播放后会额外发出少量请求。mpv 始终显示章节。</string>
+    <string name="autoplay_preload_next_episode">预加载下一集片源</string>
+    <string name="autoplay_preload_next_episode_sub">在「下一集」按钮出现前，提前在后台搜索片源。</string>
+    <string name="autoplay_selected_count">已选 %1$d 项</string>
+
+    <!-- 播放设置：音频 -->
+    <string name="audio_night_mode">夜间模式</string>
+    <string name="audio_night_mode_desc">提升对白和轻声；大音量场景保持原始混音。仅对应用解码的音频生效。直通到功放或回音壁的杜比/DTS 不受影响。</string>
+    <string name="audio_night_mode_sub">提升对白和轻声，让您可以保持较低音量</string>
+    <string name="audio_night_mode_off">关闭</string>
+    <string name="audio_night_mode_light">轻度</string>
+    <string name="audio_night_mode_light_desc">温和提升，最高 +6 dB</string>
+    <string name="audio_night_mode_medium">中度</string>
+    <string name="audio_night_mode_medium_desc">对白明显提升，最高 +10 dB</string>
+    <string name="audio_night_mode_strong">强</string>
+    <string name="audio_night_mode_strong_desc">最高 +15 dB，适合深夜低音量观看</string>
+    <string name="audio_downmix_lfe_level">下混时的 LFE 电平</string>
+    <string name="audio_downmix_lfe_level_desc">用于下混布局没有 LFE 声道的情况。下次播放时生效。</string>
+    <string name="audio_downmix_lfe_level_sub">将超低音 (LFE) 声道混入其他扬声器而不是丢弃。仅适用于 2.0 等无 LFE 的布局。</string>
+    <string name="audio_downmix_lfe_level_off">关闭</string>
+    <string name="audio_downmix_lfe_level_half">50%</string>
+    <string name="audio_downmix_lfe_level_full">100%</string>
+
+    <!-- 播放设置：字幕 -->
+    <string name="sub_languages_label">语言</string>
+    <string name="sub_style_label">样式</string>
+    <string name="sub_hdr_style">独立的 HDR / 杜比视界样式</string>
+    <string name="sub_hdr_style_sub">在 HDR 和杜比视界视频上为字幕使用不同的文字颜色和更低的亮度</string>
+    <string name="sub_hdr_brightness">HDR 亮度</string>
+    <string name="sub_hdr_text_color">HDR 文字颜色</string>
+    <string name="sub_hdr_dim_player_controls">HDR 下调暗播放控件</string>
+    <string name="sub_hdr_dim_player_controls_sub">将 HDR 亮度应用于 HDR 和杜比视界视频上的播放控件与菜单</string>
+    <string name="sub_libass_render_mode">ASS 渲染模式</string>
+    <string name="sub_libass_render_mode_sub">ASS/SSA 字幕如何绘制到视频上</string>
+    <string name="sub_libass_render_mode_overlay">叠加层</string>
+    <string name="sub_libass_render_mode_overlay_sub">在独立的表面层上渲染字幕，可保留 HDR 输出。部分设备上字幕时间可能不完全准确。</string>
+    <string name="sub_libass_render_mode_video_effect">视频特效</string>
+    <string name="sub_libass_render_mode_video_effect_sub">将字幕直接绘制到每一帧画面上。所有硬件都能精确到帧。HDR 内容会映射为 SDR。</string>
+    <string name="sub_libass_render_mode_tunneled_sub">隧道播放会绕过视频特效管线，因此自动使用叠加层。</string>
+    <string name="sub_libass_render_scale">字幕渲染分辨率</string>
+    <string name="sub_libass_render_scale_sub">降低分辨率可提升复杂特效字幕的性能，但清晰度会下降</string>
+
+    <!-- 播放设置：P2P -->
+    <string name="settings_p2p_profile_title">种子配置</string>
+    <string name="settings_p2p_profile_soft">轻柔</string>
+    <string name="settings_p2p_profile_soft_description">使用更少对等连接，降低电量与网络负担</string>
+    <string name="settings_p2p_profile_balanced">均衡</string>
+    <string name="settings_p2p_profile_balanced_description">推荐的启动速度与连接稳定性平衡</string>
+    <string name="settings_p2p_profile_fast">快速</string>
+    <string name="settings_p2p_profile_fast_description">对困难或高码率种子使用更多对等连接</string>
+    <string name="settings_p2p_cache_size_title">种子缓存大小</string>
+    <string name="settings_p2p_cache_size_description">在本设备保留已下载的种子数据，以便更快重播</string>
+    <string name="settings_p2p_cache_none">不保留缓存</string>
+    <string name="settings_p2p_cache_2_gb">2 GB</string>
+    <string name="settings_p2p_cache_5_gb">5 GB</string>
+    <string name="settings_p2p_cache_10_gb">10 GB</string>
+    <string name="settings_p2p_clear_cache_title">清理种子缓存</string>
+    <string name="settings_p2p_clear_cache_usage">当前已用 %1$s</string>
+    <string name="settings_p2p_clear_cache_usage_pending">使用量在 P2P 启动后统计；选择可清理缓存的种子数据</string>
+    <string name="settings_p2p_clear_cache_clearing">正在清理未使用的种子数据…</string>
+    <string name="settings_p2p_clear_cache_done">已清理 %1$s 未使用的种子数据</string>
+    <string name="settings_p2p_clear_cache_failed">无法清理种子缓存</string>
+    <string name="settings_p2p_clear_cache_playback_active">请先停止 P2P 播放再清理缓存</string>
 
 </resources>

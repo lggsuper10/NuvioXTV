@@ -2,6 +2,9 @@
 
 package com.nuvio.tv.ui.screens.settings
 
+import com.nuvio.tv.LocalContentFocusRequester
+import com.nuvio.tv.LocalTopNavHasFocus
+import com.nuvio.tv.LocalTopNavInset
 import com.nuvio.tv.ui.screens.party.PartySettingsContent
 import com.nuvio.tv.ui.screens.party.PartyViewModel
 import com.nuvio.tv.ui.theme.NuvioTheme
@@ -245,6 +248,12 @@ fun SettingsScreen(
         ?: selectedCategory
     val railListState = rememberLazyListState()
     val railScope = rememberCoroutineScope()
+    // The top navigation bar keeps D-pad focus while the user moves across its tabs; leaving
+    // focus there lets them keep switching destinations instead of being dropped into the rail.
+    val topNavOwnsFocus = LocalTopNavHasFocus.current
+    // Down out of the top bar enters settings here. Requesting the rail lets its own focusRestorer
+    // put the user back on the category they left from instead of the first one.
+    val contentFocusRequester = LocalContentFocusRequester.current
 
     // The rail is a lazy list, so an item that has scrolled out of view has no attached requester
     // and cannot take focus. Bring it back into view first, then ask, retrying while it composes.
@@ -349,6 +358,7 @@ fun SettingsScreen(
     }
 
     LaunchedEffect(Unit) {
+        if (topNavOwnsFocus) return@LaunchedEffect
         // Categories such as plugins and addons open a destination of their own, so Settings leaves
         // composition and comes back with nothing asking for the options pane: the rail is simply
         // the first thing able to take focus. Landing there loses the user's place for a trip they
@@ -389,7 +399,7 @@ fun SettingsScreen(
             .padding(
                 start = NuvioTheme.spacing.xxl,
                 end = NuvioTheme.spacing.xxl,
-                top = if (showBuiltInHeader) NuvioTheme.spacing.xl else 68.dp,
+                top = maxOf(LocalTopNavInset.current, if (showBuiltInHeader) NuvioTheme.spacing.xl else 68.dp),
                 bottom = NuvioTheme.spacing.xl
             )
     ) {
@@ -481,6 +491,7 @@ fun SettingsScreen(
                             state = railListState,
                             modifier = Modifier
                                 .focusRequester(railContainerFocusRequester)
+                                .focusRequester(contentFocusRequester)
                                 // Lets the rail resolve its own focus enter to the item that was on it when
                                 // it last lost focus. Without this the enter is resolved by stepping on from
                                 // whatever holds focus, which lands an item further along and drags the rail
@@ -635,6 +646,7 @@ fun SettingsScreen(
                         state = railListState,
                         modifier = Modifier
                             .focusRequester(railContainerFocusRequester)
+                            .focusRequester(contentFocusRequester)
                             // Lets the rail resolve its own focus enter to the item that was on it when
                             // it last lost focus. Without this the enter is resolved by stepping on from
                             // whatever holds focus, which lands an item further along and drags the rail

@@ -91,9 +91,9 @@ internal fun LocalMediaSettingsContent(
         if (uri != null) viewModel.addSource(uri.toString())
     }
     val storagePermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
+        ActivityResultContracts.RequestMultiplePermissions()
     ) { granted ->
-        if (granted) {
+        if (granted.isNotEmpty() && granted.values.all { it }) {
             showFolderBrowser = true
         } else {
             viewModel.storagePermissionDenied()
@@ -110,14 +110,16 @@ internal fun LocalMediaSettingsContent(
     }
     fun openBuiltInFolderBrowser() {
         when {
-            LocalStorageAccess.canBrowseFiles(context) -> showFolderBrowser = true
+            // Deleting files from a file:// source needs write access too, not just read.
+            LocalStorageAccess.canBrowseFiles(context) &&
+                LocalStorageAccess.canWriteLocalFiles(context) -> showFolderBrowser = true
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> runCatching {
                 allFilesAccessLauncher.launch(
                     LocalStorageAccess.allFilesAccessIntent(context)
                         ?: error("No all-files access settings activity")
                 )
             }.onFailure { viewModel.storagePermissionDenied() }
-            else -> storagePermissionLauncher.launch(LocalStorageAccess.runtimePermission())
+            else -> storagePermissionLauncher.launch(LocalStorageAccess.runtimePermissions())
         }
     }
     fun openFolderPicker() {
@@ -190,22 +192,6 @@ internal fun LocalMediaSettingsContent(
                         icon = Icons.Default.Folder,
                         height = 220.dp
                     )
-                    Button(
-                        onClick = { showAddSourceDialog = true },
-                        shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
-                        colors = ButtonDefaults.colors(
-                            containerColor = NuvioTheme.colors.BackgroundCard,
-                            contentColor = NuvioTheme.colors.TextPrimary
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.width(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.local_media_add_source))
-                    }
                 }
             } else {
                 val deviceSources = uiState.sources.filter { it.type != LocalSourceType.SMB }

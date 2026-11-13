@@ -1,8 +1,9 @@
-@file:OptIn(ExperimentalTvMaterial3Api::class)
+@file:OptIn(ExperimentalTvMaterial3Api::class, ExperimentalFoundationApi::class)
 
 package com.nuvio.tv.ui.screens.locallibrary
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.relocation.BringIntoViewResponder
+import androidx.compose.foundation.relocation.bringIntoViewResponder
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -37,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -79,6 +83,16 @@ fun LocalDetailScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val playFocusRequester = remember { FocusRequester() }
     var showPosterSearchDialog by remember { mutableStateOf(false) }
+    // The global smooth bring-into-view spec scrolls a newly focused element to 42% of the
+    // viewport. Inside the hero that would drag the action row from the bottom of the screen
+    // up into the middle whenever focus moves between 播放 / 刷新海报 / 搜索海报, so the hero
+    // item absorbs those requests instead (same protection the remote detail screen uses).
+    val heroNoScrollResponder = remember {
+        object : BringIntoViewResponder {
+            override fun calculateRectForParent(localRect: Rect): Rect = Rect.Zero
+            override suspend fun bringChildIntoView(localRect: () -> Rect?) { }
+        }
+    }
 
     BackHandler { onBack() }
 
@@ -181,37 +195,39 @@ fun LocalDetailScreen(
 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     item(key = "local_hero", contentType = "hero") {
-                        HeroContentSection(
-                            meta = localMeta,
-                            nextEpisode = null,
-                            nextToWatch = nextToWatch,
-                            onPlayClick = playAction,
-                            isPlayEnabled = true,
-                            isInLibrary = false,
-                            onToggleLibrary = {},
-                            onLibraryLongPress = {},
-                            isMovieWatched = false,
-                            isMovieWatchedPending = false,
-                            onToggleMovieWatched = {},
-                            hideMetaInfoImdb = false,
-                            showFullReleaseDate = true,
-                            playButtonFocusRequester = playFocusRequester,
-                            titleAccessory = {
-                                val sourceName = uiState.sourceName
-                                if (!sourceName.isNullOrBlank()) {
-                                    LocalSourceBadge(sourceName = sourceName)
+                        Box(modifier = Modifier.bringIntoViewResponder(heroNoScrollResponder)) {
+                            HeroContentSection(
+                                meta = localMeta,
+                                nextEpisode = null,
+                                nextToWatch = nextToWatch,
+                                onPlayClick = playAction,
+                                isPlayEnabled = true,
+                                isInLibrary = false,
+                                onToggleLibrary = {},
+                                onLibraryLongPress = {},
+                                isMovieWatched = false,
+                                isMovieWatchedPending = false,
+                                onToggleMovieWatched = {},
+                                hideMetaInfoImdb = false,
+                                showFullReleaseDate = true,
+                                playButtonFocusRequester = playFocusRequester,
+                                titleAccessory = {
+                                    val sourceName = uiState.sourceName
+                                    if (!sourceName.isNullOrBlank()) {
+                                        LocalSourceBadge(sourceName = sourceName)
+                                    }
+                                },
+                                showLibraryAction = false,
+                                showWatchedAction = false,
+                                extraActions = {
+                                    LocalPosterActions(
+                                        busy = uiState.artworkBusy,
+                                        onRefresh = viewModel::refreshArtwork,
+                                        onSearch = { showPosterSearchDialog = true }
+                                    )
                                 }
-                            },
-                            showLibraryAction = false,
-                            showWatchedAction = false,
-                            extraActions = {
-                                LocalPosterActions(
-                                    busy = uiState.artworkBusy,
-                                    onRefresh = viewModel::refreshArtwork,
-                                    onSearch = { showPosterSearchDialog = true }
-                                )
-                            }
-                        )
+                            )
+                        }
                     }
 
                     uiState.artworkResult?.let { result ->

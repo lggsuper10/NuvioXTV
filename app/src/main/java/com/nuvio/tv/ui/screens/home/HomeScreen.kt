@@ -2,7 +2,11 @@ package com.nuvio.tv.ui.screens.home
 
 import com.nuvio.tv.ui.theme.NuvioTheme
 
+import android.Manifest
+import android.os.Build
 import androidx.activity.compose.ReportDrawnWhen
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import android.util.Log
@@ -72,6 +76,7 @@ import com.nuvio.tv.ui.components.PosterCardDefaults
 import com.nuvio.tv.ui.components.PosterCardStyle
 import androidx.compose.ui.res.stringResource
 import com.nuvio.tv.R
+import com.nuvio.tv.core.locallibrary.LocalStorageAccess
 import com.nuvio.tv.core.tracking.LOCAL_LIBRARY_LIST_KEY
 import com.nuvio.tv.core.tracking.supportsMembershipFor
 import com.nuvio.tv.data.locallibrary.LocalCatalog
@@ -151,6 +156,51 @@ fun HomeScreen(
     var catalogLoadingStarted by rememberSaveable { mutableStateOf(false) }
     var posterOptionsTarget by remember { mutableStateOf<HomePosterOptionsTarget?>(null) }
     var pendingLocalDelete by remember { mutableStateOf<HomePosterOptionsTarget?>(null) }
+
+    fun deleteLocalFiles(target: HomePosterOptionsTarget) {
+        viewModel.deletePosterLocalMedia(target.item) { result ->
+            pendingLocalDelete = null
+            val message = when {
+                result.deletedCount > 0 && result.failedCount == 0 ->
+                    context.getString(
+                        R.string.home_poster_delete_local_done,
+                        result.deletedCount
+                    )
+
+                result.deletedCount > 0 ->
+                    context.getString(
+                        R.string.home_poster_delete_local_partial,
+                        result.deletedCount,
+                        result.failedCount
+                    )
+
+                result.requestedCount == 0 ->
+                    context.getString(R.string.home_poster_delete_local_unavailable)
+
+                else -> context.getString(R.string.home_poster_delete_local_failed)
+            }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // file:// sources on Android 10 and below can only be deleted with WRITE_EXTERNAL_STORAGE.
+    val localDeletePermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val target = pendingLocalDelete
+        when {
+            target == null -> Unit
+            granted -> deleteLocalFiles(target)
+            else -> {
+                pendingLocalDelete = null
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.home_poster_delete_local_failed),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
 
     LaunchedEffect(uiState.homeLayout) {
         if (uiState.homeLayout != HomeLayout.MODERN) {
@@ -553,28 +603,14 @@ fun HomeScreen(
                 },
                 onConfirm = {
                     if (!deleting) {
-                        viewModel.deletePosterLocalMedia(item) { result ->
-                            pendingLocalDelete = null
-                            val message = when {
-                                result.deletedCount > 0 && result.failedCount == 0 ->
-                                    context.getString(
-                                        R.string.home_poster_delete_local_done,
-                                        result.deletedCount
-                                    )
-
-                                result.deletedCount > 0 ->
-                                    context.getString(
-                                        R.string.home_poster_delete_local_partial,
-                                        result.deletedCount,
-                                        result.failedCount
-                                    )
-
-                                result.requestedCount == 0 ->
-                                    context.getString(R.string.home_poster_delete_local_unavailable)
-
-                                else -> context.getString(R.string.home_poster_delete_local_failed)
-                            }
-                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R &&
+                            !LocalStorageAccess.canWriteLocalFiles(context)
+                        ) {
+                            localDeletePermissionLauncher.launch(
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                            )
+                        } else {
+                            deleteLocalFiles(pendingDelete)
                         }
                     }
                 },
@@ -991,11 +1027,6 @@ private fun HomeLocalMediaEmptyState(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            Image(
-                painter = painterResource(R.drawable.app_logo_mark),
-                contentDescription = null,
-                modifier = Modifier.size(104.dp)
-            )
             Text(
                 text = stringResource(R.string.home_empty_local_title),
                 style = MaterialTheme.typography.headlineSmall,

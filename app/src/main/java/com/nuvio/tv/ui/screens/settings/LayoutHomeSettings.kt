@@ -46,6 +46,7 @@ import com.nuvio.tv.R
 import com.nuvio.tv.domain.model.DiscoverLocation
 import com.nuvio.tv.domain.model.HomeImdbRatingsVisibility
 import com.nuvio.tv.domain.model.HomeLayout
+import com.nuvio.tv.domain.model.NavBarPosition
 import com.nuvio.tv.ui.components.ClassicLayoutPreview
 import com.nuvio.tv.ui.components.GridLayoutPreview
 import com.nuvio.tv.ui.components.ModernLayoutPreview
@@ -197,13 +198,21 @@ internal fun LayoutSidebarSection(
     uiState: LayoutSettingsUiState,
     onEvent: (LayoutSettingsEvent) -> Unit
 ) {
+    // Navigation position is independent of the modern sidebar style: it always applies,
+    // whether the side panel is enabled or the classic drawer is in use.
+    NavBarPositionRow(
+        selected = uiState.navBarPosition,
+        onPositionSelected = { position ->
+            onEvent(LayoutSettingsEvent.SetNavBarPosition(position))
+        }
+    )
     SettingsToggleRow(
         title = stringResource(R.string.layout_modern_sidebar),
         subtitle = stringResource(R.string.layout_modern_sidebar_sub),
         checked = uiState.modernSidebarEnabled,
         onToggle = { onEvent(LayoutSettingsEvent.SetModernSidebarEnabled(!uiState.modernSidebarEnabled)) }
     )
-    if (uiState.modernSidebarEnabled) {
+    if (uiState.modernSidebarEnabled && uiState.navBarPosition == NavBarPosition.SIDE) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             SettingsToggleRow(
                 title = stringResource(R.string.layout_modern_sidebar_blur),
@@ -218,7 +227,7 @@ internal fun LayoutSidebarSection(
             checked = uiState.sidebarCollapsedByDefault,
             onToggle = { onEvent(LayoutSettingsEvent.SetSidebarCollapsed(!uiState.sidebarCollapsedByDefault)) }
         )
-    } else {
+    } else if (!uiState.modernSidebarEnabled && uiState.navBarPosition == NavBarPosition.SIDE) {
         SettingsToggleRow(
             title = stringResource(R.string.layout_collapse_sidebar),
             subtitle = stringResource(R.string.layout_collapse_sidebar_sub),
@@ -344,6 +353,51 @@ private fun CatalogChip(
         onClick = onClick,
         multiSelect = true
     )
+}
+
+@Composable
+private fun NavBarPositionRow(
+    selected: NavBarPosition,
+    onPositionSelected: (NavBarPosition) -> Unit
+) {
+    var dialogOpen by remember { mutableStateOf(false) }
+
+    SettingsActionRow(
+        title = stringResource(R.string.layout_nav_bar_position),
+        subtitle = stringResource(R.string.layout_nav_bar_position_sub),
+        value = when (selected) {
+            NavBarPosition.SIDE -> stringResource(R.string.layout_nav_bar_position_side)
+            NavBarPosition.TOP -> stringResource(R.string.layout_nav_bar_position_top)
+        },
+        onClick = { dialogOpen = true }
+    )
+
+    if (dialogOpen) {
+        val options = listOf(
+            SettingsPickerOption(
+                NavBarPosition.SIDE,
+                stringResource(R.string.layout_nav_bar_position_side),
+                stringResource(R.string.layout_nav_bar_position_side_desc)
+            ),
+            SettingsPickerOption(
+                NavBarPosition.TOP,
+                stringResource(R.string.layout_nav_bar_position_top),
+                stringResource(R.string.layout_nav_bar_position_top_desc)
+            )
+        )
+        SettingsSingleChoiceDialog(
+            title = stringResource(R.string.layout_nav_bar_position_dialog_title),
+            options = options,
+            selectedValue = selected,
+            onOptionSelected = { position ->
+                onPositionSelected(position)
+                dialogOpen = false
+            },
+            onDismiss = { dialogOpen = false },
+            width = 460.dp,
+            maxHeight = 320.dp
+        )
+    }
 }
 
 @Composable
