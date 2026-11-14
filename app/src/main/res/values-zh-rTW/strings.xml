@@ -101,7 +101,7 @@
     <string name="home_empty_local_title">本機媒體庫為空</string>
     <string name="home_empty_local_message">新增電視或 USB 儲存裝置中的影片資料夾，開始享受您的私人影院。</string>
     <string name="home_empty_local_action">新增本機資料夾</string>
-    <string name="auth_notice_nuvio_logged_out">您已登出 Nuvio。請重新登入。</string>
+    <string name="auth_notice_nuvio_logged_out">您已登出 非看。請重新登入。</string>
     <string name="auth_notice_trakt_logged_out">您已登出 Trakt。請重新連線。</string>
     <string name="error_generic">發生錯誤</string>
 
@@ -568,6 +568,13 @@
     <string name="local_detail_season_episode">第 %1$d 季 第 %2$d 集</string>
     <string name="local_detail_episode_title">第 %1$d 集</string>
     <string name="local_detail_file">檔案：%1$s</string>
+    <string name="local_detail_file_info_name">檔案</string>
+    <string name="local_detail_file_info_size">大小</string>
+    <string name="local_detail_file_info_location">位置</string>
+    <string name="local_detail_file_info_episode_count">共 %1$d 集</string>
+    <string name="local_detail_file_info_total_size">合計 %1$s</string>
+    <string name="local_detail_file_info_unknown">未知</string>
+    <string name="local_storage_primary_volume">內部儲存空間</string>
     <string name="local_detail_refresh_poster">重新整理海報</string>
     <string name="local_detail_search_poster">搜尋海報</string>
     <string name="local_detail_artwork_refreshing">正在更新海報…</string>
@@ -743,7 +750,7 @@
     <string name="advanced_confirm_exit">關閉時完全退出</string>
     <string name="advanced_confirm_exit_subtitle">退出時完全終止應用程式並釋放記憶體。退出前會顯示確認提示。</string>
     <string name="confirm_exit_toast">再按一次返回鍵退出</string>
-    <string name="exit_confirm_title">退出 Nuvio</string>
+    <string name="exit_confirm_title">退出 非看</string>
     <string name="exit_confirm_message">退出後將返回電視桌面，播放進度會儲存，下次開啟可繼續觀看。</string>
     <string name="exit_confirm_action">退出</string>
     <string name="settings_debug">除錯</string>

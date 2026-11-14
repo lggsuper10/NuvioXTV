@@ -102,7 +102,7 @@
     <string name="home_empty_local_message">添加本地目录或 SMB 共享，开始享受您的私人影院。</string>
     <string name="home_empty_local_action">添加本地目录</string>
     <string name="home_empty_smb_action">添加 SMB 共享</string>
-    <string name="auth_notice_nuvio_logged_out">您已登出 Nuvio。请重新登录。</string>
+    <string name="auth_notice_nuvio_logged_out">您已登出 非看。请重新登录。</string>
     <string name="auth_notice_trakt_logged_out">您已登出 Trakt。请重新连接。</string>
     <string name="error_generic">出错了</string>
 
@@ -682,6 +682,13 @@
     <string name="local_detail_season_episode">第 %1$d 季 第 %2$d 集</string>
     <string name="local_detail_episode_title">第 %1$d 集</string>
     <string name="local_detail_file">文件：%1$s</string>
+    <string name="local_detail_file_info_name">文件</string>
+    <string name="local_detail_file_info_size">大小</string>
+    <string name="local_detail_file_info_location">位置</string>
+    <string name="local_detail_file_info_episode_count">共 %1$d 集</string>
+    <string name="local_detail_file_info_total_size">合计 %1$s</string>
+    <string name="local_detail_file_info_unknown">未知</string>
+    <string name="local_storage_primary_volume">内部存储</string>
     <string name="local_detail_refresh_poster">刷新海报</string>
     <string name="local_detail_search_poster">搜索海报</string>
     <string name="local_detail_artwork_refreshing">正在更新海报…</string>
@@ -857,7 +864,7 @@
     <string name="advanced_confirm_exit">关闭时完全退出</string>
     <string name="advanced_confirm_exit_subtitle">退出时完全终止应用并释放内存。退出前会显示确认提示。</string>
     <string name="confirm_exit_toast">再按一次返回键退出</string>
-    <string name="exit_confirm_title">退出 Nuvio</string>
+    <string name="exit_confirm_title">退出 非看</string>
     <string name="exit_confirm_message">退出后将返回电视桌面，播放进度会保存，下次打开可继续观看。</string>
     <string name="exit_confirm_action">退出</string>
     <string name="settings_debug">调试</string>

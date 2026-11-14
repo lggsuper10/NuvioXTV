@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Fplayer</string>
+    <string name="app_brand_tagline">FPLAYER</string>
     <string name="tv_channel_continue_watching">Continue Watching</string>
     <string name="type_movie">Movie</string>
     <string name="type_movies">Movies</string>
@@ -102,7 +103,7 @@
     <string name="home_empty_local_message">Add a local folder or SMB share to start building your private cinema.</string>
     <string name="home_empty_local_action">Add local folder</string>
     <string name="home_empty_smb_action">Add SMB share</string>
-    <string name="auth_notice_nuvio_logged_out">You have been signed out of Nuvio. Please sign in again.</string>
+    <string name="auth_notice_nuvio_logged_out">You have been signed out of Fplayer. Please sign in again.</string>
     <string name="auth_notice_trakt_logged_out">You have been signed out of Trakt. Please reconnect.</string>
     <string name="error_generic">An error occurred</string>
 
@@ -688,6 +689,13 @@
     <string name="local_detail_season_episode">S%1$02d E%2$02d</string>
     <string name="local_detail_episode_title">Episode %1$d</string>
     <string name="local_detail_file">File: %1$s</string>
+    <string name="local_detail_file_info_name">File</string>
+    <string name="local_detail_file_info_size">Size</string>
+    <string name="local_detail_file_info_location">Location</string>
+    <string name="local_detail_file_info_episode_count">%1$d episodes</string>
+    <string name="local_detail_file_info_total_size">Total %1$s</string>
+    <string name="local_detail_file_info_unknown">Unknown</string>
+    <string name="local_storage_primary_volume">Internal storage</string>
     <string name="local_detail_refresh_poster">Refresh poster</string>
     <string name="local_detail_search_poster">Search poster</string>
     <string name="local_detail_artwork_refreshing">Updating poster…</string>
@@ -865,7 +873,7 @@
     <string name="advanced_confirm_exit">Full exit on close</string>
     <string name="advanced_confirm_exit_subtitle">Fully terminate the app and free memory when exiting. An exit confirmation is always shown.</string>
     <string name="confirm_exit_toast">Press back again to exit</string>
-    <string name="exit_confirm_title">Exit Nuvio</string>
+    <string name="exit_confirm_title">Exit Fplayer</string>
     <string name="exit_confirm_message">Return to the TV home screen. Your progress is saved and you can continue next time.</string>
     <string name="exit_confirm_action">Exit</string>
     <string name="settings_debug">Debug</string>

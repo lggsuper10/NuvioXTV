@@ -3,7 +3,6 @@
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -38,8 +37,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -53,6 +50,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.nuvio.tv.ui.components.AutoResizeText
+import com.nuvio.tv.ui.components.BrandLockup
 import com.nuvio.tv.ui.components.ProfileAvatarCircle
 import com.nuvio.tv.ui.theme.NuvioComponents
 import com.nuvio.tv.ui.theme.NuvioMotion
@@ -174,23 +172,10 @@ internal fun ModernSidebarBlurPanel(
                 .offset(y = NuvioTheme.spacing.md),
             contentAlignment = Alignment.Center
         ) {
-            Row(
+            BrandLockup(
                 modifier = Modifier.fillMaxWidth(0.92f),
-                horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.app_logo_mark),
-                    contentDescription = stringResource(R.string.app_name),
-                    modifier = Modifier.size(40.dp),
-                                    )
-                Text(
-                    text = stringResource(R.string.app_name),
-                    color = NuvioTheme.colors.TextPrimary,
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    maxLines = 1
-                )
-            }
+                badgeSize = 36.dp
+            )
         }
 
         if (showProfileSelector && activeProfileName.isNotEmpty()) {

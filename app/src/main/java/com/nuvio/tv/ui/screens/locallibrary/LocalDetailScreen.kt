@@ -63,6 +63,7 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.nuvio.tv.R
 import com.nuvio.tv.core.locallibrary.LocalArtworkCandidate
+import com.nuvio.tv.core.locallibrary.LocalMediaFileDetails
 import com.nuvio.tv.data.locallibrary.LocalMediaItemEntity
 import com.nuvio.tv.domain.model.ContentType
 import com.nuvio.tv.domain.model.Meta
@@ -321,6 +322,20 @@ fun LocalDetailScreen(
                         item(key = "local_episodes_bottom_spacer") {
                             Spacer(modifier = Modifier.height(NuvioTheme.spacing.xl))
                         }
+                    }
+
+                    item(key = "local_file_info") {
+                        LocalFileInfoFooter(
+                            primaryItem = primaryItem,
+                            episodes = episodes,
+                            sourceName = uiState.sourceName,
+                            modifier = Modifier.padding(
+                                start = NuvioTheme.spacing.xxxl,
+                                end = NuvioTheme.spacing.xxxl,
+                                top = NuvioTheme.spacing.xl,
+                                bottom = NuvioTheme.spacing.xxl
+                            )
+                        )
                     }
                 }
 
@@ -706,5 +721,95 @@ private fun episodeLabel(episode: LocalMediaItemEntity): String {
         stringResource(R.string.local_detail_episode_title, number)
     } else {
         episode.fileName
+    }
+}
+
+/**
+ * What is actually on disk, printed at the very bottom of the page: size, file name and folder.
+ *
+ * Deliberately not focusable — the D-pad should run straight from the last episode (or the hero,
+ * for a movie) without stopping on read-only text. Series report a total size and an episode
+ * count instead of a single file name, because each episode is its own file.
+ */
+@Composable
+private fun LocalFileInfoFooter(
+    primaryItem: LocalMediaItemEntity,
+    episodes: List<LocalMediaItemEntity>,
+    sourceName: String?,
+    modifier: Modifier = Modifier
+) {
+    val colors = NuvioTheme.colors
+    val unknown = stringResource(R.string.local_detail_file_info_unknown)
+    val nameLabel = stringResource(R.string.local_detail_file_info_name)
+    val sizeLabel = stringResource(R.string.local_detail_file_info_size)
+    val locationLabel = stringResource(R.string.local_detail_file_info_location)
+    val episodesLabel = stringResource(R.string.local_detail_episodes)
+    val isSeries = episodes.isNotEmpty()
+
+    val location = LocalMediaFileDetails.folder(
+        fileUri = primaryItem.fileUri,
+        primaryVolumeLabel = stringResource(R.string.local_storage_primary_volume)
+    ) ?: sourceName?.takeIf { it.isNotBlank() }
+        ?: unknown
+
+    val totalBytes = if (isSeries) episodes.sumOf { it.fileSizeBytes } else primaryItem.fileSizeBytes
+    val formattedSize = LocalMediaFileDetails.formatSize(
+        bytes = totalBytes,
+        gbTemplate = stringResource(R.string.unit_size_gb),
+        mbTemplate = stringResource(R.string.unit_size_mb)
+    )
+    val totalSizeText = formattedSize?.let {
+        stringResource(R.string.local_detail_file_info_total_size, it)
+    }
+    val episodeCountText = stringResource(
+        R.string.local_detail_file_info_episode_count,
+        episodes.size
+    )
+
+    // Built outside the layout so no string lookups happen inside a non-composable lambda.
+    val rows = buildList {
+        if (isSeries) {
+            add(episodesLabel to episodeCountText)
+        } else {
+            val name = primaryItem.fileName.takeIf { it.isNotBlank() } ?: unknown
+            add(nameLabel to LocalMediaFileDetails.shortenFileName(name))
+        }
+        // A missing size stays on screen as "unknown" rather than silently vanishing.
+        add(sizeLabel to ((if (isSeries) totalSizeText else formattedSize) ?: unknown))
+        add(locationLabel to location)
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(NuvioTheme.spacing.hairline)
+                .background(colors.BorderMuted)
+        )
+        Spacer(modifier = Modifier.height(NuvioTheme.spacing.md))
+        rows.forEach { (label, value) ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = NuvioTheme.spacing.xxs),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.TextTertiary,
+                    maxLines = 1,
+                    modifier = Modifier.width(72.dp)
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
     }
 }
