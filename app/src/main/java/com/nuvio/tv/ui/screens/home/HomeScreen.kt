@@ -1,4 +1,4 @@
-package com.nuvio.tv.ui.screens.home
+﻿package com.nuvio.tv.ui.screens.home
 
 import com.nuvio.tv.ui.theme.NuvioTheme
 
@@ -951,7 +951,7 @@ private fun HomeEmptyActionState(
             Image(
                 painter = painterResource(R.drawable.app_logo_mark),
                 contentDescription = null,
-                modifier = Modifier.size(104.dp)
+                modifier = Modifier.size(104.dp),
             )
             Text(
                 text = title,

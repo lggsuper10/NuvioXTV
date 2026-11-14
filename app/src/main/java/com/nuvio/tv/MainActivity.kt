@@ -66,6 +66,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -237,6 +238,14 @@ val LocalTopNavInset = androidx.compose.runtime.staticCompositionLocalOf { 0.dp 
  * stealing focus (for example into a text field) while the user is still moving across tabs.
  */
 val LocalTopNavHasFocus = androidx.compose.runtime.compositionLocalOf { false }
+
+/**
+ * Focus requester of the bar tab that matches the destination on screen. A screen that keeps Up
+ * for itself (a text field swallows the arrow keys) uses this to hand focus back to the bar the
+ * same way the root key handler does, instead of leaving the press dead.
+ */
+val LocalTopNavTabFocusRequester =
+    androidx.compose.runtime.compositionLocalOf<FocusRequester?> { null }
 
 data class SplashBackground(
     val profileColorHex: String? = null,
@@ -1937,6 +1946,15 @@ private fun ModernSidebarScaffold(
     // destination gaining focus as a tab switch, so without this the geometric nearest tab would
     // win and the screen would change under the user.
     var upFromContentPending by remember { mutableStateOf(false) }
+    // Bumped whenever focus has to be put back on this destination's own bar tab after the
+    // focus system picked a different one. Done through a counter because the correction cannot
+    // be requested from inside the focus change it is correcting.
+    var barTabRedirectId by remember { mutableIntStateOf(0) }
+    // Set by a Left/Right press on the bar. Only that kind of focus move activates a tab; focus
+    // arriving from anywhere else (Back, the Up redirect, a screen restoring it) must not switch
+    // the destination under the user.
+    var barKeyMovePending by remember { mutableStateOf(false) }
+    val latestCurrentTabRequester by rememberUpdatedState(currentTabFocusRequester)
     var isFloatingPillIconOnly by remember { mutableStateOf(false) }
     var pillExpandRequestCount by remember { mutableIntStateOf(0) }
     val keepFloatingPillExpanded = false
@@ -2011,6 +2029,9 @@ private fun ModernSidebarScaffold(
             // Back from the bar leaves the destination for Home; only Home itself exits.
             onNavigate(Screen.Home.route)
             navigateToDrawerRoute(navController, currentRoute, Screen.Home.route)
+            // The bar still points at the destination that was just left; move its focus to
+            // 首页 as well so the next press starts from the screen now on.
+            barTabRedirectId += 1
         } else {
             onExitApp()
         }
@@ -2124,8 +2145,29 @@ private fun ModernSidebarScaffold(
     // took focus, the flag must not stay armed for a later focus change.
     LaunchedEffect(upFromContentPending) {
         if (!upFromContentPending) return@LaunchedEffect
-        withFrameNanos { }
+        repeat(2) { withFrameNanos { } }
         upFromContentPending = false
+    }
+
+    // Leaves the content for the tab of the destination on screen. Up searches upwards and takes
+    // whichever item is nearest, which on a tall page is 首页 rather than the tab the user came
+    // from. Requesting that tab from inside the focus change is dropped, so it is re-issued once
+    // the change has settled; two frames also cover a navigation that is still being applied.
+    LaunchedEffect(barTabRedirectId) {
+        if (barTabRedirectId == 0) return@LaunchedEffect
+        repeat(2) { withFrameNanos { } }
+        // Only when the bar is the one holding focus; if the destination took it back in the
+        // meantime, pulling it out again would fight the user's next move.
+        if (!topNavHasFocus) return@LaunchedEffect
+        runCatching { latestCurrentTabRequester?.requestFocus() }
+    }
+
+    // A Left/Right press either moves focus on the bar in the same event or not at all — the flag
+    // only has to survive until the focus change it was armed for has been delivered.
+    LaunchedEffect(barKeyMovePending) {
+        if (!barKeyMovePending) return@LaunchedEffect
+        withFrameNanos { }
+        barKeyMovePending = false
     }
 
     LaunchedEffect(isSidebarExpanded, pendingSidebarFocusRequest, showSidebar, selectedDrawerRoute) {
@@ -2231,10 +2273,18 @@ private fun ModernSidebarScaffold(
                         upFromContentPending = true
                         val moved = focusManager.moveFocus(FocusDirection.Up)
                         if (moved) {
-                            if (!topNavHasFocus) upFromContentPending = false
+                            if (!topNavHasFocus) {
+                                // The content moved focus within itself (row -> hero/input).
+                                upFromContentPending = false
+                            } else {
+                                // Focus made it to the bar, but possibly on a neighbouring
+                                // destination. Correct the tab once the change has settled.
+                                barTabRedirectId += 1
+                            }
                             return@onKeyEvent true
                         }
                         upFromContentPending = false
+                        // Nothing above the content at all: go straight to this tab.
                         runCatching { currentTabFocusRequester?.requestFocus() }
                         return@onKeyEvent true
                     }
@@ -2271,7 +2321,8 @@ private fun ModernSidebarScaffold(
                 LocalSidebarExpanded provides isSidebarExpanded,
                 LocalContentFocusRequester provides contentFocusRequester,
                 LocalTopNavInset provides if (useTopNav && showSidebar) TopNavContentInset else NuvioTheme.spacing.none,
-                LocalTopNavHasFocus provides (useTopNav && topNavHasFocus)
+                LocalTopNavHasFocus provides (useTopNav && topNavHasFocus),
+                LocalTopNavTabFocusRequester provides if (useTopNav) currentTabFocusRequester else null
             ) {
                 NuvioNavHost(
                     navController = navController,
@@ -2432,10 +2483,13 @@ private fun ModernSidebarScaffold(
                 focusedDrawerIndex = index
                 if (upFromContentPending) {
                     // Focus arrived from the content below, not from moving along the bar: stay
-                    // on the destination and land on its own tab.
+                    // on the destination. The tab is corrected by the redirect effect — asking
+                    // for it here, while the focus change is still being applied, is dropped.
                     upFromContentPending = false
-                    runCatching { currentTabFocusRequester?.requestFocus() }
-                } else {
+                } else if (barKeyMovePending) {
+                    // Only walking along the bar switches destination. Focus handed over by Back,
+                    // by an Up redirect or by a screen restoring it must not change screens.
+                    barKeyMovePending = false
                     // The top bar behaves like a tab strip: moving focus onto a destination is the
                     // activation, no extra OK press needed.
                     val focusedRoute = drawerItems.getOrNull(index)?.route
@@ -2472,9 +2526,13 @@ private fun ModernSidebarScaffold(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .onPreviewKeyEvent { event ->
-                    if (event.type != KeyEventType.KeyDown || event.key != Key.DirectionDown) {
+                    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                    if (event.key == Key.DirectionLeft || event.key == Key.DirectionRight) {
+                        // Walking along the bar is what activates a tab; see onDrawerItemFocused.
+                        barKeyMovePending = true
                         return@onPreviewKeyEvent false
                     }
+                    if (event.key != Key.DirectionDown) return@onPreviewKeyEvent false
                     // Entering the destination is handled by the effect below, not by the
                     // geometric focus search: the bar floats over the content, and searching
                     // from it either finds nothing (Library) or picks another bar item (Settings).

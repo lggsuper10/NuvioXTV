@@ -1,4 +1,4 @@
-package com.nuvio.tv.ui.screens.detail
+﻿package com.nuvio.tv.ui.screens.detail
 
 import android.content.Context
 import android.view.KeyEvent as AndroidKeyEvent
@@ -315,7 +315,6 @@ internal fun EpisodeOptionsOverlay(
                         .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen },
                     contentScale = ContentScale.Crop,
                     alignment = Alignment.Center,
-                    filterQuality = FilterQuality.High
                 )
             }
             if (!isNoneStyle) {

@@ -1,8 +1,9 @@
-package com.nuvio.tv
+﻿package com.nuvio.tv
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -48,15 +50,14 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.Icon
+import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.nuvio.tv.ui.components.AutoResizeText
-import com.nuvio.tv.ui.components.BrandWordmark
 import com.nuvio.tv.ui.components.ProfileAvatarCircle
 import com.nuvio.tv.ui.theme.NuvioComponents
 import com.nuvio.tv.ui.theme.NuvioMotion
 import com.nuvio.tv.ui.theme.NuvioStrokes
 import com.nuvio.tv.ui.theme.NuvioTheme
-import com.nuvio.tv.ui.theme.brandWordmarkResourceOnLight
 import com.nuvio.tv.ui.util.contentTextDirection
 import com.nuvio.tv.ui.util.rememberRawSvgPainter
 import dev.chrisbanes.haze.HazeState
@@ -142,7 +143,6 @@ internal fun ModernSidebarBlurPanel(
     }
     val panelBackgroundBrush = rememberNavPanelBackgroundBrush(blurEnabled)
     val panelBorderColor = rememberNavPanelBorderColor(blurEnabled)
-    val isLight = NuvioTheme.colors.isLight
 
     Column(
         modifier = Modifier
@@ -167,11 +167,36 @@ internal fun ModernSidebarBlurPanel(
             )
             .padding(horizontal = NuvioTheme.spacing.md, vertical = NuvioTheme.spacing.lg - NuvioTheme.spacing.xxs)
     ) {
+        // 顶部品牌: Logo + 应用名(跟随系统语言: 中文=非看, 英文=Fplayer)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(y = NuvioTheme.spacing.md),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(0.92f),
+                horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.app_logo_mark),
+                    contentDescription = stringResource(R.string.app_name),
+                    modifier = Modifier.size(40.dp),
+                                    )
+                Text(
+                    text = stringResource(R.string.app_name),
+                    color = NuvioTheme.colors.TextPrimary,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    maxLines = 1
+                )
+            }
+        }
+
         if (showProfileSelector && activeProfileName.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(NuvioTheme.spacing.md))
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .offset(y = NuvioTheme.spacing.md),
+                modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 SidebarProfileItem(
@@ -185,26 +210,6 @@ internal fun ModernSidebarBlurPanel(
                     },
                     onClick = onSwitchProfile,
                     modifier = Modifier.fillMaxWidth(0.92f)
-                )
-            }
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .offset(y = NuvioTheme.spacing.md),
-                contentAlignment = Alignment.Center
-            ) {
-                BrandWordmark(
-                    contentDescription = stringResource(R.string.app_name),
-                    drawableOverride = if (isLight) {
-                        NuvioTheme.currentTheme.brandWordmarkResourceOnLight
-                    } else {
-                        null
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth(0.72f)
-                        .height(36.dp),
-                    alpha = sidebarLabelAlpha
                 )
             }
         }

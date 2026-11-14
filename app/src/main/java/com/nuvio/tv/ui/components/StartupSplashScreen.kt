@@ -1,12 +1,9 @@
-package com.nuvio.tv.ui.components
+﻿package com.nuvio.tv.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -18,6 +15,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -25,7 +23,6 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.nuvio.tv.R
 import com.nuvio.tv.ui.theme.NuvioPrimitives
-import com.nuvio.tv.ui.theme.NuvioTheme
 
 @Composable
 fun StartupSplashScreen(
@@ -64,7 +61,7 @@ fun StartupSplashScreen(
                 contentScale = ContentScale.Crop
             )
         } else if (!skipGradient) {
-            val baseBg = Color(0xFF121212)
+            val baseBg = Color(0xFF071228)
             val baseBgElevated = NuvioPrimitives.neutral875
             val gradientTop = lerp(baseBgElevated, avatarColor, 0.3f)
             val gradientMid = lerp(baseBg, avatarColor, 0.14f)
@@ -96,18 +93,15 @@ fun StartupSplashScreen(
             )
         }
 
-        Column(
+        Box(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            contentAlignment = Alignment.Center
         ) {
-            BrandWordmark(
-                modifier = Modifier.height(48.dp),
+            Image(
+                painter = painterResource(R.drawable.app_logo_mark),
                 contentDescription = stringResource(R.string.cd_nuvio_logo),
-                drawableOverride = brandWordmarkRes
+                modifier = Modifier.size(180.dp),
             )
-            Spacer(modifier = Modifier.height(NuvioTheme.spacing.xxl))
-            LoadingIndicator(modifier = Modifier.size(NuvioTheme.spacing.xxxl))
         }
     }
 }

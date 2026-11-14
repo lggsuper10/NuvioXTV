@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalTvMaterial3Api::class)
+﻿@file:OptIn(ExperimentalTvMaterial3Api::class)
 
 package com.nuvio.tv.ui.screens.settings
 
@@ -189,7 +189,7 @@ private fun AppIconOptionCard(
                     modifier = Modifier
                         .size(34.dp)
                         .clip(RoundedCornerShape(7.dp)),
-                    contentScale = ContentScale.Fit
+                    contentScale = ContentScale.Fit,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(

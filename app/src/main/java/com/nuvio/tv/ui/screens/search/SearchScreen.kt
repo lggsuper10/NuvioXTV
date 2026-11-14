@@ -163,6 +163,9 @@ fun SearchScreen(
     // searching downwards from it is unreliable; every destination names the node that should
     // take focus instead.
     val contentFocusRequester = com.nuvio.tv.LocalContentFocusRequester.current
+    // The bar tab for this screen. The text field swallows Up for caret movement, so leaving
+    // for the bar has to be done from inside the field, through this requester.
+    val topNavTabFocusRequester = com.nuvio.tv.LocalTopNavTabFocusRequester.current
     var isSearchFieldFocused by remember { mutableStateOf(false) }
     // Track the whole input row, including voice and Discover.
     var inputRowHasFocus by remember { mutableStateOf(false) }
@@ -645,6 +648,7 @@ fun SearchScreen(
                     voiceFocusRequester = if (isVoiceSearchAvailable) voiceFocusRequester else null,
                     searchFocusRequester = searchFocusRequester,
                     entryFocusRequester = contentFocusRequester,
+                    topNavTabFocusRequester = topNavTabFocusRequester,
                     onSearchFieldFocusChanged = { focused -> isSearchFieldFocused = focused },
                     onQueryChanged = handleQueryChanged,
                     onSubmit = {
@@ -1191,6 +1195,7 @@ private fun SearchInputField(
     voiceFocusRequester: FocusRequester?,
     searchFocusRequester: FocusRequester,
     entryFocusRequester: FocusRequester,
+    topNavTabFocusRequester: FocusRequester? = null,
     onSearchFieldFocusChanged: (Boolean) -> Unit,
     onQueryChanged: (String) -> Unit,
     onSubmit: () -> Unit,
@@ -1359,6 +1364,31 @@ private fun SearchInputField(
                         KeyEvent.KEYCODE_NUMPAD_ENTER -> {
                             if (keyEvent.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
                                 onSubmit()
+                            }
+                            return@onPreviewKeyEvent true
+                        }
+
+                        KeyEvent.KEYCODE_BACK -> {
+                            // Same as Up: an editing field keeps Back for itself, so the root
+                            // BackHandler never runs. Return to the bar one step at a time.
+                            val topTab = topNavTabFocusRequester
+                                ?: return@onPreviewKeyEvent false
+                            if (keyEvent.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                                keyboardController?.hide()
+                                runCatching { topTab.requestFocus() }
+                            }
+                            return@onPreviewKeyEvent true
+                        }
+
+                        KeyEvent.KEYCODE_DPAD_UP -> {
+                            // A text field spends Up on the caret, so the root handler never
+                            // sees the press. Leaving for the bar has to be done from here, and
+                            // it must land on this screen's tab.
+                            val topTab = topNavTabFocusRequester
+                                ?: return@onPreviewKeyEvent false
+                            if (keyEvent.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                                keyboardController?.hide()
+                                runCatching { topTab.requestFocus() }
                             }
                             return@onPreviewKeyEvent true
                         }

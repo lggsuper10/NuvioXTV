@@ -297,6 +297,7 @@ fun ThemeSettingsContent(
                 }
             }
 
+            /*
             SettingsGroupCard(
                 modifier = Modifier.fillMaxWidth(),
                 title = stringResource(R.string.appearance_launcher_artwork),
@@ -313,6 +314,7 @@ fun ThemeSettingsContent(
                     }
                 )
             }
+            */
 
             AmbientModeSettingsCard()
 
