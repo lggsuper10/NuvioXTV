@@ -74,6 +74,76 @@ class StartupLoadingPolicyTest {
         }
     }
 
+    @Test
+    fun `home waits for layout preferences before releasing its shell`() {
+        assertFalse(
+            shouldReleaseHomeStartupGate(
+                layoutPreferencesReady = false,
+                isModernLayout = false,
+                modernPresentationReady = true,
+                hasHomeRows = true,
+                hasAnyContent = true,
+                hasError = false
+            )
+        )
+    }
+
+    @Test
+    fun `modern home releases on placeholders without waiting for catalog or continue watching data`() {
+        assertTrue(
+            shouldReleaseHomeStartupGate(
+                layoutPreferencesReady = true,
+                isModernLayout = true,
+                modernPresentationReady = true,
+                hasHomeRows = true,
+                hasAnyContent = false,
+                hasError = false
+            )
+        )
+    }
+
+    @Test
+    fun `classic and grid shells release as soon as placeholder rows exist`() {
+        assertTrue(
+            shouldReleaseHomeStartupGate(
+                layoutPreferencesReady = true,
+                isModernLayout = false,
+                modernPresentationReady = true,
+                hasHomeRows = true,
+                hasAnyContent = false,
+                hasError = false
+            )
+        )
+    }
+
+    @Test
+    fun `terminal home errors release the shell so the error can be shown`() {
+        assertTrue(
+            shouldReleaseHomeStartupGate(
+                layoutPreferencesReady = true,
+                isModernLayout = true,
+                modernPresentationReady = false,
+                hasHomeRows = false,
+                hasAnyContent = false,
+                hasError = true
+            )
+        )
+    }
+
+    @Test
+    fun `modern home still waits for its presentation shell`() {
+        assertFalse(
+            shouldReleaseHomeStartupGate(
+                layoutPreferencesReady = true,
+                isModernLayout = true,
+                modernPresentationReady = false,
+                hasHomeRows = true,
+                hasAnyContent = true,
+                hasError = false
+            )
+        )
+    }
+
     private fun show(destination: StartupDestination, complete: Boolean = false): Boolean =
         shouldShowStartupSplash(true, complete, destination)
 }

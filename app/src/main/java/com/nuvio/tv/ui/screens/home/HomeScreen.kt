@@ -69,6 +69,7 @@ import com.nuvio.tv.ui.components.ErrorState
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.components.LocalStartupLoadingState
 import com.nuvio.tv.ui.components.LocalStartupSplashEnabled
+import com.nuvio.tv.ui.components.shouldReleaseHomeStartupGate
 import com.nuvio.tv.ui.components.shouldShowHomeStartupLoader
 import com.nuvio.tv.ui.components.NuvioDialog
 import com.nuvio.tv.ui.components.NuvioDialogButton
@@ -136,7 +137,6 @@ fun HomeScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
     val modernPresentation by viewModel.modernHomePresentation.collectAsStateWithLifecycle()
-    val initialCwResolved by viewModel.initialCwResolved.collectAsStateWithLifecycle()
     val scrollToTopTrigger by viewModel.scrollToTopTrigger.collectAsStateWithLifecycle()
     val effectiveAutoplayEnabled by viewModel.effectiveAutoplayEnabled.collectAsStateWithLifecycle(
         initialValue = false
@@ -152,8 +152,6 @@ fun HomeScreen(
     var hasShownInitialHomeContent by rememberSaveable { mutableStateOf(false) }
     // Once we've shown stable home content, never go back to loading gate.
     var homeStableGateReleased by rememberSaveable { mutableStateOf(false) }
-    // Track that catalog loading has started at least once (isLoading went true→false).
-    var catalogLoadingStarted by rememberSaveable { mutableStateOf(false) }
     var posterOptionsTarget by remember { mutableStateOf<HomePosterOptionsTarget?>(null) }
     var pendingLocalDelete by remember { mutableStateOf<HomePosterOptionsTarget?>(null) }
 
@@ -241,41 +239,33 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(
-        uiState.isLoading,
-        hasCatalogContent,
-        hasCollectionContent,
-        hasHeroContent,
-        initialCwResolved,
-        modernPresentationReady
-    ) {
-        // Track that addons are known (even if isLoading flipped too fast to catch).
-        if (uiState.installedAddonsCount > 0) {
-            catalogLoadingStarted = true
-        }
-        // Wait until catalog loading has completed with content AND the CW
-        // pipeline has completed its first emission.
-        if (!homeStableGateReleased &&
-            catalogLoadingStarted &&
-            !uiState.isLoading &&
-            initialCwResolved &&
-            modernPresentationReady &&
-            // When addons are installed, require at least one catalog row.
-            (hasCatalogContent || uiState.installedAddonsCount == 0)
-        ) {
-            Log.d("HomeGate", "RELEASE: catalogs=$hasCatalogContent cwResolved=$initialCwResolved cwItems=${uiState.continueWatchingItems.size} addons=${uiState.installedAddonsCount}")
+    val startupShellReady = shouldReleaseHomeStartupGate(
+        layoutPreferencesReady = uiState.layoutPreferencesReady,
+        isModernLayout = uiState.homeLayout == HomeLayout.MODERN,
+        modernPresentationReady = modernPresentationReady,
+        hasHomeRows = uiState.homeRows.isNotEmpty(),
+        hasAnyContent = hasCatalogContent || hasCollectionContent || hasHeroContent ||
+            uiState.continueWatchingItems.isNotEmpty(),
+        hasError = uiState.error != null
+    )
+    val homeGateOpen = homeStableGateReleased || startupShellReady
+    LaunchedEffect(startupShellReady) {
+        if (startupShellReady) {
             homeStableGateReleased = true
         }
     }
 
     LaunchedEffect(Unit) {
-        // Safety timeout — if catalogs and CW haven't loaded within this
-        // window, show whatever is available.  Covers edge cases like
-        // clean cache (addons loading from remote sync) and users with
-        // no addons at all.
+        // Safety timeout for edge cases where no placeholder shell can be built,
+        // such as addons still arriving from a remote sync.
         delay(HOME_STABLE_GATE_TIMEOUT_MS)
         if (!homeStableGateReleased) {
-            Log.d("HomeGate", "RELEASE timeout: isLoading=${uiState.isLoading} cwResolved=$initialCwResolved catalogs=$hasCatalogContent cwItems=${uiState.continueWatchingItems.size}")
+            Log.d(
+                "HomeGate",
+                "RELEASE timeout: isLoading=${uiState.isLoading} " +
+                    "homeRows=${uiState.homeRows.size} catalogs=$hasCatalogContent " +
+                    "cwItems=${uiState.continueWatchingItems.size}"
+            )
             homeStableGateReleased = true
         }
     }
@@ -300,14 +290,13 @@ fun HomeScreen(
         (uiState.continueWatchingEnabled && uiState.continueWatchingItems.isNotEmpty()) ||
         uiState.heroItems.isNotEmpty() ||
         hasCollectionContent
+    val directTerminalState = uiState.error != null ||
+        (homeGateOpen && !uiState.isLoading && !hasAnyContent)
     val showStartupLoader = when {
-        !uiState.layoutPreferencesReady -> true
-        uiState.isLoading && !hasAnyContent -> true
-        uiState.error == noAddonsError && uiState.catalogRows.isEmpty() -> !homeStableGateReleased
-        uiState.error == noCatalogAddonsError && uiState.catalogRows.isEmpty() && !hasCollectionContent && !hasHeroContent -> !homeStableGateReleased
-        uiState.error != null && uiState.catalogRows.isEmpty() -> false
-        !uiState.isLoading && !hasAnyContent -> !homeStableGateReleased
-        else -> !homeStableGateReleased || !modernPresentationReady || !showHomeContentWithAnimation
+        !homeGateOpen -> true
+        directTerminalState -> false
+        !modernPresentationReady -> true
+        else -> !showHomeContentWithAnimation
     }
 
     // Reports the home screen as fully drawn once it leaves the loading state so startup timing is measurable and post-launch work can be deferred.
@@ -333,14 +322,10 @@ fun HomeScreen(
                 Unit
             }
 
-            uiState.isLoading && !hasAnyContent -> {
-                Unit
-            }
-
             uiState.localSourceCount == 0 &&
                 !hasAnyContent &&
                 !uiState.isLoading &&
-                homeStableGateReleased -> {
+                homeGateOpen -> {
                 HomeLocalMediaEmptyState(
                     onAddLocalFolder = onNavigateToLocalMedia,
                     onAddSmb = onNavigateToSmb
@@ -348,7 +333,7 @@ fun HomeScreen(
             }
 
             uiState.error == noAddonsError && uiState.catalogRows.isEmpty() -> {
-                if (!homeStableGateReleased) {
+                if (!homeGateOpen) {
                     Unit
                 } else {
                     HomeEmptyActionState(
@@ -373,7 +358,7 @@ fun HomeScreen(
             }
 
             uiState.error == noCatalogAddonsError && uiState.catalogRows.isEmpty() && !hasCollectionContent && !hasHeroContent -> {
-                if (!homeStableGateReleased) {
+                if (!homeGateOpen) {
                     Unit
                 } else {
                     HomeEmptyActionState(
@@ -399,7 +384,7 @@ fun HomeScreen(
             !uiState.isLoading && !hasAnyContent -> {
                 // Don't show "no catalogs" until the stable gate has released —
                 // addons may still be loading from remote after a cache clear.
-                if (!homeStableGateReleased) {
+                if (!homeGateOpen) {
                     Unit
                 } else {
                     Box(
@@ -416,9 +401,9 @@ fun HomeScreen(
             }
 
             else -> {
-                // On first launch, wait for stable content before revealing home.
-                // Once released, never go back to loading (homeStableGateReleased is rememberSaveable).
-                if (!homeStableGateReleased) {
+                // Once the placeholder shell is available, keep Home visible while
+                // catalogs and continue-watching data finish loading.
+                if (!homeGateOpen) {
                     Unit
                 } else if (!modernPresentationReady) {
                     Unit

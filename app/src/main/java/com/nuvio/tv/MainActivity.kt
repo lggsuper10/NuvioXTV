@@ -248,7 +248,6 @@ val LocalTopNavTabFocusRequester =
     androidx.compose.runtime.compositionLocalOf<FocusRequester?> { null }
 
 data class SplashBackground(
-    val profileColorHex: String? = null,
     val backgroundUrl: String? = null,
     val backgroundCacheKey: String? = null,
     val skipGradient: Boolean = false,
@@ -700,12 +699,8 @@ open class MainActivity : ComponentActivity() {
                         }
                         else -> null
                     }
-                    val colorHex = activeProfile?.avatarColorHex
                     // Only overwrite bg_url when we have a real value or when
                     // we know the profile has no background at all.
-                    if (splashPreferencesReady && colorHex != null) {
-                        splashPrefs.edit().putString("color_$activeProfileId", colorHex).apply()
-                    }
                     if (splashPreferencesReady && bgUrl != null) {
                         splashPrefs.edit()
                             .putString("bg_url_$activeProfileId", bgUrl)
@@ -723,7 +718,6 @@ open class MainActivity : ComponentActivity() {
                     }
                     // Fall back to cached values only on cold start (no focused override)
                     val hasFocusedOverride = focusedSplashColor != null
-                    val fallbackColor = if (colorHex == null && !hasFocusedOverride) splashPrefs.getString("color_$activeProfileId", null) else null
                     val fallbackBg = if (
                         bgUrl == null && !hasFocusedOverride && (!splashPreferencesReady || profileBgSelection != null)
                     ) splashPrefs.getString("bg_url_$activeProfileId", null) else null
@@ -737,7 +731,6 @@ open class MainActivity : ComponentActivity() {
                             ?.let { name -> AppTheme.entries.firstOrNull { it.name == name } }
                         ?: AppTheme.WHITE
                     SplashBackground(
-                        profileColorHex = if (hasFocusedOverride) focusedSplashColor else (colorHex ?: fallbackColor),
                         backgroundUrl = resolvedBgUrl,
                         backgroundCacheKey = if (hasFocusedOverride) focusedSplashCacheKey else when (profileBgSelection) {
                             is ProfileBackgroundSelection.Catalog -> profileBgCatalog
@@ -1318,11 +1311,9 @@ open class MainActivity : ComponentActivity() {
                     }
                     if (splashAlpha > 0f) {
                         com.nuvio.tv.ui.components.StartupSplashScreen(
-                            profileColorHex = splashBackground.profileColorHex,
                             profileBackgroundUrl = splashBackground.backgroundUrl,
                             backgroundCacheKey = splashBackground.backgroundCacheKey,
                             skipGradient = splashBackground.skipGradient,
-                            brandWordmarkRes = splashBackground.brandWordmarkRes,
                             modifier = Modifier.graphicsLayer { alpha = splashAlpha }
                         )
                     }

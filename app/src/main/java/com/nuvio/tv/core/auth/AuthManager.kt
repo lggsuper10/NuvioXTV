@@ -36,6 +36,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -102,6 +103,7 @@ class AuthManager @Inject constructor(
     private var cachedEffectiveUserSourceUserId: String? = null
     private var startupAuthDiagnostics: AuthDiagnosticsSession? = null
     private var startupAuthCompleted = false
+    private var startupSessionValidationJob: Job? = null
 
     init {
         observeSessionStatus()
@@ -130,15 +132,32 @@ class AuthManager @Inject constructor(
                                 cachedEffectiveUserId = null
                                 cachedEffectiveUserSourceUserId = null
                             }
-                            if (user.email.isNullOrBlank()) {
+                            if (user.email.isNullOrBlank() || !tokenPresent) {
                                 clearInvalidRemoteSession()
-                                finishStartupAuthDiagnostics("signed_out", "authenticated_session_missing_email")
-                            } else if (!validateAuthenticatedSession(force = false)) {
-                                finishStartupAuthDiagnostics("signed_out", "authenticated_session_invalid")
+                                finishStartupAuthDiagnostics(
+                                    "signed_out",
+                                    "authenticated_session_missing_email_or_token"
+                                )
                             } else {
+                                // The locally restored session is enough to unblock the UI.
+                                // Remote validation still runs and can sign the user out below.
                                 _authState.value = AuthState.FullAccount(userId = user.id, email = user.email!!)
                                 authSessionNoticeDataStore.markNuvioAuthenticated()
-                                finishStartupAuthDiagnostics("success", "authenticated_session_validated")
+                                if (startupSessionValidationJob?.isActive != true) {
+                                    startupSessionValidationJob = scope.launch {
+                                        if (!validateAuthenticatedSession(force = false)) {
+                                            finishStartupAuthDiagnostics(
+                                                "signed_out",
+                                                "authenticated_session_invalid"
+                                            )
+                                        } else {
+                                            finishStartupAuthDiagnostics(
+                                                "success",
+                                                "authenticated_session_validated"
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         } else {
                             clearInvalidRemoteSession()

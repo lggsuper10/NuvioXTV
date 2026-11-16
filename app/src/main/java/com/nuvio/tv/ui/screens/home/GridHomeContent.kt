@@ -366,6 +366,21 @@ fun GridHomeContent(
         return
     }
 
+    if (gridItems.isEmpty() &&
+        !hasHero &&
+        !hasContinueWatching &&
+        uiState.upcomingItems.isEmpty() &&
+        uiState.isLoading
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            LoadingIndicator()
+        }
+        return
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(NuvioTheme.colors.Background)) {
         val contentFocusRequester = LocalContentFocusRequester.current
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {

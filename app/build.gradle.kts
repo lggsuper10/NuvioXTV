@@ -314,7 +314,7 @@ android {
         abi {
             isEnable = !buildingAppBundle
             reset()
-            include("armeabi-v7a", "x86_64")
+            include("armeabi-v7a", "x86_64", "arm64-v8a")
             isUniversalApk = false
         }
     }

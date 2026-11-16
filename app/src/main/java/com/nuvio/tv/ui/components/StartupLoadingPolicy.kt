@@ -29,3 +29,20 @@ fun shouldShowHomeStartupLoader(
     sharedSplashEnabled: Boolean,
     startupComplete: Boolean
 ): Boolean = loading && (!sharedSplashEnabled || startupComplete)
+
+fun shouldReleaseHomeStartupGate(
+    layoutPreferencesReady: Boolean,
+    isModernLayout: Boolean,
+    modernPresentationReady: Boolean,
+    hasHomeRows: Boolean,
+    hasAnyContent: Boolean,
+    hasError: Boolean
+): Boolean {
+    if (!layoutPreferencesReady) return false
+    if (hasError) return true
+    return if (isModernLayout) {
+        modernPresentationReady
+    } else {
+        hasHomeRows || hasAnyContent
+    }
+}
