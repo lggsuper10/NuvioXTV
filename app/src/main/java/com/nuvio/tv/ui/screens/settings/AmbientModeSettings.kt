@@ -27,7 +27,7 @@ internal fun AmbientModeSettingsCard(
 
     SettingsGroupCard(
         modifier = Modifier.fillMaxWidth(),
-        title = stringResource(R.string.ambient_mode_title),
+        title = stringResource(R.string.ambient_mode_group_title),
         subtitle = stringResource(R.string.ambient_mode_subtitle)
     ) {
         SettingsToggleRow(

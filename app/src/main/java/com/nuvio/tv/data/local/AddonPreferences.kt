@@ -77,9 +77,7 @@ class AddonPreferences @Inject constructor(
 
     val addonEnabledStates: Flow<Map<String, Boolean>> = effectiveProfileIdFlow.flatMapLatest { pid ->
         factory.get(pid, FEATURE).data.map { preferences ->
-            preferences[addonEnabledStatesKey]
-                ?.let(::parseEnabledStateMap)
-                .orEmpty()
+            getCurrentEnabledStates(preferences)
         }
     }
 
@@ -105,7 +103,7 @@ class AddonPreferences @Inject constructor(
             if (current.any { canonicalizeUrl(it).equals(normalizedUrl, ignoreCase = true) }) return@edit
             preferences[orderedUrlsKey] = gson.toJson(current + normalizedUrl)
             val states = getCurrentEnabledStates(preferences).toMutableMap()
-            states[normalizedUrl] = true
+            states[normalizedUrl] = states[normalizedUrl] ?: true
             preferences[addonEnabledStatesKey] = gson.toJson(states)
             changed = true
         }
@@ -161,7 +159,7 @@ class AddonPreferences @Inject constructor(
         store().edit { preferences ->
             val states = getCurrentEnabledStates(preferences).toMutableMap()
             val normalizedUrl = canonicalizeUrl(url)
-            if ((states[normalizedUrl] ?: true) == enabled) return@edit
+            if ((states[normalizedUrl] ?: false) == enabled) return@edit
             states[normalizedUrl] = enabled
             preferences[addonEnabledStatesKey] = gson.toJson(states)
             changed = true
@@ -224,8 +222,10 @@ class AddonPreferences @Inject constructor(
     }
 
     private fun getCurrentEnabledStates(preferences: Preferences): Map<String, Boolean> {
-        val json = preferences[addonEnabledStatesKey] ?: return emptyMap()
-        return parseEnabledStateMap(json)
+        val stored = preferences[addonEnabledStatesKey]
+            ?.let(::parseEnabledStateMap)
+            .orEmpty()
+        return getDefaultEnabledStates() + stored
     }
 
     private fun parseEnabledStateMap(json: String): Map<String, Boolean> {
@@ -242,4 +242,7 @@ class AddonPreferences @Inject constructor(
         "https://v3-cinemeta.strem.io",
         "https://opensubtitles-v3.strem.io"
     )
+
+    private fun getDefaultEnabledStates(): Map<String, Boolean> =
+        getDefaultAddons().associateWith { false }
 }

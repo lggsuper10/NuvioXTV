@@ -71,11 +71,11 @@ class ThemeDataStore @Inject constructor(
 
     val settingsUiStyle: Flow<SettingsUiStyle> = profileManager.activeProfileId.flatMapLatest { pid ->
         factory.get(pid, FEATURE).data.map { prefs ->
-            val styleName = prefs[settingsUiStyleKey] ?: SettingsUiStyle.CLASSIC.name
+            val styleName = prefs[settingsUiStyleKey] ?: SettingsUiStyle.ZEN.name
             try {
                 SettingsUiStyle.valueOf(styleName)
             } catch (e: IllegalArgumentException) {
-                SettingsUiStyle.CLASSIC
+                SettingsUiStyle.ZEN
             }
         }
     }

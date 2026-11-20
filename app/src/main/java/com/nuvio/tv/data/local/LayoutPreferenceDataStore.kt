@@ -240,8 +240,8 @@ class LayoutPreferenceDataStore @Inject constructor(
     }
 
     val navBarPosition: Flow<NavBarPosition> = profileFlow { prefs ->
-        val stored = prefs[navBarPositionKey] ?: NavBarPosition.SIDE.name
-        runCatching { NavBarPosition.valueOf(stored) }.getOrDefault(NavBarPosition.SIDE)
+        val stored = prefs[navBarPositionKey] ?: NavBarPosition.TOP.name
+        runCatching { NavBarPosition.valueOf(stored) }.getOrDefault(NavBarPosition.TOP)
     }
 
     val modernLandscapePostersEnabled: Flow<Boolean> = profileFlow { prefs ->
@@ -249,7 +249,7 @@ class LayoutPreferenceDataStore @Inject constructor(
     }
 
     val modernHeroFullScreenBackdropEnabled: Flow<Boolean> = profileFlow { prefs ->
-        prefs[modernHeroFullScreenBackdropKey] ?: false
+        prefs[modernHeroFullScreenBackdropKey] ?: true
     }
 
     val heroSectionEnabled: Flow<Boolean> = profileFlow { prefs ->

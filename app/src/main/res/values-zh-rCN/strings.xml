@@ -391,6 +391,7 @@
     <string name="appearance_launcher_artwork">启动器图标</string>
     <string name="appearance_launcher_artwork_subtitle">选择 Nuvio 在电视主屏幕上的显示方式</string>
     <string name="ambient_mode_title">氛围模式</string>
+    <string name="ambient_mode_group_title">屏保</string>
     <string name="ambient_mode_subtitle">电视闲置时轮播目录中的海报</string>
     <string name="ambient_mode_enabled_subtitle">无遥控器操作一段时间后，全屏显示背景图</string>
     <string name="ambient_mode_timeout">闲置后启动</string>
@@ -398,7 +399,7 @@
     <plurals name="ambient_mode_timeout_minutes">
         <item quantity="other">%1$d 分钟</item>
     </plurals>
-    <string name="ambient_mode_catalogs">目录</string>
+    <string name="ambient_mode_catalogs">屏保目录</string>
     <string name="ambient_mode_catalogs_subtitle">最多选择 3 个目录作为海报来源</string>
     <string name="ambient_mode_catalogs_dialog_subtitle">最多选择 3 个目录</string>
     <string name="ambient_mode_catalogs_default">与焦点区块相同</string>
@@ -1220,7 +1221,7 @@
     <string name="layout_nav_bar_position_side_desc">导航浮动在侧边栏中。</string>
     <string name="layout_nav_bar_position_top">顶部</string>
     <string name="layout_nav_bar_position_top_desc">导航浮动在顶部导航栏中。</string>
-    <string name="layout_fullscreen_hero_backdrop">全屏焦点区块背景</string>
+    <string name="layout_fullscreen_hero_backdrop">海报全屏</string>
     <string name="layout_fullscreen_hero_backdrop_sub">将焦点区块背景延伸到整个屏幕。</string>
     <string name="layout_classic_focus_gradient">焦点项目渐变</string>
     <string name="layout_classic_focus_gradient_sub">将美术图颜色混合到经典首页的右侧。</string>
