@@ -82,6 +82,7 @@ import com.nuvio.tv.domain.model.FocusedPosterTrailerPlaybackTarget
 import com.nuvio.tv.domain.model.MetaPreview
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.components.ContinueWatchingOptionsDialog
+import com.nuvio.tv.ui.components.continueWatchingImageModel
 import com.nuvio.tv.LocalSidebarExpanded
 import com.nuvio.tv.LocalContentFocusRequester
 import com.nuvio.tv.ui.util.LocalRecompositionHighlighterEnabled
@@ -783,12 +784,36 @@ fun ModernHomeContent(
                         item.heroPreview.backdrop?.takeIf { it.isNotBlank() }
                     }
                     
-                    val heroBackdrop = firstNonBlank(
-                        resolvedHero?.backdrop,
-                        resolvedHero?.imageUrl,
-                        resolvedHero?.poster,
-                        activeRowFallbackBackdrop.takeIf { activeCarouselItem == null }
-                    )
+                    // Continue Watching must use the same resolver as the visible card.
+                    // resolvedHero can be overwritten by TMDB enrichment, which is why the hero
+                    // showed a different image even though the card used progress artwork.
+                    val cwPayload = activeCarouselItem?.payload as? ModernPayload.ContinueWatching
+                    val heroBackdrop = if (cwPayload != null) {
+                        val preferPosterArtwork = when (uiState.continueWatchingCardStyle) {
+                            ContinueWatchingCardStyle.POSTER, ContinueWatchingCardStyle.WIDE -> true
+                            ContinueWatchingCardStyle.CARD -> false
+                        }
+                        val effectiveEpisodeThumbnails = uiState.useEpisodeThumbnailsInCw &&
+                            uiState.continueWatchingCardStyle != ContinueWatchingCardStyle.POSTER
+                        firstNonBlank(
+                            continueWatchingImageModel(
+                                item = cwPayload.item,
+                                useEpisodeThumbnails = effectiveEpisodeThumbnails,
+                                preferPosterArtwork = preferPosterArtwork
+                            ),
+                            resolvedHero?.imageUrl,
+                            resolvedHero?.poster,
+                            resolvedHero?.backdrop,
+                            activeRowFallbackBackdrop.takeIf { activeCarouselItem == null }
+                        )
+                    } else {
+                        firstNonBlank(
+                            resolvedHero?.backdrop,
+                            resolvedHero?.imageUrl,
+                            resolvedHero?.poster,
+                            activeRowFallbackBackdrop.takeIf { activeCarouselItem == null }
+                        )
+                    }
                     
                     Triple(heroBackdrop, resolvedHero, effectiveEnrichmentActive)
                 }
@@ -963,8 +988,17 @@ fun ModernHomeContent(
                                 return@collect
                             }
                         }
+                        // Keep the last displayed backdrop only while the same item is still
+                        // active. When focus moves to another item, accept its resolved backdrop
+                        // so Continue Watching cards can correct stale progress.backdrop values.
+                        val previousTitle = existingStable?.preview?.title
+                        val incomingTitle = currentStable.preview?.title
+                        val sameActiveItem = previousTitle != null &&
+                            incomingTitle != null &&
+                            previousTitle == incomingTitle
                         val displayedBackdrop = HeroBackdropState.lastDisplayedUrl
-                        val corrected = if (!displayedBackdrop.isNullOrBlank() &&
+                        val corrected = if (sameActiveItem &&
+                            !displayedBackdrop.isNullOrBlank() &&
                             displayedBackdrop != currentStable.heroBackdrop
                         ) {
                             currentStable.copy(heroBackdrop = displayedBackdrop)

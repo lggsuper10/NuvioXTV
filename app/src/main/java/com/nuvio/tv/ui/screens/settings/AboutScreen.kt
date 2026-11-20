@@ -165,14 +165,15 @@ fun AboutSettingsContent(
                                 }
                             )
 
-                            if (AppFeaturePolicy.supportNuvioEnabled) {
-                                SettingsActionRow(
-                                    title = stringResource(R.string.support_nuvio_name),
-                                    subtitle = stringResource(R.string.about_supporters_contributors_subtitle),
-                                    trailingIcon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    onClick = onNavigateToSupportersContributors
-                                )
-                            }
+                            // "Support Nuvio" entry is intentionally hidden.
+                            // if (AppFeaturePolicy.supportNuvioEnabled) {
+                            //     SettingsActionRow(
+                            //         title = stringResource(R.string.support_nuvio_name),
+                            //         subtitle = stringResource(R.string.about_supporters_contributors_subtitle),
+                            //         trailingIcon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            //         onClick = onNavigateToSupportersContributors
+                            //     )
+                            // }
 
                             SettingsActionRow(
                                 title = stringResource(R.string.about_licenses_attributions),

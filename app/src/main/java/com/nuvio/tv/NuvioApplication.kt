@@ -117,6 +117,23 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
                 .readTimeout(5, TimeUnit.SECONDS)
                 .callTimeout(8, TimeUnit.SECONDS)
                 .addInterceptor { chain ->
+                    val request = chain.request()
+                    if (request.url.host.contains("douban", ignoreCase = true)) {
+                        chain.proceed(
+                            request.newBuilder()
+                                .header("Referer", "https://movie.douban.com/")
+                                .header(
+                                    "User-Agent",
+                                    "Mozilla/5.0 (Linux; Android 9; Android TV) AppleWebKit/537.36 " +
+                                        "(KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36"
+                                )
+                                .build()
+                        )
+                    } else {
+                        chain.proceed(request)
+                    }
+                }
+                .addInterceptor { chain ->
                     try {
                         chain.proceed(chain.request())
                     } catch (e: java.net.SocketTimeoutException) {

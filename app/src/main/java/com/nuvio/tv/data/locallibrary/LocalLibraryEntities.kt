@@ -1,5 +1,6 @@
 package com.nuvio.tv.data.locallibrary
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -75,6 +76,7 @@ data class LocalMediaItemEntity(
 @Entity(tableName = "local_artwork_cache")
 data class LocalArtworkCacheEntity(
     @PrimaryKey val fileUri: String,
+    @ColumnInfo(index = true) val cacheKey: String = "",
     val posterUri: String? = null,
     val backdropUri: String? = null,
     val sourceModifiedAt: Long = 0L,

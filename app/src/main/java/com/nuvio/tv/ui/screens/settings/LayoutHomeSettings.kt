@@ -356,7 +356,7 @@ private fun CatalogChip(
 }
 
 @Composable
-private fun NavBarPositionRow(
+internal fun NavBarPositionRow(
     selected: NavBarPosition,
     onPositionSelected: (NavBarPosition) -> Unit
 ) {

@@ -194,7 +194,16 @@ private fun LayoutSectionContent(
 ) {
     val onEvent: (LayoutSettingsEvent) -> Unit = viewModel::onEvent
     when (section) {
-        LayoutSection.ESSENTIAL_HOME -> LayoutHomeLayoutSection(uiState, onEvent)
+        LayoutSection.ESSENTIAL_HOME -> {
+            LayoutHomeLayoutSection(uiState, onEvent)
+            SettingsSectionLabel(text = stringResource(R.string.layout_group_home_navigation))
+            NavBarPositionRow(
+                selected = uiState.navBarPosition,
+                onPositionSelected = { position ->
+                    onEvent(LayoutSettingsEvent.SetNavBarPosition(position))
+                }
+            )
+        }
         LayoutSection.HOME -> {
             SettingsSectionLabel(text = stringResource(R.string.layout_group_home_layout))
             LayoutHomeLayoutSection(uiState, onEvent)

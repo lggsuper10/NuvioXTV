@@ -244,11 +244,17 @@ interface LocalArtworkDao {
     @Query("SELECT * FROM local_artwork_cache WHERE fileUri IN (:fileUris)")
     suspend fun getByFileUris(fileUris: List<String>): List<LocalArtworkCacheEntity>
 
+    @Query("SELECT * FROM local_artwork_cache WHERE cacheKey IN (:cacheKeys)")
+    suspend fun getByCacheKeys(cacheKeys: List<String>): List<LocalArtworkCacheEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entry: LocalArtworkCacheEntity)
 
     @Query("DELETE FROM local_artwork_cache WHERE fileUri = :fileUri")
     suspend fun deleteByFileUri(fileUri: String)
+
+    @Query("DELETE FROM local_artwork_cache WHERE cacheKey = :cacheKey")
+    suspend fun deleteByCacheKey(cacheKey: String)
 
     @Query("DELETE FROM local_artwork_cache WHERE fileUri IN (:fileUris)")
     suspend fun deleteByFileUris(fileUris: List<String>)

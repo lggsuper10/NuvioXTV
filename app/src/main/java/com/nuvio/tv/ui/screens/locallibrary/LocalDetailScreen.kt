@@ -44,6 +44,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -503,6 +504,8 @@ private fun ArtworkCandidateRow(
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val posterFallbackColor = NuvioTheme.colors.BackgroundCard
+            val posterFallbackPainter = remember(posterFallbackColor) { ColorPainter(posterFallbackColor) }
             AsyncImage(
                 model = candidate.posterUrl,
                 contentDescription = null,
@@ -510,7 +513,10 @@ private fun ArtworkCandidateRow(
                 modifier = Modifier
                     .width(64.dp)
                     .height(96.dp)
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(RoundedCornerShape(6.dp)),
+                placeholder = posterFallbackPainter,
+                error = posterFallbackPainter,
+                fallback = posterFallbackPainter
             )
             Spacer(modifier = Modifier.width(NuvioTheme.spacing.md))
             Column(modifier = Modifier.weight(1f)) {

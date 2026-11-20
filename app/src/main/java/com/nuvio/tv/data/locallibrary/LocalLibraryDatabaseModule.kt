@@ -97,6 +97,18 @@ object LocalLibraryDatabaseModule {
         }
     }
 
+    private val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL(
+                "ALTER TABLE local_artwork_cache ADD COLUMN cacheKey TEXT NOT NULL DEFAULT ''"
+            )
+            database.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_local_artwork_cache_cacheKey " +
+                    "ON local_artwork_cache(cacheKey)"
+            )
+        }
+    }
+
     @Provides
     @Singleton
     fun provideLocalLibraryDatabase(
@@ -113,7 +125,8 @@ object LocalLibraryDatabaseModule {
             MIGRATION_4_5,
             MIGRATION_5_6,
             MIGRATION_6_7,
-            MIGRATION_7_8
+            MIGRATION_7_8,
+            MIGRATION_8_9
         )
         .fallbackToDestructiveMigration()
         .build()

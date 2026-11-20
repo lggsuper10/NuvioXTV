@@ -142,15 +142,15 @@ class PlaybackSettingsOrganizationTest {
         }
     }
 
-    private fun expand(section: PlaybackSection) = toggle(section, R.string.layout_closed)
+    private fun expand(section: PlaybackSection) = toggle(section)
 
-    private fun collapse(section: PlaybackSection) = toggle(section, R.string.layout_open)
+    private fun collapse(section: PlaybackSection) = toggle(section)
 
-    private fun toggle(section: PlaybackSection, currentState: Int) {
+    private fun toggle(section: PlaybackSection) {
         composeRule.onNode(
             hasClickAction() and
                 hasText(context.getString(section.title)) and
-                hasText(context.getString(currentState)) and
+                hasTestTag(SettingsTestTags.COLLAPSIBLE_HEADER) and
                 hasAnyAncestor(hasTestTag(PlaybackSettingsTestTags.section(section)))
         ).performSemanticsAction(SemanticsActions.OnClick)
         composeRule.waitForIdle()

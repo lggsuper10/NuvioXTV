@@ -14,7 +14,6 @@ import com.nuvio.tv.data.locallibrary.LocalArtworkDao
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileOutputStream
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -69,14 +68,25 @@ class LocalArtworkProvider @Inject constructor(
     suspend fun cachedArtwork(fileUris: List<String>): Map<String, LocalArtwork> {
         if (fileUris.isEmpty()) return emptyMap()
         val distinctUris = fileUris.distinct()
-        val entries = withContext(Dispatchers.IO) {
-            distinctUris.chunked(SQLITE_BIND_CHUNK).flatMap { chunk ->
-                artworkDao.getByFileUris(chunk)
-            }
+        val keysByUri = distinctUris.associateWith(ArtworkKeys::forFileUri)
+        val entriesByKey = withContext(Dispatchers.IO) {
+            keysByUri.values.distinct().chunked(SQLITE_BIND_CHUNK).flatMap { chunk ->
+                artworkDao.getByCacheKeys(chunk)
+            }.associateBy { it.cacheKey }
         }
         return buildMap {
-            entries.forEach { entry ->
-                resolvedArtwork(entry)?.let { put(entry.fileUri, it) }
+            keysByUri.forEach { (fileUri, cacheKey) ->
+                val entry = entriesByKey[cacheKey] ?: run {
+                    val legacy = artworkDao.getByFileUri(fileUri)
+                    if (legacy != null && legacy.cacheKey.isBlank()) {
+                        val upgraded = legacy.copy(cacheKey = cacheKey)
+                        artworkDao.upsert(upgraded)
+                        upgraded
+                    } else {
+                        legacy?.takeIf { it.cacheKey == cacheKey }
+                    }
+                }
+                entry?.let(::resolvedArtwork)?.let { put(fileUri, it) }
             }
         }
     }
@@ -142,6 +152,7 @@ class LocalArtworkProvider @Inject constructor(
                 posterFile(fileUri),
                 force = true
             ) ?: return@withLock null
+            writeSidecarPoster(fileUri, poster)
             val backdrop = candidate.backdropUrl
                 ?.takeIf { it != candidate.posterUrl }
                 ?.let { url ->
@@ -178,6 +189,7 @@ class LocalArtworkProvider @Inject constructor(
     ): LocalArtwork? = withContext(Dispatchers.IO) {
         if (fileUri.isBlank()) return@withContext null
         TmdbRuntimeConfig.markApiAvailable()
+        artworkDao.deleteByCacheKey(ArtworkKeys.forFileUri(fileUri))
         artworkDao.deleteByFileUri(fileUri)
         resolveArtwork(
             fileUri = fileUri,
@@ -199,7 +211,7 @@ class LocalArtworkProvider @Inject constructor(
         val modifiedAt = sourceModifiedAt(uri)
         val lock = fileMutexes.getOrPut(fileUri) { Mutex() }
         lock.withLock {
-            val cached = if (ignoreCache) null else artworkDao.getByFileUri(fileUri)
+            val cached = if (ignoreCache) null else loadCacheEntry(fileUri, ArtworkKeys.forFileUri(fileUri))
             val sameSource = cached == null || cached.sourceModifiedAt == modifiedAt
             if (cached?.status == STATUS_RESOLVED &&
                 sameSource &&
@@ -233,6 +245,7 @@ class LocalArtworkProvider @Inject constructor(
                 val poster = posterUrl?.let { url ->
                     cacheRemoteImage(url, posterFile(fileUri)) ?: url
                 }
+                writeSidecarPoster(fileUri, poster)
                 val backdrop = when {
                     images.backdropUrl == null -> poster
                     images.backdropUrl == posterUrl -> poster
@@ -279,6 +292,7 @@ class LocalArtworkProvider @Inject constructor(
             if (!doubanPosterUrl.isNullOrBlank()) {
                 val poster = cacheRemoteImage(doubanPosterUrl, posterFile(fileUri))
                     ?: doubanPosterUrl
+                writeSidecarPoster(fileUri, poster)
                 val artwork = LocalArtwork(
                     posterUri = poster,
                     backdropUri = poster,
@@ -370,8 +384,10 @@ class LocalArtworkProvider @Inject constructor(
         fileUri: String,
         modifiedAt: Long
     ): LocalArtwork? {
-        val poster = posterFile(fileUri)
-        if (!isUsableFile(poster)) return null
+        val poster = posterFile(fileUri).takeIf(::isUsableFile)
+            ?: File(posterDirectory, "${ArtworkKeys.legacyForFileUri(fileUri)}.jpg")
+                .takeIf(::isUsableFile)
+            ?: return null
         if (modifiedAt > 0L && poster.lastModified() < modifiedAt) return null
         val artwork = LocalArtwork(
             posterUri = Uri.fromFile(poster).toString(),
@@ -391,6 +407,7 @@ class LocalArtworkProvider @Inject constructor(
         artworkDao.upsert(
             LocalArtworkCacheEntity(
                 fileUri = fileUri,
+                cacheKey = ArtworkKeys.forFileUri(fileUri),
                 posterUri = artwork.posterUri,
                 backdropUri = artwork.backdropUri,
                 sourceModifiedAt = modifiedAt,
@@ -400,6 +417,23 @@ class LocalArtworkProvider @Inject constructor(
                 resolvedAt = System.currentTimeMillis()
             )
         )
+    }
+
+    private suspend fun loadCacheEntry(
+        fileUri: String,
+        cacheKey: String
+    ): LocalArtworkCacheEntity? {
+        artworkDao.getByCacheKeys(listOf(cacheKey)).firstOrNull()?.let { return it }
+        val legacy = artworkDao.getByFileUri(fileUri) ?: return null
+        return when {
+            legacy.cacheKey.isBlank() -> {
+                val upgraded = legacy.copy(cacheKey = cacheKey)
+                artworkDao.upsert(upgraded)
+                upgraded
+            }
+            legacy.cacheKey == cacheKey -> legacy
+            else -> null
+        }
     }
 
     private fun resolvedArtwork(entry: LocalArtworkCacheEntity): LocalArtwork? {
@@ -429,12 +463,12 @@ class LocalArtworkProvider @Inject constructor(
             ?: return null
         val baseName = video.nameWithoutExtension
         val candidates = listOf(
+            "$baseName-poster.jpg",
+            "$baseName-poster.png",
             "$baseName.jpg",
             "$baseName.jpeg",
             "$baseName.png",
             "$baseName.webp",
-            "$baseName-poster.jpg",
-            "$baseName-poster.png",
             "poster.jpg",
             "poster.png",
             "folder.jpg",
@@ -451,12 +485,12 @@ class LocalArtworkProvider @Inject constructor(
 
     private fun posterFile(fileUri: String): File = File(
         posterDirectory,
-        "${UUID.nameUUIDFromBytes(fileUri.toByteArray())}.jpg"
+        "${ArtworkKeys.forFileUri(fileUri)}.jpg"
     )
 
     private fun backdropFile(fileUri: String): File = File(
         backdropDirectory,
-        "${UUID.nameUUIDFromBytes(fileUri.toByteArray())}.jpg"
+        "${ArtworkKeys.forFileUri(fileUri)}.jpg"
     )
 
     private suspend fun cacheRemoteImage(
@@ -514,6 +548,34 @@ class LocalArtworkProvider @Inject constructor(
                 null
             }
         }
+
+    private fun writeSidecarPoster(fileUri: String, cachedPosterUri: String?) {
+        if (cachedPosterUri.isNullOrBlank()) return
+        val video = runCatching { Uri.parse(fileUri) }.getOrNull()
+            ?.takeIf { it.scheme == ContentResolver.SCHEME_FILE }
+            ?.path?.let(::File)?.takeIf { it.isFile } ?: return
+        val poster = runCatching { Uri.parse(cachedPosterUri) }.getOrNull()
+            ?.takeIf { it.scheme == ContentResolver.SCHEME_FILE }
+            ?.path?.let(::File)?.takeIf(::isUsableFile) ?: return
+        val directory = video.parentFile ?: return
+        val target = File(directory, "${video.nameWithoutExtension}-poster.jpg")
+        if (target.exists() && target.length() > 0L) return
+        val temporary = File(directory, "${target.name}.tmp")
+        try {
+            poster.copyTo(temporary, overwrite = true)
+            if (target.exists() && target.length() > 0L) {
+                temporary.delete()
+                return
+            }
+            if (!temporary.renameTo(target)) {
+                temporary.copyTo(target, overwrite = true)
+                temporary.delete()
+            }
+        } catch (error: Exception) {
+            temporary.delete()
+            Log.w(TAG, "Could not write sidecar poster ${target.absolutePath}: ${error.message}")
+        }
+    }
 
     private fun highResolutionBackdropUrl(url: String): String =
         url

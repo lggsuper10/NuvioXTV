@@ -26,7 +26,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Border
@@ -36,7 +36,6 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.nuvio.tv.R
 import com.nuvio.tv.ui.theme.NuvioTheme
 
 internal val SettingsRowContentInset = 18.dp
@@ -63,11 +62,12 @@ internal fun SettingsCollapsibleSection(
         SettingsActionRow(
             title = title,
             subtitle = description,
-            value = summary ?: stringResource(if (expanded) R.string.layout_open else R.string.layout_closed),
+            value = summary,
             onClick = onToggle,
             leadingIcon = icon,
             trailingIcon = if (expanded) Icons.Default.ExpandMore else Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            modifier = if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier,
+            modifier = (if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+                .testTag(SettingsTestTags.COLLAPSIBLE_HEADER),
             onFocused = onFocused
         )
 

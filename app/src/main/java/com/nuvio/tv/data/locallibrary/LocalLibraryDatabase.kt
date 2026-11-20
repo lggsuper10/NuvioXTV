@@ -12,7 +12,7 @@ import androidx.room.TypeConverters
         LocalArtworkCacheEntity::class,
         LocalSearchIndexEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(LocalMediaKindConverter::class, LocalSourceTypeConverter::class)

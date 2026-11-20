@@ -188,6 +188,7 @@ internal fun settingsRowBorder(
 
 internal object SettingsTestTags {
     const val ROW_ICON = "settings_row_icon"
+    const val COLLAPSIBLE_HEADER = "settings_collapsible_header"
 }
 
 @Composable

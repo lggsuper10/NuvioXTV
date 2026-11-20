@@ -65,6 +65,7 @@ import com.nuvio.tv.ui.components.ContinueWatchingSection
 import com.nuvio.tv.ui.components.LocalLandscapePosterMode
 import com.nuvio.tv.core.poster.withCustomPosterUrls
 import com.nuvio.tv.domain.model.ContinueWatchingCardStyle
+import com.nuvio.tv.ui.components.continueWatchingImageModel
 import com.nuvio.tv.ui.components.HeroCarousel
 import com.nuvio.tv.ui.components.HeroCarouselBackdrop
 import com.nuvio.tv.ui.components.LoadingIndicator
@@ -631,16 +632,17 @@ fun ClassicHomeContent(
                         cwPendingScrollToStart.intValue = 0
                     }
                 }
+                val continueWatchingItemsWithArtwork = remember(
+                    uiState.continueWatchingItems,
+                    uiState.customPosterUrlPattern,
+                    uiState.customPosterEnabledScreens,
+                ) {
+                    uiState.continueWatchingItems.withCustomPosterUrls(
+                        com.nuvio.tv.core.poster.patternForScreen(uiState.customPosterUrlPattern, com.nuvio.tv.core.poster.CustomPosterScreen.CONTINUE_WATCHING, uiState.customPosterEnabledScreens)
+                    )
+                }
                 ContinueWatchingSection(
-                    items = remember(
-                        uiState.continueWatchingItems,
-                        uiState.customPosterUrlPattern,
-                        uiState.customPosterEnabledScreens,
-                    ) {
-                        uiState.continueWatchingItems.withCustomPosterUrls(
-                            com.nuvio.tv.core.poster.patternForScreen(uiState.customPosterUrlPattern, com.nuvio.tv.core.poster.CustomPosterScreen.CONTINUE_WATCHING, uiState.customPosterEnabledScreens)
-                        )
-                    },
+                    items = continueWatchingItemsWithArtwork,
                     onItemClick = { item ->
                         onContinueWatchingClick(item)
                     },
@@ -689,8 +691,12 @@ fun ClassicHomeContent(
                         cwFocusedIndex.intValue = itemIndex
                         onFocusedRowKeyChanged(null)
                         if (uiState.classicFocusGradientEnabled) {
-                            focusedArtwork = uiState.continueWatchingItems.getOrNull(itemIndex)
-                                ?.toClassicFocusArtwork(uiState.focusedPosterBackdropExpandEnabled)
+                            focusedArtwork = continueWatchingItemsWithArtwork.getOrNull(itemIndex)
+                                ?.toClassicFocusArtwork(
+                                    useBackdrop = uiState.focusedPosterBackdropExpandEnabled,
+                                    useEpisodeThumbnails = uiState.useEpisodeThumbnailsInCw,
+                                    cardStyle = uiState.continueWatchingCardStyle
+                                )
                         }
                     },
                     blurUnwatchedEpisodes = uiState.blurUnwatchedEpisodes,
@@ -717,16 +723,17 @@ fun ClassicHomeContent(
                         upcomingPendingScrollToStart.intValue = 0
                     }
                 }
+                val upcomingItemsWithArtwork = remember(
+                    uiState.upcomingItems,
+                    uiState.customPosterUrlPattern,
+                    uiState.customPosterEnabledScreens,
+                ) {
+                    uiState.upcomingItems.withCustomPosterUrls(
+                        com.nuvio.tv.core.poster.patternForScreen(uiState.customPosterUrlPattern, com.nuvio.tv.core.poster.CustomPosterScreen.CONTINUE_WATCHING, uiState.customPosterEnabledScreens)
+                    )
+                }
                 ContinueWatchingSection(
-                    items = remember(
-                        uiState.upcomingItems,
-                        uiState.customPosterUrlPattern,
-                        uiState.customPosterEnabledScreens,
-                    ) {
-                        uiState.upcomingItems.withCustomPosterUrls(
-                            com.nuvio.tv.core.poster.patternForScreen(uiState.customPosterUrlPattern, com.nuvio.tv.core.poster.CustomPosterScreen.CONTINUE_WATCHING, uiState.customPosterEnabledScreens)
-                        )
-                    },
+                    items = upcomingItemsWithArtwork,
                     title = stringResource(R.string.upcoming_section_title),
                     onItemClick = { item ->
                         onContinueWatchingClick(item)
@@ -776,8 +783,12 @@ fun ClassicHomeContent(
                         cwFocusedIndex.intValue = itemIndex
                         onFocusedRowKeyChanged(null)
                         if (uiState.classicFocusGradientEnabled) {
-                            focusedArtwork = uiState.upcomingItems.getOrNull(itemIndex)
-                                ?.toClassicFocusArtwork(uiState.focusedPosterBackdropExpandEnabled)
+                            focusedArtwork = upcomingItemsWithArtwork.getOrNull(itemIndex)
+                                ?.toClassicFocusArtwork(
+                                    useBackdrop = uiState.focusedPosterBackdropExpandEnabled,
+                                    useEpisodeThumbnails = uiState.useEpisodeThumbnailsInCw,
+                                    cardStyle = uiState.continueWatchingCardStyle
+                                )
                         }
                     },
                     cardWidth = classicContinueWatchingCardWidth,
@@ -951,25 +962,42 @@ internal fun MetaPreview.toClassicFocusArtwork(useBackdrop: Boolean, useLandscap
     )
 }
 
-private fun ContinueWatchingItem.toClassicFocusArtwork(useBackdrop: Boolean): ClassicFocusArtwork {
-    return when (this) {
-        is ContinueWatchingItem.InProgress -> ClassicFocusArtwork(
-            imageUrl = if (useBackdrop) {
-                episodeThumbnail ?: progress.backdrop ?: progress.poster
-            } else {
-                progress.poster ?: episodeThumbnail ?: progress.backdrop
-            },
-            seed = "${progress.contentId}|${progress.name}|${progress.contentType}"
-        )
-        is ContinueWatchingItem.NextUp -> ClassicFocusArtwork(
-            imageUrl = if (useBackdrop) {
-                info.backdrop ?: info.thumbnail ?: info.poster
-            } else {
-                info.poster ?: info.thumbnail ?: info.backdrop
-            },
-            seed = "${info.contentId}|${info.name}|${info.contentType}"
-        )
+private fun ContinueWatchingItem.toClassicFocusArtwork(
+    useBackdrop: Boolean,
+    useEpisodeThumbnails: Boolean,
+    cardStyle: ContinueWatchingCardStyle
+): ClassicFocusArtwork {
+    val preferPosterArtwork = cardStyle == ContinueWatchingCardStyle.POSTER ||
+        cardStyle == ContinueWatchingCardStyle.WIDE
+    // POSTER cards ignore episode thumbnails, matching ContinueWatchingSection.
+    val effectiveUseEpisodeThumbnails = useEpisodeThumbnails &&
+        cardStyle != ContinueWatchingCardStyle.POSTER
+    val cardImageUrl = continueWatchingImageModel(
+        item = this,
+        useEpisodeThumbnails = effectiveUseEpisodeThumbnails,
+        preferPosterArtwork = preferPosterArtwork
+    )
+    val fallbackImageUrl = when (this) {
+        is ContinueWatchingItem.InProgress -> if (useBackdrop) {
+            episodeThumbnail ?: progress.backdrop ?: progress.poster
+        } else {
+            progress.poster ?: episodeThumbnail ?: progress.backdrop
+        }
+        is ContinueWatchingItem.NextUp -> if (useBackdrop) {
+            info.backdrop ?: info.thumbnail ?: info.poster
+        } else {
+            info.poster ?: info.thumbnail ?: info.backdrop
+        }
     }
+    return ClassicFocusArtwork(
+        imageUrl = cardImageUrl ?: fallbackImageUrl,
+        seed = when (this) {
+            is ContinueWatchingItem.InProgress ->
+                "${progress.contentId}|${progress.name}|${progress.contentType}"
+            is ContinueWatchingItem.NextUp ->
+                "${info.contentId}|${info.name}|${info.contentType}"
+        }
+    )
 }
 
 private fun CollectionFolder.toClassicFocusArtwork(useBackdrop: Boolean): ClassicFocusArtwork {
