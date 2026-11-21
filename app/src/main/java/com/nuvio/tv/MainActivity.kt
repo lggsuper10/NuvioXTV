@@ -181,7 +181,7 @@ import com.nuvio.tv.domain.repository.AddonRepository
 import com.nuvio.tv.ui.components.NuvioScrollDefaults
 import com.nuvio.tv.ui.components.NuvioDialog
 import com.nuvio.tv.ui.components.NuvioDialogConfirmationButtons
-import com.nuvio.tv.ui.components.BrandWordmark
+import com.nuvio.tv.ui.components.BrandLockup
 import com.nuvio.tv.ui.components.LocalCardDepthStyle
 import com.nuvio.tv.ui.components.LocalLandscapePosterMode
 import com.nuvio.tv.ui.components.LocalAlwaysBackdropWithLogo
@@ -1657,11 +1657,9 @@ private fun LegacySidebarScaffold(
                                     }
                                 }
                             } else {
-                                BrandWordmark(
-                                    contentDescription = stringResource(R.string.app_name),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(42.dp)
+                                BrandLockup(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    badgeSize = 36.dp
                                 )
                             }
                         }
@@ -1790,7 +1788,7 @@ private fun LegacySidebarButton(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val itemShape = NuvioTheme.shapes.navItem
+    val itemShape = RoundedCornerShape(10.dp)
     val backgroundColor by animateColorAsState(
         targetValue = when {
             isFocused -> NuvioTheme.colors.FocusBackground
