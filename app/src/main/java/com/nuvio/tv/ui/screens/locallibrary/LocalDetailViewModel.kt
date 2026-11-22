@@ -1,5 +1,6 @@
 package com.nuvio.tv.ui.screens.locallibrary
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +17,9 @@ import com.nuvio.tv.data.locallibrary.LocalCatalog
 import com.nuvio.tv.data.locallibrary.LocalLibraryRepository
 import com.nuvio.tv.data.locallibrary.LocalMediaItemEntity
 import com.nuvio.tv.domain.model.ContentType
+import com.nuvio.tv.domain.model.LibraryEntryInput
+import com.nuvio.tv.domain.model.PosterShape
+import com.nuvio.tv.domain.repository.LibraryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Locale
 import javax.inject.Inject
@@ -25,6 +29,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -44,7 +49,9 @@ data class LocalDetailUiState(
     val artworkResult: LocalArtworkActionResult? = null,
     val posterSearchResults: List<LocalArtworkCandidate> = emptyList(),
     val isPosterSearching: Boolean = false,
-    val posterSearchCompleted: Boolean = false
+    val posterSearchCompleted: Boolean = false,
+    val isInLibrary: Boolean = false,
+    val libraryPending: Boolean = false
 ) {
     val isSeries: Boolean get() = episodes.isNotEmpty()
 }
@@ -65,8 +72,13 @@ class LocalDetailViewModel @Inject constructor(
     private val doubanService: DoubanService,
     private val tmdbService: TmdbService,
     private val tmdbMetadataService: TmdbMetadataService,
-    private val playback: LocalMediaPlayback
+    private val playback: LocalMediaPlayback,
+    private val libraryRepository: LibraryRepository
 ) : ViewModel() {
+    companion object {
+        private const val TAG = "LocalDetailViewModel"
+    }
+
     private val localId: String = savedStateHandle.get<String>("localId").orEmpty()
     private val _uiState = MutableStateFlow(LocalDetailUiState())
     val uiState: StateFlow<LocalDetailUiState> = _uiState.asStateFlow()
@@ -107,6 +119,7 @@ class LocalDetailViewModel @Inject constructor(
                     artworkIsSeries = false
                     loadArtwork(movie.fileUri, displayTitle, displayYear, isSeries = false)
                     loadMetadata(displayTitle, displayYear, isSeries = false)
+                    refreshLibraryState()
                 }
                 return@launch
             }
@@ -151,7 +164,63 @@ class LocalDetailViewModel @Inject constructor(
                     isSeries = true
                 )
                 loadMetadata(displayTitle, displayYear, isSeries = true)
+                refreshLibraryState()
             }
+        }
+    }
+
+    private fun libraryItemType(): String =
+        if (LocalCatalog.isMovieItemId(localId)) "movie" else "series"
+
+    private fun currentLibraryEntryInput(): LibraryEntryInput {
+        val state = _uiState.value
+        return LibraryEntryInput(
+            itemId = localId,
+            itemType = libraryItemType(),
+            title = state.title.ifBlank { artworkTitle },
+            year = artworkYear?.take(4)?.toIntOrNull(),
+            tmdbId = state.tmdbId,
+            poster = state.posterUri,
+            posterShape = PosterShape.LANDSCAPE,
+            background = state.backdropUri ?: state.posterUri,
+            description = state.enrichment?.description,
+            releaseInfo = state.enrichment?.releaseInfo ?: artworkYear,
+            imdbRating = state.enrichment?.rating?.toFloat(),
+            genres = state.enrichment?.genres.orEmpty(),
+            addonBaseUrl = LocalCatalog.LIBRARY_BASE_URL
+        )
+    }
+
+    fun refreshLibraryState() {
+        viewModelScope.launch {
+            runCatching {
+                libraryRepository.isInLibrary(localId, libraryItemType()).first()
+            }.onSuccess { inLibrary ->
+                _uiState.update { it.copy(isInLibrary = inLibrary) }
+            }.onFailure { error ->
+                Log.w(TAG, "Failed to refresh local detail library state: ${error.message}")
+            }
+        }
+    }
+
+    fun toggleLibrary() {
+        if (_uiState.value.libraryPending) return
+        _uiState.update { it.copy(libraryPending = true) }
+        viewModelScope.launch {
+            val input = currentLibraryEntryInput()
+            runCatching {
+                libraryRepository.toggleDefault(input)
+            }.onFailure { error ->
+                Log.w(TAG, "Failed to toggle local detail library: ${error.message}")
+            }
+            runCatching {
+                libraryRepository.isInLibrary(localId, libraryItemType()).first()
+            }.onSuccess { inLibrary ->
+                _uiState.update { it.copy(isInLibrary = inLibrary) }
+            }.onFailure { error ->
+                Log.w(TAG, "Failed to refresh local detail library state: ${error.message}")
+            }
+            _uiState.update { it.copy(libraryPending = false) }
         }
     }
 

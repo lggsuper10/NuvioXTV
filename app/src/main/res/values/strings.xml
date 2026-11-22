@@ -892,7 +892,7 @@
     <string name="settings_animeskip_subtitle">Anime intro/outro skip timestamps</string>
     <string name="settings_debrid_subtitle">Experimental cloud account sources</string>
 
-    <string name="playback_title">Playback Settings</string>
+    <string name="playback_title">Playback &amp; Posters</string>
     <string name="playback_subtitle">Configure video playback and subtitle options</string>
     <string name="cd_decrease">Decrease</string>
     <string name="cd_increase">Increase</string>

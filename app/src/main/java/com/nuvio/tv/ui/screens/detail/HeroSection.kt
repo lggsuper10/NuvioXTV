@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -46,6 +47,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -132,7 +134,12 @@ fun HeroContentSection(
     titleAccessory: (@Composable () -> Unit)? = null,
     showLibraryAction: Boolean = true,
     showWatchedAction: Boolean = true,
-    extraActions: (@Composable () -> Unit)? = null
+    extraActions: (@Composable () -> Unit)? = null,
+    secondaryActions: (@Composable () -> Unit)? = null,
+    playButtonHeight: Dp = 52.dp,
+    playButtonMinWidth: Dp = 0.dp,
+    playButtonHorizontalPadding: Dp = 20.dp,
+    metaInfoBesideActions: Boolean = false
 ) {
     val context = LocalContext.current
     val isSeriesApi = remember(meta.apiType) {
@@ -295,18 +302,20 @@ fun HeroContentSection(
                         )
                     }
 
-                    MetaInfoRow(
-                        meta = meta,
-                        hideImdbRating = hideMetaInfoImdb,
-                        showFullReleaseDate = showFullReleaseDate,
-                        tmdbRating = tmdbRating
-                    )
-
-                    Spacer(modifier = Modifier.height(NuvioTheme.spacing.lg))
+                    if (!metaInfoBesideActions) {
+                        MetaInfoRow(
+                            meta = meta,
+                            hideImdbRating = hideMetaInfoImdb,
+                            showFullReleaseDate = showFullReleaseDate,
+                            tmdbRating = tmdbRating
+                        )
+                        Spacer(modifier = Modifier.height(NuvioTheme.spacing.lg))
+                    }
 
                     // Primary actions sit below the synopsis and just above the
                     // next section so they stay close to the bottom of the screen.
                     Row(
+                        modifier = if (metaInfoBesideActions) Modifier.fillMaxWidth() else Modifier,
                         horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -317,11 +326,27 @@ fun HeroContentSection(
                             onLongPress = onPlayLongPress,
                             focusRequester = playButtonFocusRequester,
                             restoreFocusToken = restorePlayFocusToken,
+                            height = playButtonHeight,
+                            minWidth = playButtonMinWidth,
+                            horizontalPadding = playButtonHorizontalPadding,
                             onFocusRestored = {
                                 onHeroActionFocused()
                                 onPlayFocusRestored()
                             }
                         )
+
+                        if (metaInfoBesideActions) {
+                            MetaInfoRow(
+                                meta = meta,
+                                hideImdbRating = hideMetaInfoImdb,
+                                showFullReleaseDate = showFullReleaseDate,
+                                tmdbRating = tmdbRating,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(start = NuvioTheme.spacing.sm),
+                                compact = true
+                            )
+                        }
 
                         if (showLibraryAction) {
                             ActionIconButton(
@@ -381,6 +406,17 @@ fun HeroContentSection(
 
                         extraActions?.invoke()
                     }
+
+                    if (secondaryActions != null) {
+                        Spacer(modifier = Modifier.height(NuvioTheme.spacing.sm))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            secondaryActions.invoke()
+                        }
+                    }
                 }
             }
         }
@@ -397,6 +433,9 @@ internal fun PlayButton(
     onLongPress: (() -> Unit)? = null,
     focusRequester: FocusRequester? = null,
     restoreFocusToken: Int = 0,
+    height: Dp = 52.dp,
+    minWidth: Dp = 0.dp,
+    horizontalPadding: Dp = 20.dp,
     onFocusRestored: () -> Unit = {}
 ) {
     var longPressTriggered by remember { mutableStateOf(false) }
@@ -420,7 +459,7 @@ internal fun PlayButton(
             }
         },
         modifier = modifier
-            .height(52.dp)
+            .height(height)
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .onFocusChanged {
                 if (it.isFocused) {
@@ -483,10 +522,12 @@ internal fun PlayButton(
             )
         ),
         scale = ButtonDefaults.scale(focusedScale = 1.02f),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp)
+        contentPadding = PaddingValues(horizontal = horizontalPadding, vertical = 0.dp)
     ) {
         Box(
-            modifier = Modifier.fillMaxHeight(),
+            modifier = Modifier
+                .fillMaxHeight()
+                .widthIn(min = minWidth),
             contentAlignment = Alignment.Center
         ) {
             Row(
@@ -549,6 +590,7 @@ private fun ActionIconButtonPainter(
                 shape = CircleShape
             )
         ),
+        scale = IconButtonDefaults.scale(focusedScale = 1f),
         shape = IconButtonDefaults.shape(
             shape = CircleShape
         )
@@ -563,7 +605,7 @@ private fun ActionIconButtonPainter(
 
 @OptIn(ExperimentalTvMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-private fun ActionIconButton(
+internal fun ActionIconButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     painter: Painter? = null,
     contentDescription: String,
@@ -577,7 +619,9 @@ private fun ActionIconButton(
     selectedContainerColor: Color = Color(0xFF7CFF9B),
     selectedContentColor: Color = Color.Black,
     onFocused: () -> Unit = {},
-    focusRequester: FocusRequester? = null
+    focusRequester: FocusRequester? = null,
+    upFocusRequester: FocusRequester? = null,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
     var longPressTriggered by remember { mutableStateOf(false) }
     val longPressKeyTracker = rememberLongPressKeyTracker()
@@ -595,6 +639,7 @@ private fun ActionIconButton(
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .size(NuvioTheme.spacing.xxxl)
             .onFocusChanged { state ->
+                onFocusChanged(state.isFocused)
                 if (state.isFocused) onFocused()
             }
             .onPreviewKeyEvent { event ->
@@ -629,7 +674,9 @@ private fun ActionIconButton(
                 }
                 false
             }
-            .focusProperties { up = FocusRequester.Cancel }
+            .focusProperties {
+                up = upFocusRequester ?: FocusRequester.Cancel
+            }
             .semantics {
                 if (toggleable) {
                     role = Role.Checkbox
@@ -648,6 +695,7 @@ private fun ActionIconButton(
                 shape = CircleShape
             )
         ),
+        scale = IconButtonDefaults.scale(focusedScale = 1f),
         shape = IconButtonDefaults.shape(
             shape = CircleShape
         )
@@ -673,7 +721,9 @@ private fun MetaInfoRow(
     meta: Meta,
     hideImdbRating: Boolean,
     showFullReleaseDate: Boolean = true,
-    tmdbRating: Float? = null
+    tmdbRating: Float? = null,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
     val context = LocalContext.current
     val genresText = remember(meta.genres) {
@@ -737,10 +787,15 @@ private fun MetaInfoRow(
         }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm)) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(
+            if (compact) NuvioTheme.spacing.xs else NuvioTheme.spacing.sm
+        )
+    ) {
         // Primary row: Genres, Release, Ratings
         Row(
-            modifier = if (reserveImdbRatingHeight) Modifier.height(30.dp) else Modifier,
+            modifier = if (reserveImdbRatingHeight && !compact) Modifier.height(30.dp) else Modifier,
             horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {

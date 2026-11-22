@@ -3,16 +3,17 @@
 package com.nuvio.tv.ui.screens.locallibrary
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -28,7 +29,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,8 +60,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.Button
-import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -73,9 +75,11 @@ import com.nuvio.tv.domain.model.PosterShape
 import com.nuvio.tv.ui.components.LocalSourceBadge
 import com.nuvio.tv.ui.components.NuvioDialog
 import com.nuvio.tv.ui.components.NuvioDialogButton
+import com.nuvio.tv.ui.screens.detail.ActionIconButton
 import com.nuvio.tv.ui.screens.detail.CastSection
 import com.nuvio.tv.ui.screens.detail.HeroContentSection
 import com.nuvio.tv.ui.theme.NuvioTheme
+import com.nuvio.tv.ui.util.rememberRawSvgPainter
 import kotlinx.coroutines.launch
 
 @Composable
@@ -201,6 +205,15 @@ fun LocalDetailScreen(
                 val playAction = {
                     onPlay(viewModel.playerRoute(primaryItem))
                 }
+                val rewindHeroIfNeeded = {
+                    if (listState.firstVisibleItemIndex > 0 ||
+                        listState.firstVisibleItemScrollOffset > 0
+                    ) {
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(0)
+                        }
+                    }
+                }
 
                 LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
                     item(key = "local_hero", contentType = "hero") {
@@ -220,18 +233,7 @@ fun LocalDetailScreen(
                                 hideMetaInfoImdb = false,
                                 showFullReleaseDate = true,
                                 playButtonFocusRequester = playFocusRequester,
-                                onHeroActionFocused = {
-                                    // Reached from below. The hero swallows bring-into-view
-                                    // requests, so the page has to rewind itself; otherwise the
-                                    // title and description stay scrolled off the top.
-                                    if (listState.firstVisibleItemIndex > 0 ||
-                                        listState.firstVisibleItemScrollOffset > 0
-                                    ) {
-                                        coroutineScope.launch {
-                                            listState.animateScrollToItem(0)
-                                        }
-                                    }
-                                },
+                                onHeroActionFocused = rewindHeroIfNeeded,
                                 titleAccessory = {
                                     val sourceName = uiState.sourceName
                                     if (!sourceName.isNullOrBlank()) {
@@ -240,12 +242,73 @@ fun LocalDetailScreen(
                                 },
                                 showLibraryAction = false,
                                 showWatchedAction = false,
-                                extraActions = {
-                                    LocalPosterActions(
-                                        busy = uiState.artworkBusy,
-                                        onRefresh = viewModel::refreshArtwork,
-                                        onSearch = { showPosterSearchDialog = true }
+                                playButtonHeight = 44.dp,
+                                playButtonMinWidth = 180.dp,
+                                playButtonHorizontalPadding = 20.dp,
+                                metaInfoBesideActions = true,
+                                secondaryActions = {
+                                    val libraryAddPainter = rememberRawSvgPainter(
+                                        rawIconRes = R.raw.library_add_plus
                                     )
+                                    val libraryLabel = stringResource(
+                                        if (uiState.isInLibrary) {
+                                            R.string.hero_remove_from_library
+                                        } else {
+                                            R.string.hero_add_to_library
+                                        }
+                                    )
+                                    val refreshLabel = stringResource(
+                                        if (uiState.artworkBusy) {
+                                            R.string.local_detail_artwork_refreshing
+                                        } else {
+                                            R.string.local_detail_refresh_poster
+                                        }
+                                    )
+                                    val searchLabel = stringResource(R.string.local_detail_search_poster)
+                                    var focusedLabel by remember { mutableStateOf<String?>(null) }
+                                    ActionIconButton(
+                                        icon = if (uiState.isInLibrary) Icons.Default.Check else null,
+                                        painter = if (uiState.isInLibrary) null else libraryAddPainter,
+                                        contentDescription = libraryLabel,
+                                        onClick = viewModel::toggleLibrary,
+                                        enabled = !uiState.libraryPending,
+                                        onFocused = rewindHeroIfNeeded,
+                                        upFocusRequester = playFocusRequester,
+                                        onFocusChanged = { focused -> focusedLabel = if (focused) libraryLabel else null }
+                                    )
+                                    ActionIconButton(
+                                        icon = Icons.Default.Refresh,
+                                        contentDescription = refreshLabel,
+                                        onClick = viewModel::refreshArtwork,
+                                        enabled = !uiState.artworkBusy,
+                                        onFocused = rewindHeroIfNeeded,
+                                        upFocusRequester = playFocusRequester,
+                                        onFocusChanged = { focused -> focusedLabel = if (focused) refreshLabel else null }
+                                    )
+                                    ActionIconButton(
+                                        icon = Icons.Default.Search,
+                                        contentDescription = searchLabel,
+                                        onClick = { showPosterSearchDialog = true },
+                                        enabled = !uiState.artworkBusy,
+                                        onFocused = rewindHeroIfNeeded,
+                                        upFocusRequester = playFocusRequester,
+                                        onFocusChanged = { focused -> focusedLabel = if (focused) searchLabel else null }
+                                    )
+                                    AnimatedVisibility(
+                                        visible = focusedLabel != null,
+                                        enter = fadeIn(),
+                                        exit = fadeOut()
+                                    ) {
+                                        focusedLabel?.let { text ->
+                                            Text(
+                                                text = text,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = NuvioTheme.colors.TextSecondary,
+                                                maxLines = 1,
+                                                modifier = Modifier.padding(start = NuvioTheme.spacing.xs)
+                                            )
+                                        }
+                                    }
                                 }
                             )
                         }
@@ -546,77 +609,6 @@ private fun artworkSourceLabel(source: String): String = when (source) {
     "TMDB" -> stringResource(R.string.local_detail_artwork_source_tmdb)
     "DOUBAN" -> stringResource(R.string.local_detail_artwork_source_douban)
     else -> source
-}
-
-@Composable
-private fun LocalPosterActions(
-    busy: Boolean,
-    onRefresh: () -> Unit,
-    onSearch: () -> Unit
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Button(
-            onClick = onRefresh,
-            enabled = !busy,
-            modifier = Modifier.height(52.dp),
-            colors = ButtonDefaults.colors(
-                containerColor = NuvioTheme.colors.BackgroundCard,
-                contentColor = NuvioTheme.colors.TextPrimary,
-                focusedContainerColor = NuvioTheme.colors.Secondary,
-                focusedContentColor = NuvioTheme.colors.OnSecondary,
-                disabledContainerColor = NuvioTheme.colors.BackgroundCard.copy(alpha = 0.55f),
-                disabledContentColor = NuvioTheme.colors.TextTertiary
-            ),
-            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
-            scale = ButtonDefaults.scale(focusedScale = 1.02f),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp)
-        ) {
-            Box(
-                modifier = Modifier.fillMaxHeight(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(
-                        if (busy) {
-                            R.string.local_detail_artwork_refreshing
-                        } else {
-                            R.string.local_detail_refresh_poster
-                        }
-                    ),
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
-        }
-        Button(
-            onClick = onSearch,
-            enabled = !busy,
-            modifier = Modifier.height(52.dp),
-            colors = ButtonDefaults.colors(
-                containerColor = NuvioTheme.colors.BackgroundCard,
-                contentColor = NuvioTheme.colors.TextPrimary,
-                focusedContainerColor = NuvioTheme.colors.Secondary,
-                focusedContentColor = NuvioTheme.colors.OnSecondary,
-                disabledContainerColor = NuvioTheme.colors.BackgroundCard.copy(alpha = 0.55f),
-                disabledContentColor = NuvioTheme.colors.TextTertiary
-            ),
-            shape = ButtonDefaults.shape(RoundedCornerShape(10.dp)),
-            scale = ButtonDefaults.scale(focusedScale = 1.02f),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp)
-        ) {
-            Box(
-                modifier = Modifier.fillMaxHeight(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.local_detail_search_poster),
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
-        }
-    }
 }
 
 @Composable

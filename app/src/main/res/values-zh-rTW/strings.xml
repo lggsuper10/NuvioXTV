@@ -768,7 +768,7 @@
     <string name="settings_animeskip_subtitle">動畫片頭/片尾跳過時間戳</string>
     <string name="settings_debrid_subtitle">實驗性雲端帳戶來源</string>
 
-    <string name="playback_title">播放設定</string>
+    <string name="playback_title">播放與海報</string>
     <string name="playback_subtitle">配置影片播放和字幕選項</string>
     <string name="cd_decrease">減少</string>
     <string name="cd_increase">增加</string>

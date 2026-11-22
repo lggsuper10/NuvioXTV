@@ -883,7 +883,7 @@
     <string name="settings_animeskip_subtitle">动画片头/片尾跳过时间戳</string>
     <string name="settings_debrid_subtitle">实验性云账户来源</string>
 
-    <string name="playback_title">播放设置</string>
+    <string name="playback_title">播放与海报</string>
     <string name="playback_subtitle">配置视频播放和字幕选项</string>
     <string name="cd_decrease">减少</string>
     <string name="cd_increase">增加</string>
