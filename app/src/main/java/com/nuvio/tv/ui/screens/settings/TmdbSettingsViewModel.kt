@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nuvio.tv.data.local.TmdbSettingsDataStore
 import com.nuvio.tv.data.local.ContinueWatchingEnrichmentCache
+import com.nuvio.tv.data.remote.api.TmdbApi
 import com.nuvio.tv.data.trailer.TrailerService
 import com.nuvio.tv.domain.model.TmdbSettings
 import com.nuvio.tv.domain.repository.MetaRepository
@@ -21,7 +22,8 @@ class TmdbSettingsViewModel @Inject constructor(
     private val dataStore: TmdbSettingsDataStore,
     private val trailerService: TrailerService,
     private val metaRepository: MetaRepository,
-    private val cwEnrichmentCache: ContinueWatchingEnrichmentCache
+    private val cwEnrichmentCache: ContinueWatchingEnrichmentCache,
+    private val tmdbApi: TmdbApi
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TmdbSettingsUiState())
@@ -39,6 +41,7 @@ class TmdbSettingsViewModel @Inject constructor(
         when (event) {
             is TmdbSettingsEvent.ToggleEnabled -> update { dataStore.setEnabled(event.enabled) }
             is TmdbSettingsEvent.SetApiKey -> update { dataStore.setApiKey(event.apiKey) }
+            is TmdbSettingsEvent.TestApiKey -> testApiKey(event.apiKey.trim())
             is TmdbSettingsEvent.ToggleDouban -> update { dataStore.setUseDouban(event.enabled) }
             is TmdbSettingsEvent.ToggleModernHomeEnabled -> {
                 update { dataStore.setModernHomeEnabled(event.enabled) }
@@ -67,9 +70,35 @@ class TmdbSettingsViewModel @Inject constructor(
         }
     }
 
+    private fun testApiKey(apiKey: String) {
+        if (apiKey.isBlank()) {
+            _uiState.update { it.copy(apiKeyTestResult = ApiKeyTestResult.Idle) }
+            return
+        }
+        _uiState.update { it.copy(apiKeyTestResult = ApiKeyTestResult.Testing) }
+        viewModelScope.launch {
+            val result = runCatching {
+                val response = tmdbApi.getMovieGenres(apiKey = apiKey, language = "en")
+                when {
+                    response.isSuccessful && response.body()?.genres != null -> ApiKeyTestResult.Success
+                    response.code() == 401 || response.code() == 403 -> ApiKeyTestResult.Error("invalid_key")
+                    else -> ApiKeyTestResult.Error("http_${response.code()}")
+                }
+            }.getOrElse { ApiKeyTestResult.Error("network") }
+            _uiState.update { it.copy(apiKeyTestResult = result) }
+        }
+    }
+
     private fun update(action: suspend () -> Unit) {
         viewModelScope.launch { action() }
     }
+}
+
+sealed class ApiKeyTestResult {
+    data object Idle : ApiKeyTestResult()
+    data object Testing : ApiKeyTestResult()
+    data object Success : ApiKeyTestResult()
+    data class Error(val reason: String) : ApiKeyTestResult()
 }
 
 data class TmdbSettingsUiState(
@@ -88,7 +117,8 @@ data class TmdbSettingsUiState(
     val useEpisodes: Boolean = true,
     val useTrailers: Boolean = true,
     val useMoreLikeThis: Boolean = true,
-    val useCollections: Boolean = true
+    val useCollections: Boolean = true,
+    val apiKeyTestResult: ApiKeyTestResult = ApiKeyTestResult.Idle
 ) {
     fun fromSettings(settings: TmdbSettings): TmdbSettingsUiState = copy(
         enabled = settings.enabled,
@@ -113,6 +143,7 @@ data class TmdbSettingsUiState(
 sealed class TmdbSettingsEvent {
     data class ToggleEnabled(val enabled: Boolean) : TmdbSettingsEvent()
     data class SetApiKey(val apiKey: String) : TmdbSettingsEvent()
+    data class TestApiKey(val apiKey: String) : TmdbSettingsEvent()
     data class ToggleDouban(val enabled: Boolean) : TmdbSettingsEvent()
     data class ToggleModernHomeEnabled(val enabled: Boolean) : TmdbSettingsEvent()
     data class ToggleEnrichContinueWatching(val enabled: Boolean) : TmdbSettingsEvent()

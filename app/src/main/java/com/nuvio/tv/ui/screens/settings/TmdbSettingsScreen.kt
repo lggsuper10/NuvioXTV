@@ -289,6 +289,8 @@ fun TmdbSettingsContent(
     if (showApiKeyDialog) {
         TmdbApiKeyDialog(
             currentValue = uiState.apiKey,
+            testResult = uiState.apiKeyTestResult,
+            onTest = { viewModel.onEvent(TmdbSettingsEvent.TestApiKey(it)) },
             onSave = {
                 viewModel.onEvent(TmdbSettingsEvent.SetApiKey(it))
                 showApiKeyDialog = false
@@ -305,6 +307,8 @@ fun TmdbSettingsContent(
 @Composable
 private fun TmdbApiKeyDialog(
     currentValue: String,
+    testResult: ApiKeyTestResult,
+    onTest: (String) -> Unit,
     onSave: (String) -> Unit,
     onClear: () -> Unit,
     onDismiss: () -> Unit
@@ -387,9 +391,38 @@ private fun TmdbApiKeyDialog(
             }
         }
 
+        val resultText = when (testResult) {
+            is ApiKeyTestResult.Idle -> null
+            is ApiKeyTestResult.Testing -> stringResource(R.string.tmdb_key_test_testing)
+            is ApiKeyTestResult.Success -> stringResource(R.string.tmdb_key_test_success)
+            is ApiKeyTestResult.Error -> {
+                val reason = testResult.reason
+                stringResource(
+                    R.string.tmdb_key_test_failed,
+                    when (reason) {
+                        "invalid_key" -> stringResource(R.string.tmdb_key_test_invalid)
+                        "network" -> stringResource(R.string.tmdb_key_test_network)
+                        else -> reason
+                    }
+                )
+            }
+        }
+        if (resultText != null) {
+            Text(
+                text = resultText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (testResult is ApiKeyTestResult.Success) {
+                    NuvioTheme.colors.Primary
+                } else {
+                    NuvioTheme.colors.Error
+                },
+                modifier = Modifier.padding(top = NuvioTheme.spacing.sm)
+            )
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             NuvioDialogButton(
                 text = stringResource(R.string.action_cancel),
@@ -399,6 +432,16 @@ private fun TmdbApiKeyDialog(
             NuvioDialogButton(
                 text = stringResource(R.string.action_clear),
                 onClick = onClear,
+                modifier = Modifier.weight(1f)
+            )
+            NuvioDialogButton(
+                text = if (testResult is ApiKeyTestResult.Testing) {
+                    stringResource(R.string.tmdb_key_test_testing)
+                } else {
+                    stringResource(R.string.tmdb_key_test_button)
+                },
+                onClick = { onTest(value) },
+                enabled = testResult !is ApiKeyTestResult.Testing && value.isNotBlank(),
                 modifier = Modifier.weight(1f)
             )
             NuvioDialogButton(

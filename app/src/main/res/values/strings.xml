@@ -1730,6 +1730,12 @@
     <string name="tmdb_api_key_dialog_title">TMDB API Key</string>
     <string name="tmdb_api_key_dialog_subtitle">Create a free key at themoviedb.org. If api.themoviedb.org is blocked on your network, a proxy or VPN is still required.</string>
     <string name="tmdb_api_key_placeholder">Enter TMDB API key</string>
+    <string name="tmdb_key_test_button">Test</string>
+    <string name="tmdb_key_test_testing">Testing…</string>
+    <string name="tmdb_key_test_success">Connection successful, API key is valid</string>
+    <string name="tmdb_key_test_failed">Test failed: %1$s</string>
+    <string name="tmdb_key_test_invalid">Invalid API key or no permission</string>
+    <string name="tmdb_key_test_network">Network error, check connection or use a proxy</string>
     <string name="tmdb_douban_title">Douban Artwork and Details (Fallback)</string>
     <string name="tmdb_douban_subtitle">When TMDB is unavailable, fetch the poster, synopsis, director, cast, and genres from Douban. Unofficial interface; availability may vary.</string>
     <string name="tmdb_artwork_title">Artwork</string>

@@ -1629,6 +1629,12 @@
     <string name="tmdb_api_key_dialog_title">TMDB API 密钥</string>
     <string name="tmdb_api_key_dialog_subtitle">可在 themoviedb.org 免费申请。如果当前网络无法访问 api.themoviedb.org，仍需配合代理或 VPN。</string>
     <string name="tmdb_api_key_placeholder">输入 TMDB API Key</string>
+    <string name="tmdb_key_test_button">测试</string>
+    <string name="tmdb_key_test_testing">测试中…</string>
+    <string name="tmdb_key_test_success">连接成功，API Key 有效</string>
+    <string name="tmdb_key_test_failed">测试失败：%1$s</string>
+    <string name="tmdb_key_test_invalid">API Key 无效或无权限</string>
+    <string name="tmdb_key_test_network">网络错误，请检查网络或使用代理</string>
     <string name="tmdb_douban_title">豆瓣海报与资料（兜底）</string>
     <string name="tmdb_douban_subtitle">TMDB 不可用时，从豆瓣获取海报、简介、导演、演员和类型。非官方接口，可能受访问频率限制。</string>
     <string name="tmdb_artwork_title">美术图</string>
