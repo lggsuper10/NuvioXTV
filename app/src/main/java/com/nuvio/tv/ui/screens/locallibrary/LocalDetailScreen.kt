@@ -302,10 +302,17 @@ fun LocalDetailScreen(
                                         focusedLabel?.let { text ->
                                             Text(
                                                 text = text,
-                                                style = MaterialTheme.typography.labelMedium,
-                                                color = NuvioTheme.colors.TextSecondary,
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = NuvioTheme.colors.OnSecondary,
                                                 maxLines = 1,
-                                                modifier = Modifier.padding(start = NuvioTheme.spacing.xs)
+                                                modifier = Modifier
+                                                    .padding(start = NuvioTheme.spacing.xl)
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(NuvioTheme.colors.Secondary)
+                                                    .padding(
+                                                        horizontal = NuvioTheme.spacing.sm,
+                                                        vertical = NuvioTheme.spacing.xxs
+                                                    )
                                             )
                                         }
                                     }

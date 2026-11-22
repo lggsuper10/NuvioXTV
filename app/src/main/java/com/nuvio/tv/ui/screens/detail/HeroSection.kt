@@ -317,7 +317,7 @@ fun HeroContentSection(
                     Row(
                         modifier = if (metaInfoBesideActions) Modifier.fillMaxWidth() else Modifier,
                         horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = if (metaInfoBesideActions) Alignment.Top else Alignment.CenterVertically
                     ) {
                         PlayButton(
                             text = if (isPlayEnabled) nextToWatch?.displayText else stringResource(R.string.playback_unavailable),
@@ -341,9 +341,6 @@ fun HeroContentSection(
                                 hideImdbRating = hideMetaInfoImdb,
                                 showFullReleaseDate = showFullReleaseDate,
                                 tmdbRating = tmdbRating,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(start = NuvioTheme.spacing.sm),
                                 compact = true
                             )
                         }
